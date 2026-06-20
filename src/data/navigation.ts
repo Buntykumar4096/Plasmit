@@ -1,0 +1,266 @@
+import {
+  Activity,
+  Ambulance,
+  Archive,
+  BarChart3,
+  BedDouble,
+  Bell,
+  Bot,
+  Brain,
+  BriefcaseMedical,
+  Building2,
+  CalendarClock,
+  CheckCircle2,
+  ClipboardList,
+  ClipboardPlus,
+  CreditCard,
+  DoorOpen,
+  Droplets,
+  FilePenLine,
+  FileClock,
+  FlaskConical,
+  Gauge,
+  HeartPulse,
+  Home,
+  IdCard,
+  Landmark,
+  LayoutDashboard,
+  ListChecks,
+  LockKeyhole,
+  MessageSquareText,
+  Microscope,
+  Package,
+  Pill,
+  RadioTower,
+  ScanSearch,
+  Search,
+  Settings,
+  ShieldCheck,
+  Stethoscope,
+  Store,
+  Syringe,
+  Users,
+  UserCog,
+  Workflow,
+} from "lucide-react";
+
+import type { NavigationItem, Role } from "@/types";
+
+export const roles: Role[] = [
+  "Super Admin",
+  "Hospital Admin",
+  "Doctor",
+  "Nurse",
+  "Receptionist",
+  "Lab Technician",
+  "Radiologist",
+  "Pharmacist",
+  "Billing Executive",
+  "HR Manager",
+  "Management",
+];
+
+const allRoles = roles;
+
+function notesRoute(category?: string) {
+  return category ? `/notes/all-notes?category=${category}` : "/notes/all-notes";
+}
+
+function notes1Route(category?: string, specialty?: string) {
+  const params = new URLSearchParams();
+  if (category) params.set("category", category);
+  if (specialty) params.set("specialty", specialty);
+  const query = params.toString();
+  return query ? `/notes1?${query}` : "/notes1";
+}
+
+function note1CategoryMenu(id: string, label: string, specialties: string[]) {
+  return {
+    id: `notes1-${id}`,
+    label,
+    route: notes1Route(id),
+    children: specialties.length
+      ? [
+          { id: `notes1-${id}-all`, label: `All ${label}`, route: notes1Route(id) },
+          ...specialties.map((specialty) => ({
+            id: `notes1-${id}-${specialty.toLowerCase().replaceAll(" ", "-")}`,
+            label: specialty,
+            route: notes1Route(id, specialty),
+          })),
+        ]
+      : undefined,
+  };
+}
+
+const notes1Menu = [
+  { id: "notes1-all", label: "All Notes", route: "/notes1" },
+  note1CategoryMenu("medical", "Medical Notes", ["ED Notes", "Physician Notes"]),
+  note1CategoryMenu("surgery", "Surgical Notes", ["Neurosurgery", "Ophthalmology", "ENT", "Cardiothoracic Surgery", "Thoracic Surgery", "Hepatobiliary Surgery", "General Surgery", "Colorectal Surgery", "Upper GI Surgery", "Lower GI Surgery", "Vascular Surgery", "Orthopedic Surgery", "Interventional Radiology", "Gynecology", "Transplant Surgery", "Plastic and Reconstructive Surgery", "Maxillo-facial Surgery", "Urology", "Others"]),
+  note1CategoryMenu("operative", "Operative Notes", ["Neurosurgery", "Ophthalmology", "ENT", "Cardiothoracic Surgery", "Thoracic Surgery", "Hepatobiliary Surgery", "General Surgery", "Colorectal Surgery", "Upper GI Surgery", "Lower GI Surgery", "Vascular Surgery", "Orthopedic Surgery", "Interventional Radiology", "Gynecology", "Transplant Surgery", "Plastic and Reconstructive Surgery", "Maxillo-facial Surgery", "Urology", "Others"]),
+  note1CategoryMenu("nurse", "Nurse Notes", ["ICU Nurse", "Ward Nurse", "ED Nurse"]),
+  note1CategoryMenu("pharmacy", "Pharmacy Notes", []),
+  note1CategoryMenu("allied", "Allied Health Notes", ["Physiotherapy", "Dietitian", "Social Worker", "Occupational Therapy", "Speech Therapy", "Psychology"]),
+  { id: "notes1-filter", label: "Filter Notes", route: "/notes1?filters=open" },
+];
+
+const notesMenu = [
+  { id: "notes-all", label: "All Notes", route: notesRoute() },
+  { id: "notes-medical", label: "Medical Notes", route: notesRoute("medical") },
+  { id: "notes-surgery", label: "Surgery Notes", route: notesRoute("surgery") },
+  { id: "notes-operative", label: "Operative Notes", route: notesRoute("operative") },
+  { id: "notes-nurse", label: "Nurse Notes", route: notesRoute("nurse") },
+  { id: "notes-pharmacy", label: "Pharmacy Notes", route: notesRoute("pharmacy") },
+  { id: "notes-allied", label: "Allied Health Notes", route: notesRoute("allied") },
+];
+
+export const navigationItems: NavigationItem[] = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, route: "/dashboard", group: "Command", allowedRoles: allRoles, status: "ready" },
+  // { id: "search", label: "Global Search", icon: Search, route: "/search", group: "Command", allowedRoles: allRoles, status: "ready" },
+  // { id: "notifications", label: "Notifications", icon: Bell, route: "/notifications", group: "Command", allowedRoles: allRoles, status: "ready" },
+  // { id: "admin-roles", label: "Roles", icon: ShieldCheck, route: "/admin/roles", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin"], status: "ready" },
+  // { id: "admin-permissions", label: "Permissions", icon: LockKeyhole, route: "/admin/permissions", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin"], status: "ready" },
+  // { id: "admin-users", label: "Users", icon: UserCog, route: "/admin/users", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin", "HR Manager"], status: "ready" },
+  // { id: "admin-departments", label: "Departments", icon: Building2, route: "/admin/departments", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin"], status: "ready" },
+  // { id: "admin-hospital", label: "Hospital Setup", icon: Settings, route: "/admin/hospital-setup", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin", "Management"], status: "ready" },
+  // { id: "admin-branches", label: "Branches", icon: Store, route: "/admin/branches", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin"], status: "ready" },
+  // { id: "admin-security", label: "Security", icon: ShieldCheck, route: "/admin/security", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin"], status: "ready" },
+  // { id: "admin-audit", label: "Audit Logs", icon: Archive, route: "/admin/audit-logs", group: "Admin Setup", allowedRoles: ["Super Admin", "Hospital Admin", "Management"], status: "ready" },
+  // { id: "front-office", label: "Front Office", icon: Home, route: "/front-office", group: "Operations", allowedRoles: ["Super Admin", "Hospital Admin", "Receptionist", "Management"], status: "ready" },
+  // {
+  //   id: "bundle",
+  //   label: "UI Bundle",
+  //   icon: Package,
+  //   route: "/bundle",
+  //   group: "Bundle",
+  //   allowedRoles: allRoles,
+  //   status: "ready",
+  //   children: [
+  //     { id: "bundle-overview", label: "Overview", route: "/bundle", status: "ready" },
+  //     { id: "bundle-button", label: "Button", route: "/bundle/button", status: "ready" },
+  //     { id: "bundle-textbox", label: "Textbox", route: "/bundle/textbox", status: "ready" },
+  //     { id: "bundle-textarea", label: "Textarea", route: "/bundle/textarea", status: "ready" },
+  //     { id: "bundle-search-box", label: "Search Box", route: "/bundle/search-box", status: "ready" },
+  //     { id: "bundle-form-controls", label: "Form Controls", route: "/bundle/form-controls", status: "ready" },
+  //     { id: "bundle-navbar", label: "Navbar", route: "/bundle/navbar", status: "ready" },
+  //     { id: "bundle-sidebar", label: "Sidebar", route: "/bundle/sidebar", status: "ready" },
+  //     { id: "bundle-box", label: "Box / Card", route: "/bundle/box", status: "ready" },
+  //     { id: "bundle-tabs", label: "Tabs", route: "/bundle/tabs", status: "ready" },
+  //     { id: "bundle-alert-status", label: "Alert / Status", route: "/bundle/alert-status", status: "ready" },
+  //     { id: "bundle-drawer", label: "Drawer", route: "/bundle/drawer", status: "ready" },
+  //     { id: "bundle-toast", label: "Toast", route: "/bundle/toast", status: "ready" },
+  //     { id: "bundle-table", label: "Table", route: "/bundle/table", status: "ready" },
+  //     { id: "bundle-empty-loading", label: "Empty / Loading", route: "/bundle/empty-loading", status: "ready" },
+  //   ],
+  // },
+  // { id: "billing-desk", label: "Billing Desk", icon: CreditCard, route: "/billing-desk", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Receptionist", "Billing Executive", "Management"], status: "ready" },
+  // { id: "patients", label: "Patient", icon: IdCard, route: "/patients", group: "Clinical", allowedRoles: allRoles, status: "ready" },
+  { id: "patient-details", label: "Patient Details", icon: IdCard, route: "/patient-details", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"], status: "ready" },
+  { id: "patient-history", label: "Patient History", icon: ClipboardList, route: "/patient-history", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"], status: "ready" },
+  { id: "patient-list", label: "Patient Details List", icon: IdCard, route: "/patient-list", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"], status: "ready" },
+  { id: "patient-history-list", label: "Patient History List", icon: ListChecks, route: "/patient-history-list", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"], status: "ready" },
+  { id: "poct-add", label: "Add POCT", icon: ClipboardPlus, route: "/poct/add", group: "POCT", allowedRoles: allRoles, status: "ready" },
+  { id: "poct-results", label: "View POCT Result", icon: FileClock, route: "/poct/results", group: "POCT", allowedRoles: allRoles, status: "ready" },
+  { id: "notes", label: "Notes", icon: FilePenLine, route: "/notes/all-notes", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: notesMenu },
+  { id: "notes1", label: "Notes1", icon: FilePenLine, route: "/notes1", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: notes1Menu },
+  { id: "appointments", label: "Appointment", icon: CalendarClock, route: "/appointments", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Receptionist", "Doctor", "Nurse", "Billing Executive", "Management"], status: "ready" },
+  {
+    id: "diagnostic-hub",
+    label: "Diagnostic Hub",
+    icon: Microscope,
+    route: "/diagnostic-hub/overview",
+    group: "Clinical",
+    allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Lab Technician", "Radiologist", "Management"],
+    status: "ready",
+    children: [
+      { id: "diagnostic-hub-overview", label: "Overview", route: "/diagnostic-hub/overview", status: "ready" },
+      { id: "diagnostic-hub-report-details", label: "Report Details", route: "/diagnostic-hub/report-details", status: "ready" },
+      { id: "diagnostic-hub-imaging", label: "Imaging Report View", route: "/diagnostic-hub/imaging-report-view", status: "ready" },
+      { id: "diagnostic-hub-trends", label: "Trends & Charts", route: "/diagnostic-hub/trends-charts", status: "ready" },
+    ],
+  },
+  {
+    id: "tele-icu",
+    label: "Tele ICU",
+    icon: RadioTower,
+    route: "/remote-monitoring",
+    group: "Clinical",
+    allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"],
+    status: "ready",
+    children: [
+      { id: "tele-icu-command-center", label: "Remote Intensivist Command Center", route: "/remote-monitoring", status: "ready" },
+      { id: "tele-icu-remote-consultations", label: "Remote Consultations", route: "/remote-monitoring/remote-consultations", status: "ready" },
+      { id: "tele-icu-escalated-cases", label: "Escalated Cases", route: "/remote-monitoring/escalated-cases", status: "ready" },
+    ],
+  },
+  // {
+  //   id: "admission",
+  //   label: "Admission",
+  //   icon: DoorOpen,
+  //   route: "/admission",
+  //   group: "Clinical",
+  //   allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"],
+  //   status: "ready",
+  // },
+  // { id: "opd", label: "OPD", icon: Stethoscope, route: "/opd", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Pharmacist", "Lab Technician", "Management"], status: "ready" },
+  // { id: "clinical-examination", label: "Clinical Exam", icon: ClipboardList, route: "/clinical-examination", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready" },
+  // { id: "rapid-review", label: "Rapid Review", icon: Activity, route: "/rapid-review", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready" },
+  // {
+  //   id: "renal",
+  //   label: "Renal",
+  //   icon: Droplets,
+  //   route: "/renal",
+  //   group: "Clinical",
+  //   allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Lab Technician", "Billing Executive", "Management"],
+  //   status: "ready",
+  // },
+  // {
+  //   id: "neuro-icu",
+  //   label: "Neuro ICU",
+  //   icon: Brain,
+  //   route: "/neuro-icu",
+  //   group: "Clinical",
+  //   allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"],
+  //   status: "ready",
+  // },
+  // {
+  //   id: "ipd",
+  //   label: "Monitoring",
+  //   icon: BedDouble,
+  //   route: "/ipd",
+  //   group: "Clinical",
+  //   allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Pharmacist", "Management"],
+  //   status: "ready",
+  // },
+  { id: "emergency", label: "Emergency", icon: Ambulance, route: "/emergency", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"], status: "ready" },
+  // { id: "emr", label: "EMR / EHR", icon: ClipboardList, route: "/emr", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Lab Technician", "Radiologist", "Pharmacist", "Management"], status: "ready" },
+  // { id: "laboratory", label: "Laboratory", icon: FlaskConical, route: "/laboratory", group: "Diagnostics", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Lab Technician", "Billing Executive", "Management"], status: "ready" },
+  // { id: "radiology", label: "Radiology", icon: ScanSearch, route: "/radiology", group: "Diagnostics", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Radiologist", "Billing Executive", "Management"], status: "ready" },
+  // { id: "pharmacy", label: "Pharmacy", icon: Pill, route: "/pharmacy", group: "Operations", allowedRoles: ["Super Admin", "Hospital Admin", "Pharmacist", "Doctor", "Nurse", "Billing Executive", "Management"], status: "ready" },
+  // { id: "ot", label: "OT", icon: Syringe, route: "/ot", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Billing Executive", "Management"], status: "ready" },
+  // { id: "billing", label: "Billing", icon: CreditCard, route: "/billing", group: "Finance", allowedRoles: ["Super Admin", "Hospital Admin", "Billing Executive", "Doctor", "Nurse", "Pharmacist", "Management"], status: "ready" },
+  // { id: "finance", label: "Finance", icon: BarChart3, route: "/finance", group: "Finance", allowedRoles: ["Super Admin", "Hospital Admin", "Billing Executive", "Management"], status: "ready" },
+  // { id: "insurance", label: "Insurance & TPA", icon: Landmark, route: "/insurance", group: "Finance", allowedRoles: ["Super Admin", "Hospital Admin", "Billing Executive", "Doctor", "Nurse", "Management"], status: "ready" },
+  // { id: "inventory", label: "Inventory & Store", icon: Store, route: "/inventory", group: "Operations", allowedRoles: ["Super Admin", "Hospital Admin", "Pharmacist", "Nurse", "Billing Executive", "Management"], status: "ready" },
+  // { id: "hrms", label: "HRMS", icon: Users, route: "/hrms", group: "Administration", allowedRoles: ["Super Admin", "Hospital Admin", "HR Manager", "Doctor", "Nurse", "Management"], status: "ready" },
+  // { id: "administration", label: "Administration", icon: Building2, route: "/administration", group: "Administration", allowedRoles: ["Super Admin", "Hospital Admin", "Receptionist", "HR Manager", "Management"], status: "ready" },
+  // { id: "reports", label: "Reports & Analytics", icon: BarChart3, route: "/reports", group: "Insights", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Billing Executive", "HR Manager", "Management"], status: "ready" },
+  // { id: "communication", label: "Communication", icon: MessageSquareText, route: "/communication", group: "Platform", allowedRoles: ["Super Admin", "Hospital Admin", "HR Manager", "Receptionist", "Management"], status: "ready" },
+  // { id: "integrations", label: "Integrations", icon: Workflow, route: "/integrations", group: "Platform", allowedRoles: ["Super Admin", "Hospital Admin", "Billing Executive", "Lab Technician", "Radiologist", "Management"], status: "ready" },
+  // { id: "security", label: "Security & Compliance", icon: ShieldCheck, route: "/security-compliance", group: "Platform", allowedRoles: ["Super Admin", "Hospital Admin", "HR Manager", "Management"], status: "ready" },
+  // { id: "mobile", label: "Mobile & Remote", icon: RadioTower, route: "/mobile", group: "Platform", allowedRoles: allRoles, status: "ready" },
+  // { id: "ai", label: "AI & Smart Healthcare", icon: Bot, route: "/smart-healthcare", group: "Platform", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Radiologist", "Management"], status: "ready" },
+  // { id: "final-qa", label: "Final QA", icon: CheckCircle2, route: "/final-qa", group: "Platform", allowedRoles: ["Super Admin", "Hospital Admin", "HR Manager", "Management"], status: "ready" },
+  // { id: "settings", label: "UI Settings", icon: Settings, route: "/settings/ui", group: "Command", allowedRoles: allRoles, status: "ready" },
+  // { id: "preview", label: "Components Preview", icon: Archive, route: "/components-preview", group: "Command", allowedRoles: ["Super Admin", "Hospital Admin"], status: "ready" },
+];
+
+export const dashboardQuickActions = [
+  { id: "register", label: "Register patient", icon: IdCard, route: "/patients/register" },
+  { id: "consult", label: "Start OPD", icon: Stethoscope, route: "/opd" },
+  { id: "admit", label: "Admit patient", icon: BedDouble, route: "/ipd" },
+  { id: "sample", label: "Lab worklist", icon: Microscope, route: "/laboratory" },
+  { id: "bill", label: "Create bill", icon: CreditCard, route: "/billing" },
+  { id: "incident", label: "Security alert", icon: LockKeyhole, route: "/security-compliance" },
+  { id: "monitor", label: "Remote monitor", icon: Activity, route: "/remote-monitoring" },
+  { id: "inventory", label: "Stock review", icon: BriefcaseMedical, route: "/inventory" },
+];
