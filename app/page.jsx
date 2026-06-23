@@ -63,8 +63,11 @@ export default function HomePage() {
               <h2 className="param-title" id="param-title">Patient parameters</h2>
             </div>
             <div className="param-completeness" id="paramCompleteness" role="status" aria-live="polite">
-              <span className="param-completeness-num" id="paramCompletenessNum">0</span>
-              <span className="param-completeness-label">of <span id="paramCompletenessTotal">0</span> core parameters entered</span>
+              <div className="param-completeness-progress">
+                <span className="param-completeness-num" id="paramCompletenessNum">0</span>
+                <span className="param-completeness-total">/ <span id="paramCompletenessTotal">0</span></span>
+              </div>
+              <span className="param-completeness-label">Core parameters completed</span>
             </div>
           </div>
           <div className="param-grid" id="paramGrid"></div>

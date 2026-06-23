@@ -349,7 +349,11 @@
               <p class="result-heading">Classification</p>
               <p class="result-statement" id="${inst.id}-result-statement">Awaiting input</p>
               <button class="breakdown-toggle" type="button" id="${inst.id}BreakdownToggle" aria-expanded="false" aria-controls="${inst.id}Breakdown">Show calculation breakdown</button>
-              <div class="breakdown" id="${inst.id}Breakdown" hidden>
+              <div class="breakdown" id="${inst.id}Breakdown" tabindex="-1" hidden>
+                <div class="breakdown-heading">
+                  <span class="breakdown-heading-icon" aria-hidden="true">✓</span>
+                  <div><strong>Calculation breakdown unlocked</strong><span>Review the entered values and points below.</span></div>
+                </div>
                 <table class="breakdown-table">
                   <caption class="visually-hidden">${esc(inst.title)} scoring breakdown</caption>
                   <thead><tr><th scope="col">Criterion</th><th scope="col">Value entered</th><th scope="col">Threshold / band</th><th scope="col" style="text-align:right;">Points</th></tr></thead>
@@ -666,6 +670,17 @@
       else { panel.setAttribute("hidden", ""); btn.setAttribute("aria-expanded", "false"); btn.textContent = "Show calculation breakdown"; }
   }
 
+  function revealBreakdownAfterLogin(instId) {
+    toggleBreakdown(instId);
+    const panel = $(instId + "Breakdown");
+    requestAnimationFrame(() => {
+      panel.classList.add("just-unlocked");
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      panel.focus({ preventScroll: true });
+      setTimeout(() => panel.classList.remove("just-unlocked"), 1600);
+    });
+  }
+
   function ensureBreakdownLoginModal() {
     if ($("breakdownLoginModal")) return;
     const modal = document.createElement("div");
@@ -704,7 +719,7 @@
         breakdownUnlocked = true;
         const targetId = pendingBreakdownId;
         closeBreakdownLogin();
-        if (targetId) toggleBreakdown(targetId);
+        if (targetId) revealBreakdownAfterLogin(targetId);
         return;
       }
       $("breakdownLoginError").textContent = "Invalid username or password.";
