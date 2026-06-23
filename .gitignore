@@ -1,5 +1,4 @@
-node_modules/
+# Local workspace artifacts; the application configuration lives in Early warning score/.gitignore.
 .next/
-out/
-*.log
-.env*.local
+node_modules/
+.vercel/
