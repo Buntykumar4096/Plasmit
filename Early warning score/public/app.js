@@ -49,12 +49,11 @@
     grid.innerHTML = SHARED_PARAMS.map(p => `
       <div class="param-field" data-param-field="${p.key}">
         <label class="param-field-label" for="param-${p.key}">
-          <span>${esc(p.label)}</span>
+          <span>${esc(p.label)}${p.unit ? ` <span class="param-field-unit">(${esc(p.unit)})</span>` : ""}</span>
           <span class="param-field-used-by">${p.usedBy.join(" · ")}</span>
         </label>
         <input type="${p.type}" id="param-${p.key}" step="${p.step || 1}" inputmode="decimal"
                placeholder="" value="${esc(state[p.key] ?? "")}">
-        <span class="param-field-unit">${esc(p.unit || "")}</span>
       </div>
     `).join("");
 
@@ -88,9 +87,8 @@
     const tabs = [{ id: "index", shortName: "Index", isIndex: true }, ...INSTRUMENTS];
     const tabList = $("tabList");
     tabList.innerHTML = tabs.map(t => `
-      <button class="tab-btn" id="tabbtn-${t.id}" role="tab" type="button"
+      <button class="tab-btn ${t.isIndex ? "" : "flag-neutral"}" id="tabbtn-${t.id}" role="tab" type="button"
               aria-selected="${activeTab === t.id}" aria-controls="tabpanel-${t.id}" tabindex="${activeTab === t.id ? 0 : -1}">
-        ${t.isIndex ? "" : `<span class="tab-flag flag-neutral" id="tabflag-${t.id}" aria-hidden="true"></span>`}
         ${esc(t.shortName)}
       </button>
     `).join("");
@@ -159,7 +157,7 @@
     return `
       <li class="criterion-row from-shared" data-row="${rowKey}">
         <div class="criterion-label-wrap">
-          <p class="criterion-label">${label} <span class="shared-pill">shared</span></p>
+          <p class="criterion-label">${label}</p>
         </div>
         <div class="field-control">
           <span class="shared-readonly" id="${rowKey}-readonly">—</span>
@@ -182,7 +180,7 @@
 
     if (inst.id === "sirs") {
       bodyHtml += `
-          <div class="section-label"><p class="instrument-eyebrow" style="margin-bottom:2px;">Step 1 — SIRS criteria (≥2 of 4 required)</p></div>
+          <div class="section-label"><p class="instrument-eyebrow" style="margin-bottom:2px;">SIRS criteria (≥2 of 4 required)</p></div>
           <ul class="ledger" id="sirsList">
             ${sharedFieldRow("temp", "Temperature", ["tempC"])}
             ${sharedFieldRow("hr", "Heart rate", ["hr"])}
@@ -190,7 +188,7 @@
             ${sharedFieldRow("wbc", "White blood cell count", ["wbc","bandsPct"])}
           </ul>
           <div class="section-label" style="border-top:1px solid var(--rule); margin-top:8px;">
-            <p class="instrument-eyebrow" style="margin-bottom:2px;">Step 2–4 — Sepsis pathway</p>
+            <p class="instrument-eyebrow" style="margin-bottom:2px;">Sepsis</p>
           </div>
           <div class="cascade" id="cascade">
             <div class="cascade-step">
@@ -305,7 +303,7 @@
           <ul class="ledger" id="${inst.id}List">
             <li class="criterion-row" data-row="shorr-age">
               <div class="criterion-label-wrap">
-                <p class="criterion-label">Age 19–29 or &gt;79 years <span class="shared-pill">shared</span></p>
+                <p class="criterion-label">Age 19–29 or &gt;79 years</p>
               </div>
               <div class="field-control">
                 <span class="shared-readonly" id="shorr-age-readonly">—</span>
@@ -366,9 +364,10 @@
         </div>
 
         <aside class="tally-rail" aria-label="${esc(inst.scoreLabel)}">
+          <div class="tally-missing" id="${inst.id}TallyMissing" hidden></div>
           <div>
             <p class="tally-label">${esc(inst.scoreLabel)}</p>
-            <p class="tally-score"><span id="${inst.id}TallyNum">0</span><span class="of">&nbsp;/&nbsp;${inst.maxScore}</span></p>
+            <p class="tally-score"><span class="score-badge"><span id="${inst.id}TallyNum">0</span><span class="of">/${inst.maxScore}</span></span></p>
           </div>
           <div class="tally-track" aria-hidden="true">
             <div class="tally-track-bg"></div>
@@ -378,7 +377,6 @@
             </div>
           </div>
           <div class="tally-verdict flag-neutral" id="${inst.id}TallyVerdict" role="status">Awaiting input</div>
-          <div class="tally-missing" id="${inst.id}TallyMissing" hidden></div>
         </aside>
       </div>
     `;
@@ -532,7 +530,7 @@
     $("sirsTallyNum").textContent = result.metCount;
     const fill = $("sirsTallyFill");
     fill.style.height = ((result.metCount / 4) * 100) + "%";
-    fill.style.background = casc.sirsPositive ? "var(--clay)" : "#6FA08C";
+    fill.style.background = casc.sirsPositive ? "var(--danger)" : "var(--success)";
     renderVerdict("sirs", result);
 
     // result statement
@@ -579,7 +577,7 @@
     $("cpisTallyNum").textContent = result.total;
     const fill = $("cpisTallyFill");
     fill.style.height = Math.min((result.total / 12) * 100, 100) + "%";
-    fill.style.background = result.total > 6 ? "var(--clay)" : "#6FA08C";
+    fill.style.background = result.total > 6 ? "var(--danger)" : "var(--success)";
     renderVerdict("cpis", result);
     renderResultStatement("cpis", result);
   }
@@ -617,7 +615,7 @@
     const fill = $(inst.id + "TallyFill");
     fill.style.height = Math.min((result.total / inst.maxScore) * 100, 100) + "%";
     const positive = inst.id === "shorr" ? result.total > inst.thresholdLine.value : result.total >= inst.thresholdLine.value;
-    fill.style.background = positive ? "var(--clay)" : "#6FA08C";
+    fill.style.background = positive ? "var(--danger)" : "var(--success)";
     renderVerdict(inst.id, result);
     renderResultStatement(inst.id, result);
   }
@@ -760,7 +758,7 @@
               <p class="index-card-eyebrow">${esc(inst.eyebrow)}</p>
               <p class="index-card-title">${esc(inst.shortName)}</p>
             </div>
-            <p class="index-card-score">${score}<span class="of">/${max}</span></p>
+            <p class="index-card-score"><span class="score-badge">${score}<span class="of">/${max}</span></span></p>
           </div>
           <p class="index-card-verdict ${flagClass}">${esc(result.verdictFlag === "neutral" ? "Awaiting input" : result.headline)}</p>
         </button>
@@ -771,10 +769,13 @@
       card.addEventListener("click", () => selectTab(card.getAttribute("data-goto")));
     });
 
-    // Update tab flags
+    // Update tab label colors
     results.forEach(({ inst, result }) => {
-      const flagEl = $("tabflag-" + inst.id);
-      if (flagEl) flagEl.className = "tab-flag flag-" + result.verdictFlag;
+      const tabBtn = $("tabbtn-" + inst.id);
+      if (tabBtn) {
+        tabBtn.classList.remove("flag-neutral", "flag-positive", "flag-negative", "flag-incomplete");
+        tabBtn.classList.add("flag-" + result.verdictFlag);
+      }
     });
 
     // Summary banner
