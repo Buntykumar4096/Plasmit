@@ -252,19 +252,19 @@ const pageMeta: Record<NursingIcuPageId, { title: string; description: string; i
   "iv-fluids": { title: "IV Fluid & Infusion Management", description: "Infusion pump, fluid rate, volume, remaining balance, pause/resume/stop, and completion alerts.", icon: Syringe },
   "blood-transfusion": { title: "Blood Transfusion", description: "Blood unit issue, crossmatch, start/end, pre/during/post vitals, reaction monitoring, and acknowledgements.", icon: Droplets },
   "doctor-rounds": { title: "Doctor Rounds", description: "Admitting doctor rounds, result review, care plan, discharge, transfer, surgery, and continue-ICU decisions.", icon: Stethoscope },
-  "icu-round-2": { title: "ICU Round", description: "Patient file, doctor orders, pending work, and round sign-off in one ICU doctor workflow.", icon: Stethoscope },
+  "icu-round-2": { title: "ICU Round", description: "Patient file, doctor orders, workload review, and round sign-off in one ICU doctor workflow.", icon: Stethoscope },
   "doctor-instructions": { title: "Doctor Instructions", description: "Instructions from admitting, consulting, and duty doctors assigned to nurses with due time and completion tracking.", icon: FileText },
   "lab-results": { title: "Lab Orders & Results", description: "ICU lab order status, sample status, result availability, critical result alerts, doctor review, and nurse follow-up.", icon: TestTube2 },
   "radiology-reports": { title: "Radiology Orders & Reports", description: "ICU radiology order status, modality, report availability, doctor review, and nursing follow-up.", icon: Activity },
-  "pharmacy-requests": { title: "Pharmacy Requests", description: "Medicine requests, dispense status, pending medicines, stock shortage, receive, and return workflow.", icon: Pill },
+  "pharmacy-requests": { title: "Pharmacy Requests", description: "Medicine requests, dispense status, active medicines, stock shortage, receive, and return workflow.", icon: Pill },
   "head-nurse-console": { title: "Head Nurse Console", description: "Head nurse supervision for all ICU patients, ward nurse activities, workload, reassignment, escalation, and documentation completeness.", icon: UserRound },
-  "unit-nurse-console": { title: "Unit Nurse Dashboard", description: "Assign ward nurses, monitor pending bedside work, complete first-level issue review, escalate when required, and prepare unit handover.", icon: UserRound },
-  "unit-assigned-patients": { title: "Assigned Patients", description: "Review patients assigned to your unit, their bed, Ward Nurse coverage, clinical status, and pending work.", icon: UserRound },
+  "unit-nurse-console": { title: "Unit Nurse Dashboard", description: "Assign ward nurses, monitor bedside workload, complete first-level issue review, escalate when required, and prepare unit handover.", icon: UserRound },
+  "unit-assigned-patients": { title: "Assigned Patients", description: "Review patients assigned to your unit, their bed, Ward Nurse coverage, clinical status, and workload.", icon: UserRound },
   "unit-bed-nurse-link": { title: "Bed & Ward Nurse Link", description: "Link every patient and occupied bed to the responsible Ward Nurse for the current shift.", icon: BedDouble },
-  "unit-pending-vitals": { title: "Pending Vitals", description: "Review overdue and pending patient vital-sign observations for the current shift.", icon: HeartPulse },
-  "unit-pending-medicines": { title: "Pending Medicines", description: "Review due, late, held, and unadministered medicines for unit patients.", icon: Pill },
-  "unit-pending-orders": { title: "Pending Doctor Orders", description: "Track Doctor instructions that require nursing acknowledgement or execution.", icon: Stethoscope },
-  "unit-pending-tasks": { title: "Pending Nursing Tasks", description: "Track pending, in-progress, overdue, and escalated bedside nursing tasks.", icon: ListChecks },
+  "unit-pending-vitals": { title: "Vitals Review", description: "Review vital-sign observations for the current shift.", icon: HeartPulse },
+  "unit-pending-medicines": { title: "Medicine Review", description: "Review due, late, held, and unadministered medicines for unit patients.", icon: Pill },
+  "unit-pending-orders": { title: "Doctor Orders", description: "Track Doctor instructions that require nursing acknowledgement or execution.", icon: Stethoscope },
+  "unit-pending-tasks": { title: "Nursing Tasks", description: "Track in-progress, overdue, and escalated bedside nursing tasks.", icon: ListChecks },
   "unit-critical-alerts": { title: "Critical Alerts", description: "Review active critical patient alerts requiring immediate Unit Nurse attention.", icon: AlertTriangle },
   "unit-first-level-review": { title: "First-Level Review", description: "Review and acknowledge issues raised by Ward Nurses.", icon: ClipboardCheck },
   "unit-escalation-decision": { title: "Escalation Decision", description: "Decide whether an issue can be resolved within the unit or requires escalation.", icon: ShieldAlert },
@@ -3942,8 +3942,6 @@ function UnitAssignedPatients() {
       const priorityMatch = priority === "All"
         || (priority === "Critical" && patient.currentStatus === "Critical")
         || (priority === "Ventilator" && patient.ventilatorStatus !== "Room air")
-        || (priority === "Pending Review" && assignmentStatus === "Pending Acceptance")
-        || (priority === "High Pending Work" && patient.pendingTasks >= 5)
         || (priority === "Transfer Ready" && patient.currentStatus === "Ready for transfer");
       return searchMatch && priorityMatch;
     })
@@ -3956,7 +3954,7 @@ function UnitAssignedPatients() {
           <span className="font-medium text-slate-700">Search assigned patients</span>
           <Input placeholder="Patient, MRN, bed, unit, or Ward Nurse..." value={query} onChange={(event) => setQuery(event.target.value)} />
         </label>
-        <NativeSelect label="Priority" value={priority} onChange={setPriority} options={["All", "Critical", "Ventilator", "Pending Review", "High Pending Work", "Transfer Ready"]} />
+        <NativeSelect label="Priority" value={priority} onChange={setPriority} options={["All", "Critical", "Ventilator", "Transfer Ready"]} />
         <Button variant="outline" onClick={() => { setQuery(""); setPriority("All"); }}>Reset</Button>
       </div>
       <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
@@ -4172,10 +4170,10 @@ function UnitMonitoringQueue({ kind }: { kind: UnitMonitoringKind }) {
   const searchParams = useSearchParams();
   const routePatient = icuPatients.find((patient) => patient.id === searchParams.get("patientId"));
   const config = {
-    vitals: { source: "Vitals Chart", itemLabel: "Vital observation", title: "Pending Vitals", description: "Vital observations awaiting recording, acknowledgement, or review." },
-    medicines: { source: "Medication Administration", itemLabel: "Medicine", title: "Pending Medicines", description: "Patient-level list of due, late, and pending medications." },
-    orders: { source: "Doctor Instructions", itemLabel: "Doctor order", title: "Pending Doctor Orders", description: "Doctor orders awaiting nursing acknowledgement or completion." },
-    tasks: { source: "Tasks", itemLabel: "Nursing task", title: "Pending Nursing Tasks", description: "Pending, in-progress, and overdue nursing tasks." },
+    vitals: { source: "Vitals Chart", itemLabel: "Vital observation", title: "Vitals Review", description: "Vital observations awaiting recording, acknowledgement, or review." },
+    medicines: { source: "Medication Administration", itemLabel: "Medicine", title: "Medicine Review", description: "Patient-level list of due, late, and active medications." },
+    orders: { source: "Doctor Instructions", itemLabel: "Doctor order", title: "Doctor Orders", description: "Doctor orders awaiting nursing acknowledgement or completion." },
+    tasks: { source: "Tasks", itemLabel: "Nursing task", title: "Nursing Tasks", description: "In-progress and overdue nursing tasks." },
     alerts: { source: "Alerts", itemLabel: "Critical alert", title: "Critical Alerts", description: "Critical patient alerts requiring immediate review or escalation." },
   }[kind];
   const [query, setQuery] = React.useState(routePatient?.patientName ?? "");
@@ -4267,10 +4265,10 @@ function UnitMonitoringQueue({ kind }: { kind: UnitMonitoringKind }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+      {kind === "alerts" ? <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
         <h1 className="text-xl font-black text-slate-950">{config.title}</h1>
-        {kind === "tasks" || kind === "alerts" ? <p className="mt-1 text-sm text-slate-600">{config.description}</p> : null}
-      </div>
+        <p className="mt-1 text-sm text-slate-600">{config.description}</p>
+      </div> : null}
       <div className="grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[minmax(260px,1fr)_220px_auto] md:items-end">
         <label className="space-y-1 text-sm"><span className="font-medium text-slate-700">Search patient, bed, nurse or work</span><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search pending ${config.itemLabel.toLowerCase()}...`} /></label>
         <NativeSelect label="Status" value={selectedStatusOption} onChange={(value) => setFilter(value.replace(/\s+\(\d+\)$/, ""))} options={statusOptions} />
@@ -4283,8 +4281,6 @@ function UnitMonitoringQueue({ kind }: { kind: UnitMonitoringKind }) {
             <tbody className="divide-y divide-slate-200">
               {rows.map((item) => {
                 const instruction = kind === "orders" ? doctorInstructions.find((row) => `instruction-${row.id}` === item.id) : undefined;
-                const criticalOrDelayed = ["Critical", "High"].includes(item.priority) || ["Overdue", "Late", "Escalated"].includes(item.status);
-                const readyToComplete = ["In progress", "Acknowledged"].includes(item.status);
                 return <tr className="hover:bg-surface-muted/70" key={item.id}>
                   <td className="px-3 py-3"><p className="font-bold text-slate-900">{item.patientName}</p><p className="mt-1 text-xs text-slate-500">{item.bedNo} | {item.unit}</p></td>
                   <td className="px-3 py-3"><p className="font-semibold text-slate-900">{item.title}</p><p className="mt-1 max-w-md text-xs text-slate-500">{item.detail}</p>{instruction ? <p className="mt-1 text-xs font-semibold text-muted-foreground">Ordered at: {instruction.orderedAt}</p> : null}</td>
@@ -4295,22 +4291,9 @@ function UnitMonitoringQueue({ kind }: { kind: UnitMonitoringKind }) {
                   <td className="min-w-[250px] px-3 py-3"><div className="flex flex-nowrap items-center justify-center gap-2">
                     <Button aria-label="View" className="h-9 w-9 p-0" size="sm" title="View" variant="outline" onClick={() => setViewItem(item)}><Eye className="h-4 w-4" /></Button>
                     {!isClosedSupervisionStatus(item.status) ? (
-                      <>
-                        <Button aria-label="Acknowledge" className="h-9 w-9 p-0" size="sm" title="Acknowledge" variant="outline" onClick={() => setRowStatus(item, "Acknowledged")}><ClipboardCheck className="h-4 w-4" /></Button>
-                        {criticalOrDelayed ? (
-                          <>
-                            <Button aria-label="Escalate" className="h-9 w-9 p-0" size="sm" title="Escalate" onClick={() => openEscalation(item)}><ShieldAlert className="h-4 w-4" /></Button>
-                            <Button aria-label="Follow Up" className="h-9 w-9 p-0" size="sm" title="Follow Up" variant="outline" onClick={() => openFollowUp(item)}><RefreshCcw className="h-4 w-4" /></Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button aria-label="Follow Up" className="h-9 w-9 p-0" size="sm" title="Follow Up" onClick={() => openFollowUp(item)}><RefreshCcw className="h-4 w-4" /></Button>
-                            <Button aria-label="Escalate" className="h-9 w-9 p-0" size="sm" title="Escalate" variant="outline" onClick={() => openEscalation(item)}><ShieldAlert className="h-4 w-4" /></Button>
-                          </>
-                        )}
-                        {readyToComplete ? <Button aria-label="Complete" className="h-9 w-9 p-0" size="sm" title="Complete" variant="outline" onClick={() => openCompletion(item)}><CheckCircle2 className="h-4 w-4" /></Button> : null}
-                      </>
+                      <Button aria-label="Acknowledge" className="h-9 w-9 p-0" size="sm" title="Acknowledge" variant="outline" onClick={() => setRowStatus(item, "Acknowledged")}><ClipboardCheck className="h-4 w-4" /></Button>
                     ) : null}
+                    <Button aria-label="Complete" className="h-9 w-9 p-0" size="sm" title="Complete" variant="outline" onClick={() => openCompletion(item)}><CheckCircle2 className="h-4 w-4" /></Button>
                   </div></td>
                 </tr>;
               })}
@@ -4438,7 +4421,7 @@ function UnitShiftSummary() {
     })),
     ...pendingMedicines.slice(0, 4).map((medicine) => ({
       id: `medicine-${medicine.id}`,
-      title: medicine.status === "Late" ? "Late medicine" : "Pending medicine",
+      title: medicine.status === "Late" ? "Late medicine" : "Medicine",
       detail: `${medicine.bedNo} - ${medicine.medication} ${medicine.dose}`,
       owner: medicine.administeredBy === "-" ? "Assigned nurse" : medicine.administeredBy,
       tone: medicine.status === "Late" ? "danger" as StatusTone : "warning" as StatusTone,
@@ -4447,29 +4430,10 @@ function UnitShiftSummary() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-        <div>
-          <h1 className="text-xl font-black text-slate-950">Shift Summary</h1>
-        </div>
-        <Button asChild>
-          <Link href="/icu-command-center/nursing/shift-handover?view=submit">
-            <ClipboardCheck className="h-4 w-4" />
-            Submit Handover
-          </Link>
-        </Button>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <DashboardCommandMetric label="Total patients" value={icuPatients.length} tone="info" />
-        <DashboardCommandMetric label="Pending tasks" value={pendingTasks.length} tone={pendingTasks.length ? "warning" : "success"} />
-        <DashboardCommandMetric label="Critical patients" value={criticalPatients.length} tone={criticalPatients.length ? "critical" : "success"} />
-        <DashboardCommandMetric label="Active escalations" value={activeEscalations.length} tone={activeEscalations.length ? "danger" : "success"} />
-      </div>
-
       <div className="grid gap-3 lg:grid-cols-2">
         <Card>
           <CardHeader className="border-b border-border bg-surface-muted">
-            <CardTitle>Pending Doctor Orders</CardTitle>
+            <CardTitle>Doctor Orders</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 p-3">
             {pendingDoctorOrders.slice(0, 6).map((order) => (
@@ -4487,7 +4451,7 @@ function UnitShiftSummary() {
 
         <Card>
           <CardHeader className="border-b border-border bg-surface-muted">
-            <CardTitle>Pending Medicines</CardTitle>
+            <CardTitle>Medicines</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 p-3">
             {pendingMedicines.slice(0, 6).map((medicine) => (
@@ -7156,6 +7120,18 @@ type ClinicalAlertRow = {
 type ClinicalAlertCellKind = "patient" | "trigger" | "severity" | "source" | "owner" | "sla" | "status" | "route" | "action";
 type ClinicalAlertCellAction = { row: ClinicalAlertRow; kind: ClinicalAlertCellKind };
 
+function clinicalAlertCountedOption(label: string, count: number) {
+  return `${label} (${count})`;
+}
+
+function clinicalAlertRawOption(option: string) {
+  return option.replace(/\s+\(\d+\)$/, "");
+}
+
+function clinicalAlertCountOptions(options: string[], countFor: (option: string) => number) {
+  return options.map((option) => clinicalAlertCountedOption(option, countFor(option)));
+}
+
 function ClinicalAlertsCommand() {
   const { queryFocus, queryUnit } = useCommandRouteContext();
   const [search, setSearch] = React.useState("");
@@ -7170,6 +7146,17 @@ function ClinicalAlertsCommand() {
   const rows = React.useMemo(() => buildClinicalAlertRows(resolvedRows, acknowledgedRows), [acknowledgedRows, resolvedRows]);
   const unitOptions = React.useMemo(() => ["All ICU units", ...Array.from(new Set(rows.map((row) => row.unit)))], [rows]);
   const sourceOptions = React.useMemo(() => ["All sources", ...Array.from(new Set(rows.map((row) => row.source)))], [rows]);
+  const severityOptions = React.useMemo(() => ["All severity", "Critical", "High", "Medium", "Info"], []);
+  const statusOptions = React.useMemo(() => ["All status", "Active alerts", "SLA risk", "Open", "Acknowledged", "Resolved"], []);
+  const countedUnitOptions = React.useMemo(() => clinicalAlertCountOptions(unitOptions, (option) => option === "All ICU units" ? rows.length : rows.filter((row) => row.unit === option).length), [rows, unitOptions]);
+  const countedSeverityOptions = React.useMemo(() => clinicalAlertCountOptions(severityOptions, (option) => option === "All severity" ? rows.length : rows.filter((row) => row.severity === option).length), [rows, severityOptions]);
+  const countedSourceOptions = React.useMemo(() => clinicalAlertCountOptions(sourceOptions, (option) => option === "All sources" ? rows.length : rows.filter((row) => row.source === option).length), [rows, sourceOptions]);
+  const countedStatusOptions = React.useMemo(() => clinicalAlertCountOptions(statusOptions, (option) => {
+    if (option === "All status") return rows.length;
+    if (option === "Active alerts") return rows.filter((row) => row.status !== "Resolved").length;
+    if (option === "SLA risk") return rows.filter((row) => row.slaTone === "critical" || row.slaTone === "danger").length;
+    return rows.filter((row) => row.status === option).length;
+  }), [rows, statusOptions]);
   React.useEffect(() => {
     if (queryUnit) setUnit(queryUnit);
   }, [queryUnit]);
@@ -7181,33 +7168,20 @@ function ClinicalAlertsCommand() {
         && (unit === "All ICU units" || row.unit === unit)
         && (severity === "All severity" || row.severity === severity)
         && (source === "All sources" || row.source === source)
-        && (status === "All status" || row.status === status);
+        && (status === "All status"
+          || (status === "Active alerts" && row.status !== "Resolved")
+          || (status === "SLA risk" && (row.slaTone === "critical" || row.slaTone === "danger"))
+          || row.status === status);
     }).sort((left, right) => clinicalAlertFocusRank(right, queryFocus) - clinicalAlertFocusRank(left, queryFocus));
   }, [queryFocus, rows, search, severity, source, status, unit]);
   const pagination = useIcuCommandPagination(filteredRows);
-
-  const critical = rows.filter((row) => row.severity === "Critical").length;
-  const high = rows.filter((row) => row.severity === "High").length;
-  const breached = rows.filter((row) => row.slaTone === "critical" || row.slaTone === "danger").length;
-  const acknowledged = rows.filter((row) => row.status === "Acknowledged").length;
-  const open = rows.filter((row) => row.status === "Open").length;
-  const resolved = rows.filter((row) => row.status === "Resolved").length;
 
   return (
     <div className="min-w-0 max-w-full space-y-4 overflow-hidden">
       <CollapsibleCommandPanel
         summary={`${unit} | ${severity} | ${status} | ${filteredRows.length} alert(s)`}
-        title="Alert metrics & filters"
+        title="Alert filters"
       >
-        <div className="grid grid-cols-2 gap-2 border-b border-slate-200 px-3 py-3 md:flex md:flex-wrap md:items-center">
-          <DashboardCommandMetric label="Active alerts" value={rows.length - resolved} tone={open ? "warning" : "success"} />
-          <DashboardCommandMetric label="Critical" value={critical} tone={critical ? "critical" : "success"} />
-          <DashboardCommandMetric label="High" value={high} tone={high ? "danger" : "success"} />
-          <DashboardCommandMetric label="SLA risk" value={breached} tone={breached ? "danger" : "success"} />
-          <DashboardCommandMetric label="Open" value={open} tone={open ? "warning" : "success"} />
-          <DashboardCommandMetric label="Acknowledged" value={acknowledged} tone="info" />
-        </div>
-
         <div className="grid items-end gap-3 p-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.35fr)_repeat(4,minmax(128px,1fr))_minmax(112px,0.7fr)] 2xl:grid-cols-[minmax(280px,1.65fr)_repeat(4,minmax(150px,1fr))_minmax(120px,0.7fr)]">
           <label className="space-y-1 text-sm">
             <span className="block text-xs font-semibold text-slate-700">Search patient / alert / source</span>
@@ -7216,10 +7190,10 @@ function ClinicalAlertsCommand() {
               <Input className="h-10 pl-9" placeholder="Search alert, patient, owner..." value={search} onChange={(event) => setSearch(event.target.value)} />
             </span>
           </label>
-          <IcuOperationsFilterSelect label="ICU unit" value={unit} onChange={setUnit} options={unitOptions} />
-          <IcuOperationsFilterSelect label="Severity" value={severity} onChange={setSeverity} options={["All severity", "Critical", "High", "Medium", "Info"]} />
-          <IcuOperationsFilterSelect label="Source" value={source} onChange={setSource} options={sourceOptions} />
-          <IcuOperationsFilterSelect label="Status" value={status} onChange={setStatus} options={["All status", "Open", "Acknowledged", "Resolved"]} />
+          <IcuOperationsFilterSelect label="ICU unit" value={clinicalAlertCountedOption(unit, unit === "All ICU units" ? rows.length : rows.filter((row) => row.unit === unit).length)} onChange={(value) => setUnit(clinicalAlertRawOption(value))} options={countedUnitOptions} />
+          <IcuOperationsFilterSelect label="Severity" value={clinicalAlertCountedOption(severity, severity === "All severity" ? rows.length : rows.filter((row) => row.severity === severity).length)} onChange={(value) => setSeverity(clinicalAlertRawOption(value))} options={countedSeverityOptions} />
+          <IcuOperationsFilterSelect label="Source" value={clinicalAlertCountedOption(source, source === "All sources" ? rows.length : rows.filter((row) => row.source === source).length)} onChange={(value) => setSource(clinicalAlertRawOption(value))} options={countedSourceOptions} />
+          <IcuOperationsFilterSelect label="Status" value={clinicalAlertCountedOption(status, status === "All status" ? rows.length : status === "Active alerts" ? rows.filter((row) => row.status !== "Resolved").length : status === "SLA risk" ? rows.filter((row) => row.slaTone === "critical" || row.slaTone === "danger").length : rows.filter((row) => row.status === status).length)} onChange={(value) => setStatus(clinicalAlertRawOption(value))} options={countedStatusOptions} />
           <div className="min-w-[112px] space-y-1">
             <span className="block text-xs font-semibold text-transparent">Reset</span>
             <Button className="h-10 w-full" variant="outline" onClick={() => {
@@ -25672,7 +25646,7 @@ function SupervisionWorkspace({ mode }: { mode: SupervisionMode }) {
         || (status === "Open work" && !isClosedSupervisionStatus(item.status))
         || (status === "Overdue / critical" && (item.status === "Overdue" || item.status === "Late" || item.priority === "Critical"))
         || item.status === status;
-      const shiftMatch = shift === "Current shift" || item.shift === "Current" || `${item.shift} shift` === shift;
+      const shiftMatch = mode !== "ward" || shift === "Current shift" || item.shift === "Current" || `${item.shift} shift` === shift;
       return modeMatch && nurseMatch && sourceMatch && priorityMatch && statusMatch && shiftMatch && prefixMatch;
     });
   }, [defaultNurseOption, liveItems, mode, nurse, priority, search, shift, source, status]);
@@ -25745,13 +25719,11 @@ function SupervisionWorkspace({ mode }: { mode: SupervisionMode }) {
         onReassign={assignItem}
         onSaveNote={saveNote}
         onSearch={setSearch}
-        onShift={setShift}
         onSource={setSource}
         onStatus={setStatus}
         priority={priority}
         search={search}
         selectedPatient={selectedPatient}
-        shift={shift}
         source={source}
         sourceOptions={sources}
         status={status}
@@ -25856,13 +25828,11 @@ function NursingStationCommandCenter({
   onReassign,
   onSaveNote,
   onSearch,
-  onShift,
   onSource,
   onStatus,
   priority,
   search,
   selectedPatient,
-  shift,
   source,
   sourceOptions,
   status,
@@ -25885,13 +25855,11 @@ function NursingStationCommandCenter({
   onReassign: (item: SupervisionItem, nurse: string, reason: string) => void;
   onSaveNote: () => void;
   onSearch: (value: string) => void;
-  onShift: (value: string) => void;
   onSource: (value: string) => void;
   onStatus: (value: string) => void;
   priority: string;
   search: string;
   selectedPatient?: IcuPatient;
-  shift: string;
   source: string;
   sourceOptions: string[];
   status: string;
@@ -25903,8 +25871,6 @@ function NursingStationCommandCenter({
     patient: IcuPatient;
   } | null>(null);
   const [medicationStatusOverrides, setMedicationStatusOverrides] = React.useState<Record<string, string>>({});
-  const [filtersOpen, setFiltersOpen] = React.useState(false);
-  const [stationTab, setStationTab] = React.useState("dashboard");
   const patientGroups = React.useMemo(() => buildNursingStationPatientGroups(filteredItems), [filteredItems]);
   const criticalItems = filteredItems.filter((item) => item.priority === "Critical");
   const overdueItems = filteredItems.filter((item) => item.status === "Overdue" || item.status === "Late");
@@ -25912,22 +25878,11 @@ function NursingStationCommandCenter({
   const openItems = filteredItems.filter((item) => !isClosedSupervisionStatus(item.status));
   const checklistPercent = checklistTotal ? Math.round((checklistCompleted / checklistTotal) * 100) : 0;
   const allNurseLabel = nurseOptions[0] ?? "All nurses";
-  const advancedFilterCount = [source !== "All sources", priority !== "All priority"].filter(Boolean).length;
-  const activeFilterChips = [
-    search.trim() ? { label: `Search: ${search.trim()}`, onClear: () => onSearch("") } : null,
-    nurse !== allNurseLabel ? { label: nurse, onClear: () => onNurse(allNurseLabel) } : null,
-    shift !== "Current shift" ? { label: shift, onClear: () => onShift("Current shift") } : null,
-    status !== "Open work" ? { label: status, onClear: () => onStatus("Open work") } : null,
-    source !== "All sources" ? { label: source, onClear: () => onSource("All sources") } : null,
-    priority !== "All priority" ? { label: priority, onClear: () => onPriority("All priority") } : null,
-  ].filter((chip): chip is { label: string; onClear: () => void } => Boolean(chip));
-
   function resetFilters() {
     onSearch("");
     onNurse(allNurseLabel);
     onSource("All sources");
     onPriority("All priority");
-    onShift("Current shift");
     onStatus("Open work");
   }
 
@@ -25936,27 +25891,10 @@ function NursingStationCommandCenter({
       <div className="space-y-4">
         <CollapsibleCommandPanel
           summary=""
-          title="Nursing station metrics & filters"
+          title="Filter"
         >
-          <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-base font-black text-slate-950">{mode === "unit" ? "Unit nurse workflow dashboard" : "Nursing station command center"}</p>
-            </div>
-            <IcuLegend />
-          </div>
-          <div className="grid gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:grid-cols-2 xl:grid-cols-5">
-            <DashboardCommandMetric label="Patients" value={patientGroups.length} tone="info" />
-            <DashboardCommandMetric label="Open work" value={openItems.length} tone={openItems.length ? "warning" : "success"} />
-            <DashboardCommandMetric label="Critical" value={criticalItems.length} tone={criticalItems.length ? "critical" : "success"} />
-            <DashboardCommandMetric label="Overdue" value={overdueItems.length} tone={overdueItems.length ? "danger" : "success"} />
-            {mode === "unit" ? (
-              <DashboardCommandMetric label="First-level review" value={firstLevelReviewCount} tone={firstLevelReviewCount ? "warning" : "success"} />
-            ) : (
-              <DashboardCommandMetric label="Checklist" value={`${checklistPercent}%`} tone={checklistPercent >= 80 ? "success" : "warning"} />
-            )}
-          </div>
           <div className="space-y-3 px-4 py-3">
-            <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_190px_170px_190px_135px_105px] lg:items-end">
+            <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_180px_180px_170px_170px_105px] lg:items-end">
               <label className="space-y-1 text-sm">
                 <span className="font-medium text-slate-700">Search station</span>
                 <div className="relative">
@@ -25965,35 +25903,15 @@ function NursingStationCommandCenter({
                 </div>
               </label>
               <NativeSelect label="Nurse" value={nurse} onChange={onNurse} options={nurseOptions} />
-              <NativeSelect label="Shift" value={shift} onChange={onShift} options={["Current shift", "Day shift", "Night shift"]} />
+              <NativeSelect label="Source module" value={source} onChange={onSource} options={sourceOptions} />
+              <NativeSelect label="Priority" value={priority} onChange={onPriority} options={["All priority", "Critical", "High", "Medium", "Routine", "Info"]} />
               <NativeSelect label="Work status" value={status} onChange={onStatus} options={["Open work", "Overdue / critical", "All status", "Pending", "In progress", "Acknowledged", "Escalated", "Completed"]} />
-              <Button className="h-10" variant="outline" onClick={() => setFiltersOpen(true)}>More{advancedFilterCount ? ` (${advancedFilterCount})` : ""}</Button>
               <Button className="h-10" variant="outline" onClick={resetFilters}>Reset</Button>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {activeFilterChips.length ? activeFilterChips.map((chip) => (
-                <button className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-bold text-foreground hover:bg-surface-muted" key={chip.label} type="button" onClick={chip.onClear}>
-                  {chip.label}
-                  <X className="h-3 w-3" />
-                </button>
-              )) : null}
-              <span className="rounded-full border border-red-500 bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-700">Critical</span>
-              <span className="rounded-full border border-orange-400 bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-700">Due soon</span>
-              <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-bold text-foreground">Tracked</span>
-              <span className="rounded-full border border-green-600 bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">Ready</span>
             </div>
           </div>
         </CollapsibleCommandPanel>
 
-        <Tabs value={stationTab} onValueChange={setStationTab} className="space-y-3">
-          <div className="rounded-sm border border-slate-300 bg-white px-3 py-2 shadow-sm">
-            <TabsList className="flex h-auto flex-wrap gap-2 bg-slate-100 p-1">
-              <TabsTrigger className="min-h-9 px-4" value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger className="min-h-9 px-4" value="notes">Task notes & follow-up</TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent className="mt-0" value="dashboard">
-            <div className="overflow-hidden rounded-sm border border-slate-300 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-sm border border-slate-300 bg-white shadow-sm">
               <div className="max-h-[660px] overflow-auto">
                 <table className="w-full min-w-[1200px] border-collapse bg-white text-sm">
                   <thead className="sticky top-0 z-20 bg-white text-[11px] uppercase text-muted-foreground shadow-[0_1px_0_rgba(148,163,184,0.45)]">
@@ -26013,6 +25931,7 @@ function NursingStationCommandCenter({
                       const vitals = nursingStationSourceItem(group, ["Vitals Chart"]);
                       const medication = nursingStationSourceItem(group, ["Medication Administration"]);
                       const intakeOutput = nursingStationSourceItem(group, ["Intake / Output", "IV Fluids", "Blood Transfusion"]);
+                      const tasks = group.items.filter((item) => item.source === "Tasks");
                       const alert = nursingStationSourceItem(group, ["Alerts"]);
                       const coverTone = nursingStationWorkloadTone(group.items);
 
@@ -26022,7 +25941,7 @@ function NursingStationCommandCenter({
                             <NursingStationPatientCell group={group} onOpen={() => setActiveClinicalPanel({ kind: "patient", patient: group.patient })} />
                           </td>
                           <td className="px-2 py-2 align-middle text-center">
-                            <IcuOpsMatrixCell icon={UserRound} title={group.patient.assignedWardNurse.replace("Ward Nurse ", "")} detail={`${group.items.length} items | ${group.patient.assignedUnitNurse}`} tone={coverTone} showDetail={false} onClick={() => setActiveClinicalPanel({ kind: "nurse-cover", patient: group.patient })} />
+                            <IcuOpsMatrixCell icon={UserRound} title={supervisionNurseDisplayName(group.topItem.nurse)} detail={`${group.items.length} items | ${group.topItem.nurse}`} tone={coverTone} showDetail={false} onClick={() => setActiveClinicalPanel({ kind: "nurse-cover", patient: group.patient })} />
                           </td>
                           <td className="px-2 py-2 align-middle text-center">
                             <NursingStationSourceCell
@@ -26051,7 +25970,7 @@ function NursingStationCommandCenter({
                             />
                           </td>
                           <td className="px-2 py-2 align-middle text-center">
-                            <NursingStationTaskStatusCell patient={group.patient} onOpen={() => setActiveClinicalPanel({ kind: "tasks", patient: group.patient })} />
+                            <NursingStationTaskStatusCell rows={tasks} onOpen={() => setActiveClinicalPanel({ kind: "tasks", patient: group.patient })} />
                           </td>
                           <td className="px-2 py-2 align-middle text-center">
                             <NursingStationSourceCell
@@ -26076,43 +25995,8 @@ function NursingStationCommandCenter({
                   </tbody>
                 </table>
               </div>
-            </div>
-          </TabsContent>
-          <TabsContent className="mt-0" value="notes">
-            <SupervisionNotePanel
-              noteDraft={noteDraft}
-              notes={notes}
-              nurses={["Head Nurse Anita", ...nurseOptions]}
-              onChange={onNoteChange}
-              onSave={onSaveNote}
-              selectedPatient={selectedPatient}
-            />
-          </TabsContent>
-        </Tabs>
+        </div>
       </div>
-      <Dialog.Root open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px]" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-slate-300 bg-white shadow-2xl outline-none">
-            <DialogHeader title="Nursing station filters" description="Advanced filters are grouped here to keep the primary matrix visible and focused." />
-            <div className="grid gap-3 p-4 sm:grid-cols-2">
-              <NativeSelect label="Source module" value={source} onChange={onSource} options={sourceOptions} />
-              <NativeSelect label="Priority" value={priority} onChange={onPriority} options={["All priority", "Critical", "High", "Medium", "Routine", "Info"]} />
-              <NativeSelect label="Nurse" value={nurse} onChange={onNurse} options={nurseOptions} />
-              <NativeSelect label="Shift" value={shift} onChange={onShift} options={["Current shift", "Day shift", "Night shift"]} />
-              <NativeSelect label="Work status" value={status} onChange={onStatus} options={["Open work", "Overdue / critical", "All status", "Pending", "In progress", "Acknowledged", "Escalated", "Completed"]} />
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                <p className="font-bold text-slate-900">Default view</p>
-                <p className="mt-1">Current shift + open work keeps the matrix focused for {mode === "unit" ? "unit nurse first-level review" : "head nurse review"}.</p>
-              </div>
-            </div>
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 p-3 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={resetFilters}>Reset filters</Button>
-              <Button onClick={() => setFiltersOpen(false)}>Apply filters</Button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
       <NursingStationClinicalDialog
         panel={activeClinicalPanel}
         notes={notes}
@@ -26381,6 +26265,10 @@ type NursingStationPatientGroup = {
   topItem: SupervisionItem;
 };
 
+function supervisionNurseDisplayName(nurse: string) {
+  return nurse.replace(/^(Ward|Unit|Head) Nurse\s+/, "");
+}
+
 function buildNursingStationPatientGroups(items: SupervisionItem[]): NursingStationPatientGroup[] {
   const priorityOrder: Record<SupervisionPriority, number> = { Critical: 0, High: 1, Medium: 2, Routine: 3, Info: 4 };
   return icuPatients
@@ -26464,13 +26352,12 @@ function NursingStationSourceCell({
   );
 }
 
-function NursingStationTaskStatusCell({ patient, onOpen }: { patient: IcuPatient; onOpen: () => void }) {
-  const rows = icuTasks.filter((task) => task.patientId === patient.id);
+function NursingStationTaskStatusCell({ rows, onOpen }: { rows: SupervisionItem[]; onOpen: () => void }) {
   const overdue = rows.filter((task) => task.status === "Overdue").length;
   const inProgress = rows.filter((task) => task.status === "In progress").length;
   const pending = rows.filter((task) => ["Assigned", "Accepted", "Pending"].includes(task.status)).length;
   const complete = rows.filter((task) => task.status === "Completed").length;
-  const title = overdue ? "Overdue" : inProgress ? "In progress" : pending ? "Pending" : complete ? "Complete" : "Complete";
+  const title = overdue ? "Overdue" : inProgress ? "In progress" : pending ? "Pending" : complete ? "Complete" : "Clear";
   const tone: DashboardCellTone = overdue ? "critical" : inProgress ? "info" : pending ? "warning" : "success";
   return <IcuOpsMatrixCell icon={ListChecks} title={title} detail={`Pending ${pending} | In progress ${inProgress} | Complete ${complete} | Overdue ${overdue}`} tone={tone} showDetail={false} onClick={onOpen} />;
 }

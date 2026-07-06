@@ -2139,6 +2139,7 @@ export function ShiftHandoverWorkspace() {
       ? left.searchRank - right.searchRank || left.patientName.localeCompare(right.patientName)
       : left.index - right.index)
     .map(({ record }) => record);
+  const historyStatusOptions = ["All", "Signed", "Pending Acknowledgement", "Acknowledged"];
 
   const handoffRecordsTable = (
     <Card>
@@ -2150,19 +2151,27 @@ export function ShiftHandoverWorkspace() {
         <Badge tone="info">{visibleHistoryRecords.length} records</Badge>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="space-y-3 rounded-md border border-border bg-surface-muted p-3">
-          <div className="flex flex-wrap gap-2">
-            {["All", "Signed", "Pending Acknowledgement", "Acknowledged"].map((item) => (
-              <Button key={item} size="sm" variant={historyStatusFilter === item ? "default" : "outline"} onClick={() => setHistoryStatusFilter(item)}>
-                {item}
-              </Button>
-            ))}
+        <details className="group overflow-hidden rounded-md border border-border bg-surface-muted shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            <span>Filters</span>
+            <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+              <span className="truncate">{historyStatusFilter} | {visibleHistoryRecords.length} record(s)</span>
+              <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="border-t border-border p-3">
+            <div className="grid gap-2 md:grid-cols-[minmax(260px,1fr)_260px] md:items-end">
+              <label className="space-y-1 text-sm">
+                <span className="font-medium text-foreground">Search</span>
+                <span className="relative block">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input className="pl-9" value={handoverHistoryQuery} onChange={(event) => setHandoverHistoryQuery(event.target.value)} placeholder="Search patient name, bed, UHID, nurse..." />
+                </span>
+              </label>
+              <SelectField label="Status" value={historyStatusFilter} onChange={setHistoryStatusFilter} options={historyStatusOptions} />
+            </div>
           </div>
-          <div className="relative max-w-xl">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" value={handoverHistoryQuery} onChange={(event) => setHandoverHistoryQuery(event.target.value)} placeholder="Search patient name, bed, UHID, nurse..." />
-          </div>
-        </div>
+        </details>
         <div className="overflow-x-auto">
         <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
           <thead>
@@ -2233,6 +2242,7 @@ export function ShiftHandoverWorkspace() {
 
   if (view === "patients" || view === "pending" || view === "critical") {
     const reasonOptions = ["All reasons", "Abnormal vitals", "Medication overdue", "Active escalation", "High acuity"];
+    const patientFilterOptions = ["All Patients", "Pending", "Critical", "Active Escalation", "Ready for Handover"];
     const activePatientFilter = view === "pending" ? "Pending" : view === "critical" ? "Critical" : handoverPatientFilter;
     const patientQuery = handoverPatientQuery.trim();
     const rows = icuPatients
@@ -2284,20 +2294,26 @@ export function ShiftHandoverWorkspace() {
             <Badge tone="info">{rows.length} patients</Badge>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="space-y-3 rounded-md border border-border bg-surface-muted p-3">
-              <div className="flex flex-wrap gap-2">
-                {["All Patients", "Pending", "Critical", "Active Escalation", "Ready for Handover"].map((item) => (
-                  <Button key={item} size="sm" variant={activePatientFilter === item ? "default" : "outline"} onClick={() => setHandoverPatientFilter(item)}>
-                    {item}
-                  </Button>
-                ))}
+            <details className="group overflow-hidden rounded-md border border-border bg-surface-muted shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                <span>Filters</span>
+                <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <span className="truncate">{activePatientFilter} | {handoverUnitFilter} | {handoverReasonFilter} | {rows.length} patient(s)</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+                </span>
+              </summary>
+              <div className="border-t border-border p-3">
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_220px_220px_220px] xl:items-end">
+                  <label className="space-y-1 text-sm">
+                    <span className="font-medium text-foreground">Search</span>
+                    <Input value={handoverPatientQuery} onChange={(event) => setHandoverPatientQuery(event.target.value)} placeholder="Search patient, bed, reason..." />
+                  </label>
+                  <SelectField label="Patient status" value={activePatientFilter} onChange={setHandoverPatientFilter} options={patientFilterOptions} />
+                  <SelectField label="Unit" value={handoverUnitFilter} onChange={setHandoverUnitFilter} options={["All ICU units", ...Array.from(new Set(icuPatients.map((patient) => patient.unit)))]} />
+                  <SelectField label="Reason" value={handoverReasonFilter} onChange={setHandoverReasonFilter} options={reasonOptions} />
+                </div>
               </div>
-              <div className="grid gap-2 md:grid-cols-[minmax(180px,1fr)_180px_180px]">
-                <Input value={handoverPatientQuery} onChange={(event) => setHandoverPatientQuery(event.target.value)} placeholder="Search patient, bed, reason..." />
-                <SelectField label="Unit" value={handoverUnitFilter} onChange={setHandoverUnitFilter} options={["All ICU units", ...Array.from(new Set(icuPatients.map((patient) => patient.unit)))]} />
-                <SelectField label="Reason" value={handoverReasonFilter} onChange={setHandoverReasonFilter} options={reasonOptions} />
-              </div>
-            </div>
+            </details>
             {rows.map(({ patient, draftForPatient, pendingCount, pendingBreakdown, critical, criticalReason, activeEscalation, ready, readiness, draftRecord }) => (
               <div className="rounded-md border border-border bg-background p-3" key={patient.id}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -2357,9 +2373,9 @@ export function ShiftHandoverWorkspace() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="space-y-4">
-          <Card className="xl:sticky xl:top-4">
+      <div className="space-y-4">
+        <div>
+          <Card>
             <CardHeader>
               <div>
                 <CardTitle>Patient Label</CardTitle>
@@ -2367,7 +2383,7 @@ export function ShiftHandoverWorkspace() {
               </div>
               <StatusPill tone={toneForStatus(selectedPatient?.currentStatus ?? "")}>{selectedPatient?.currentStatus ?? "No patient"}</StatusPill>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.1fr)_minmax(220px,1fr)_180px_minmax(260px,1fr)_minmax(220px,0.85fr)]">
               <SelectField
                 label="Patient / bed"
                 value={draft.patientId}
@@ -2389,7 +2405,7 @@ export function ShiftHandoverWorkspace() {
                 <p>{selectedPatient?.bedNo} | {selectedPatient?.unit}</p>
                 <p className="mt-2">{selectedPatient?.diagnosis}</p>
               </div>
-              <div className="rounded-md border border-border bg-surface-muted p-3 text-xs text-muted-foreground">
+              <div className="rounded-md border border-border bg-surface-muted p-3 text-xs text-muted-foreground md:col-span-2 xl:col-span-1">
                 <p className="font-semibold">Shift legend</p>
                 <p className="mt-1">K = Morning, Y = Evening, X = Night</p>
               </div>
@@ -2679,7 +2695,6 @@ function handoverSearchRank(query: string, patientName: string, otherText: strin
 
 function ClinicalHandoffSection({
   children,
-  description,
   icon: Icon,
   title,
   tone,
@@ -2698,7 +2713,6 @@ function ClinicalHandoffSection({
         </span>
         <div>
           <p className="text-sm font-semibold text-foreground">{title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
       {children}
