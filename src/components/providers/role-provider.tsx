@@ -15,11 +15,11 @@ const RoleContext = React.createContext<RoleContextValue | null>(null);
 
 function readSavedRole(): Role {
   const saved = window.localStorage.getItem("plasmit-role");
-  return saved && roles.includes(saved as Role) ? (saved as Role) : "Hospital Admin";
+  return saved && roles.includes(saved as Role) ? (saved as Role) : "Unit Nurse";
 }
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = React.useState<Role>("Hospital Admin");
+  const [role, setRoleState] = React.useState<Role>("Unit Nurse");
 
   React.useEffect(() => {
     setRoleState(readSavedRole());

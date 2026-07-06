@@ -1,25 +1,27 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-sans text-sm font-semibold outline-none shadow-sm transition-all duration-200 ease-[ease] focus-visible:ring-2 focus-visible:ring-[#6878E8] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:shadow-sm disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none",
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-sky-600 to-blue-600 text-primary-foreground shadow-[0_8px_18px_rgba(37,99,235,0.22)] hover:brightness-105 active:brightness-95",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-muted",
-        outline: "border border-border bg-white text-foreground shadow-sm hover:border-sky-200 hover:bg-sky-50",
-        ghost: "text-muted-foreground hover:bg-surface-muted hover:text-foreground",
-        danger: "bg-danger text-danger-foreground shadow-sm hover:brightness-95",
+        default: "bg-[#6878E8] text-white hover:bg-[#5B6CE0] hover:shadow-md active:bg-[#4F46D8]",
+        secondary: "border border-[#E5E7EB] bg-white text-gray-700 hover:bg-[#F8FAFC] hover:shadow-md active:bg-slate-100",
+        outline: "border border-[#E5E7EB] bg-white text-gray-700 hover:bg-[#F8FAFC] hover:shadow-md active:bg-slate-100",
+        ghost: "bg-transparent text-gray-700 shadow-none hover:bg-[#F8FAFC] hover:shadow-sm active:bg-slate-100",
+        danger: "bg-red-600 text-white hover:bg-red-700 hover:shadow-md active:bg-red-800",
+        success: "bg-green-600 text-white hover:bg-green-700 hover:shadow-md active:bg-green-800",
       },
       size: {
-        sm: "h-[var(--density-control-height-sm)] px-[var(--density-control-x-sm)] text-xs",
-        md: "h-[var(--density-control-height)] px-[var(--density-control-x)]",
-        lg: "h-[var(--density-control-height-lg)] px-[var(--density-control-x-lg)]",
-        icon: "h-[var(--density-control-height)] w-[var(--density-control-height)]",
+        sm: "h-11 px-6",
+        md: "h-11 px-6",
+        lg: "h-11 px-6",
+        icon: "h-11 w-11 p-0",
       },
     },
     defaultVariants: {
@@ -33,12 +35,34 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
+  loadingText?: React.ReactNode;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ children, className, disabled, loading = false, loadingText, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    const isDisabled = disabled || loading;
+    return (
+      <Comp
+        aria-busy={loading || undefined}
+        aria-disabled={asChild && isDisabled ? true : undefined}
+        className={cn(buttonVariants({ variant, size, className }))}
+        data-loading={loading || undefined}
+        disabled={isDisabled}
+        ref={ref}
+        {...props}
+      >
+        {asChild ? (
+          children
+        ) : (
+          <>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+            {loading && loadingText ? loadingText : children}
+          </>
+        )}
+      </Comp>
+    );
   },
 );
 Button.displayName = "Button";

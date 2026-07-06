@@ -43,16 +43,16 @@ export function CommandSearch({ triggerClassName, compact = false }: { triggerCl
       ) : (
         <>
           <button
-            className="hidden h-9 min-w-64 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/80 px-3 text-left text-sm font-semibold text-slate-500 shadow-inner hover:border-sky-200 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
+            className="hidden h-11 min-w-72 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-left text-sm font-medium text-slate-400 shadow-inner transition duration-150 hover:border-sky-200 hover:bg-white hover:text-slate-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 lg:flex"
             onClick={() => setOpen(true)}
             type="button"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4 text-sky-600" />
             Search patient, module, bill...
-            <span className="ml-auto rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-black text-slate-500">/</span>
+            <span className="ml-auto rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">/</span>
           </button>
           <button
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-sky-50 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition duration-150 hover:bg-sky-50 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 lg:hidden"
             onClick={() => setOpen(true)}
             aria-label="Open global search"
             type="button"
@@ -63,14 +63,14 @@ export function CommandSearch({ triggerClassName, compact = false }: { triggerCl
       )}
 
       {open ? (
-        <div className="fixed inset-0 z-[90] bg-black/35 p-0 backdrop-blur-sm sm:p-6" role="presentation">
-          <div className="mx-auto flex h-dvh max-w-3xl flex-col overflow-hidden bg-surface shadow-soft sm:h-auto sm:max-h-[76dvh] sm:rounded-xl sm:border sm:border-border">
-            <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
+        <div className="fixed inset-0 z-[90] bg-slate-900/25 p-0 backdrop-blur-sm sm:p-6" role="presentation">
+          <div className="mx-auto flex h-dvh max-w-3xl flex-col overflow-hidden bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] sm:h-auto sm:max-h-[76dvh] sm:rounded-2xl sm:border sm:border-slate-200">
+            <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+              <Search className="h-4 w-4 text-sky-600" />
               <Command className="min-w-0 flex-1">
                 <Command.Input
                   autoFocus
-                  className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
                   placeholder="Search patients, doctors, modules, invoices, reports, actions..."
                 />
                 <Command.List className="max-h-[calc(100dvh-104px)] overflow-auto py-2 sm:max-h-[58dvh]">
@@ -83,7 +83,7 @@ export function CommandSearch({ triggerClassName, compact = false }: { triggerCl
                   >
                     {recentSearches.map((result) => (
                       <Command.Item
-                        className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 outline-none aria-selected:bg-surface-muted"
+                        className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 outline-none aria-selected:bg-sky-50"
                         key={`recent-${result.id}`}
                         onSelect={() => {
                           setOpen(false);
@@ -105,7 +105,7 @@ export function CommandSearch({ triggerClassName, compact = false }: { triggerCl
                   >
                     {popularActions.map((result) => (
                       <Command.Item
-                        className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 outline-none aria-selected:bg-surface-muted"
+                        className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 outline-none aria-selected:bg-sky-50"
                         key={`action-${result.id}`}
                         onSelect={() => {
                           setOpen(false);
@@ -131,7 +131,7 @@ export function CommandSearch({ triggerClassName, compact = false }: { triggerCl
                         .filter((result) => result.type === group)
                         .map((result) => (
                           <Command.Item
-                            className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 outline-none aria-selected:bg-surface-muted"
+                            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 outline-none aria-selected:bg-sky-50"
                             key={result.id}
                             onSelect={() => {
                               setOpen(false);
@@ -139,7 +139,7 @@ export function CommandSearch({ triggerClassName, compact = false }: { triggerCl
                             }}
                             value={`${result.title} ${result.description} ${result.meta}`}
                           >
-                            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface-muted text-xs font-semibold">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500">
                               {result.type.slice(0, 2)}
                             </div>
                             <div className="min-w-0 flex-1">

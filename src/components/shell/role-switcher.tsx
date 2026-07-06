@@ -17,7 +17,7 @@ export function RoleSwitcher({ className }: { className?: string }) {
     <Select.Root value={role} onValueChange={(value) => setRole(value as typeof role)}>
       <Select.Trigger
         className={cn(
-          "flex h-9 w-36 min-w-0 items-center justify-between gap-2 rounded-md border border-border bg-surface px-3 text-sm text-foreground outline-none hover:bg-surface-muted focus:ring-2 focus:ring-ring md:w-44",
+          "flex h-11 w-36 min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none transition duration-150 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 focus:ring-4 focus:ring-sky-100 md:w-44",
           className,
         )}
       >
@@ -27,11 +27,11 @@ export function RoleSwitcher({ className }: { className?: string }) {
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-[80] max-h-80 overflow-hidden rounded-md border border-border bg-surface shadow-soft">
+        <Select.Content className="z-[80] max-h-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)]">
           <Select.Viewport className="p-1">
             {selectableRoles.map((item) => (
               <Select.Item
-                className="cursor-pointer rounded px-2 py-2 text-sm text-foreground outline-none hover:bg-surface-muted focus:bg-surface-muted data-[state=checked]:bg-primary/10"
+                className="cursor-pointer rounded-lg px-2 py-2 text-sm text-slate-700 outline-none hover:bg-sky-50 focus:bg-sky-50 data-[state=checked]:bg-primary data-[state=checked]:text-white"
                 key={item}
                 value={item}
               >

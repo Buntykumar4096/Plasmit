@@ -68,7 +68,7 @@ export function DashboardPage() {
         }
       />
 
-      <section className="grid gap-3 pt-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 pt-4 sm:grid-cols-2 xl:grid-cols-5">
         {dashboardStats.map((stat, index) => (
           <motion.div
             animate={{ opacity: 1, y: 0 }}
@@ -98,18 +98,18 @@ export function DashboardPage() {
           <StatusPill tone="success">{role}</StatusPill>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
-                <Button asChild className="h-auto justify-start p-3" key={action.id} variant="outline">
+                <Button asChild className="h-auto justify-start p-4" key={action.id} variant="outline">
                   <Link href={action.route}>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <Icon className="h-4 w-4" />
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+                      <Icon className="h-5 w-5" />
                     </span>
                     <span className="text-left">
-                      <span className="block text-sm font-semibold">{action.label}</span>
-                      <span className="block text-xs font-normal text-muted-foreground">Open {action.route}</span>
+                      <span className="block text-sm font-semibold text-slate-900">{action.label}</span>
+                      <span className="block text-xs font-normal text-slate-500">Open {action.route}</span>
                     </span>
                   </Link>
                 </Button>
@@ -130,24 +130,24 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 lg:grid-cols-2">
-              <div className="overflow-hidden rounded-lg border border-border">
-                <div className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] border-b border-border bg-surface-muted px-3 py-2 text-xs font-semibold uppercase text-muted-foreground">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <div className="sticky top-0 z-10 grid grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <span>Department</span>
                   <span>Queue</span>
                   <span>Doctors</span>
                   <span>Status</span>
                 </div>
                 {departmentActivity.map((item) => (
-                  <div className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] items-center border-b border-border px-3 py-3 text-sm last:border-0" key={item.department}>
-                    <span className="font-medium text-foreground">{item.department}</span>
-                    <span>{item.queue}</span>
-                    <span>{item.doctors}</span>
+                  <div className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] items-center border-b border-slate-100 px-4 py-3 text-sm even:bg-slate-50/45 last:border-0 hover:bg-sky-50/70" key={item.department}>
+                    <span className="font-medium text-slate-900">{item.department}</span>
+                    <span className="text-slate-600">{item.queue}</span>
+                    <span className="text-slate-600">{item.doctors}</span>
                     <StatusPill tone={item.tone}>{item.status}</StatusPill>
                   </div>
                 ))}
               </div>
-              <div className="min-h-[260px] rounded-lg border border-border p-3">
-                <div className="mb-3 text-sm font-semibold text-foreground">Appointment Timeline</div>
+              <div className="min-h-[260px] rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="mb-3 text-sm font-semibold text-slate-950">Appointment Timeline</div>
                 <ResponsiveContainer height={220} width="100%">
                   <BarChart data={appointmentTimeline} margin={{ left: -24, right: 8, top: 8, bottom: 0 }}>
                     <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
@@ -158,7 +158,8 @@ export function DashboardPage() {
                       contentStyle={{
                         background: "hsl(var(--surface))",
                         border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
+                        borderRadius: "12px",
+                        boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08)",
                         color: "hsl(var(--foreground))",
                       }}
                     />
@@ -184,11 +185,11 @@ export function DashboardPage() {
               </TabsList>
               <TabsContent value="alerts" className="space-y-2">
                 {recentActivity.map((item) => (
-                  <div className="rounded-lg border border-border bg-surface-muted p-3" key={item.id}>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/50" key={item.id}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-medium text-foreground">{item.title}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">{item.meta}</div>
+                        <div className="text-sm font-semibold text-slate-900">{item.title}</div>
+                        <div className="mt-1 text-xs text-slate-500">{item.meta}</div>
                       </div>
                       <StatusPill tone={item.tone}>{item.tone}</StatusPill>
                     </div>
@@ -201,11 +202,11 @@ export function DashboardPage() {
                   return (
                     <div key={item.ward}>
                       <div className="mb-1 flex justify-between text-xs">
-                        <span className="font-medium text-foreground">{item.ward}</span>
-                        <span className="text-muted-foreground">{item.occupied}/{item.total}</span>
+                        <span className="font-medium text-slate-900">{item.ward}</span>
+                        <span className="text-slate-500">{item.occupied}/{item.total}</span>
                       </div>
-                      <div className="h-2 rounded-full bg-muted">
-                        <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                      <div className="h-2 rounded-full bg-slate-100">
+                        <div className="h-2 rounded-full bg-primary shadow-[0_0_0_1px_rgba(37,99,235,0.12)]" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );
@@ -213,9 +214,11 @@ export function DashboardPage() {
               </TabsContent>
               <TabsContent value="tasks" className="space-y-2">
                 {["Approve emergency discount", "Acknowledge critical lab alert", "Review ICU discharge readiness"].map((task) => (
-                  <div className="flex items-center gap-3 rounded-lg border border-border p-3" key={task}>
-                    <ClipboardCheck className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-foreground">{task}</span>
+                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-200 hover:bg-sky-50/50" key={task}>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+                      <ClipboardCheck className="h-4 w-4" />
+                    </span>
+                    <span className="text-sm font-medium text-slate-700">{task}</span>
                   </div>
                 ))}
               </TabsContent>

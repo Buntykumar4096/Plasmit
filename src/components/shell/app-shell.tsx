@@ -24,12 +24,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-dvh max-w-full bg-background text-foreground">
+    <div className="min-h-dvh max-w-full bg-[#F5F7FA] text-foreground">
       <div className="flex min-h-dvh min-w-0 max-w-full">
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={handleCollapsedChange} />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopHeader />
-          <main className="min-w-0 max-w-full flex-1 px-3 pb-8 pt-3 md:px-5 md:pt-4">
+          <main className="min-w-0 max-w-full flex-1 px-3 pb-8 pt-4 md:px-5 md:pt-5">
             <IcuNursingRouteGuard>{children}</IcuNursingRouteGuard>
           </main>
           <AppFooter />

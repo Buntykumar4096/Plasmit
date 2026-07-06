@@ -21,12 +21,12 @@ export const defaultPreference: UiPreference = {
 export const themePresets: ThemePreset[] = [
   {
     id: "clinical-blue",
-    label: "Clinical Blue",
+    label: "Patient Indigo",
     description: "Default operational HMS palette",
-    primary: "#2563eb",
-    hsl: "221 83% 53%",
+    primary: "#6878e8",
+    hsl: "232 74% 66%",
     foreground: "0 0% 100%",
-    soft: "221 83% 96%",
+    soft: "232 74% 96%",
   },
   {
     id: "care-green",

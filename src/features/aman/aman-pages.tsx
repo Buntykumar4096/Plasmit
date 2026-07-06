@@ -11,7 +11,7 @@ export function AmanDemoPage() {
       <PageHeader
         eyebrow="Testing"
         title="Aman Demo UI"
-        description="Bundle components ko use karke testing page."
+        description="Testing page built with the shared bundle components."
       />
 
       <Card className="max-w-md">

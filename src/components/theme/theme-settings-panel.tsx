@@ -85,13 +85,13 @@ export function ThemeSettingsPanel() {
               <div className="mt-2 flex gap-2">
                 <Input
                   id="custom-color"
-                  placeholder="#2563eb"
+                  placeholder="#6878e8"
                   value={draft.customPrimary ?? ""}
                   onChange={(event) =>
                     setDraft({ ...draft, colorPreset: "custom", customPrimary: event.target.value })
                   }
                 />
-                <div className="h-9 w-12 rounded-md border border-border" style={{ backgroundColor: isHexColor(draft.customPrimary ?? "") ? draft.customPrimary : "#2563eb" }} />
+                <div className="h-9 w-12 rounded-md border border-border" style={{ backgroundColor: isHexColor(draft.customPrimary ?? "") ? draft.customPrimary : "#6878e8" }} />
               </div>
               {customInvalid ? <p className="mt-2 text-xs text-danger">Use a valid 6-digit hex color, for example #0f766e.</p> : null}
             </div>

@@ -32,3 +32,6 @@ pnpm-debug.log*
 .vscode/
 .idea/
 Thumbs.db
+
+.vercel
+.env*

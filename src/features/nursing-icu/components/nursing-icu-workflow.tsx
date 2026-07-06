@@ -1988,11 +1988,14 @@ type NursingClinicalHandoffDraft = {
   allergies: string;
   pendingInvestigations: string;
   pendingReports: string;
+  pendingWorkSummary: string;
   highAlertMedications: string;
   pendingMedications: string;
   otherMedicationInfo: string;
   proceduresDone: string;
   proceduresPlanned: string;
+  activeEscalations: string;
+  nextShiftInstructions: string;
   consultantReferral: string;
   handedOverBy: string;
   takenOverBy: string;
@@ -2008,9 +2011,16 @@ type NursingClinicalHandoffDraft = {
 type ClinicalHandoffRecord = NursingClinicalHandoffDraft & {
   id: string;
   status: "Draft" | "Signed" | "Acknowledged";
+  submittedBy: string;
+  submittedAt: string;
+  acknowledgedBy?: string;
+  acknowledgedAt?: string;
 };
 
 export function ShiftHandoverWorkspace() {
+  const searchParams = useSearchParams();
+  const view = searchParams.get("view") ?? "submit";
+  const requestedPatientId = searchParams.get("patientId");
   const firstPatient = icuPatients[0];
   const nurseOptions = React.useMemo(
     () => Array.from(new Set([
@@ -2025,9 +2035,17 @@ export function ShiftHandoverWorkspace() {
     ])),
     [],
   );
-  const [draft, setDraft] = React.useState<NursingClinicalHandoffDraft>(() => buildClinicalHandoffDraft(firstPatient, "K - Morning (07:00-15:00)"));
+  const initialPatient = requestedPatientId ? icuPatients.find((patient) => patient.id === requestedPatientId) ?? firstPatient : firstPatient;
+  const [draft, setDraft] = React.useState<NursingClinicalHandoffDraft>(() => buildClinicalHandoffDraft(initialPatient, "K - Morning (07:00-15:00)"));
+  const [handoverPatientQuery, setHandoverPatientQuery] = React.useState("");
+  const [handoverUnitFilter, setHandoverUnitFilter] = React.useState("All ICU units");
+  const [handoverReasonFilter, setHandoverReasonFilter] = React.useState("All reasons");
+  const [handoverPatientFilter, setHandoverPatientFilter] = React.useState("All Patients");
+  const [expandedPendingKey, setExpandedPendingKey] = React.useState<string | null>(null);
+  const [handoverHistoryQuery, setHandoverHistoryQuery] = React.useState("");
+  const [historyStatusFilter, setHistoryStatusFilter] = React.useState("All");
+  const [selectedHandoffRecord, setSelectedHandoffRecord] = React.useState<ClinicalHandoffRecord | null>(null);
   const selectedPatient = icuPatients.find((patient) => patient.id === draft.patientId) ?? firstPatient;
-  const sourceSummary = React.useMemo(() => selectedPatient ? buildWholeShiftSummary(selectedPatient, draft.handedOverBy, draft.shift) : null, [draft.handedOverBy, draft.shift, selectedPatient]);
   const completion = calculateClinicalHandoffCompletion(draft);
   const [records, setRecords] = React.useState<ClinicalHandoffRecord[]>(() => [
     {
@@ -2035,12 +2053,18 @@ export function ShiftHandoverWorkspace() {
       id: "nch-001",
       status: "Signed",
       signatureConfirmation: "Digital signature captured",
+      submittedBy: "Ward Nurse Kavita",
+      submittedAt: "16:10",
     },
     {
       ...buildClinicalHandoffDraft(icuPatients[1], "X - Night (23:00-07:00)"),
       id: "nch-002",
       status: "Acknowledged",
       signatureConfirmation: "Received with exceptions",
+      submittedBy: "Night Nurse Leena",
+      submittedAt: "16:10",
+      acknowledgedBy: "Ward Nurse Arjun",
+      acknowledgedAt: "16:25",
     },
   ]);
 
@@ -2072,16 +2096,16 @@ export function ShiftHandoverWorkspace() {
   };
 
   const saveDraft = () => {
-    setRecords((current) => [{ ...draft, id: `nch-${current.length + 1}`, status: "Draft" }, ...current]);
+    setRecords((current) => [{ ...draft, id: `nch-${current.length + 1}`, status: "Draft", submittedBy: draft.handedOverBy, submittedAt: currentHandoverTime() }, ...current]);
     toast.success("Nursing clinical handoff draft saved");
   };
 
   const signHandoff = () => {
     if (draft.handedOverBy === draft.takenOverBy) {
-      toast.error("Handed over aur taken over nurse same nahi ho sakte");
+      toast.error("The handing-over nurse and receiving nurse must be different.");
       return;
     }
-    setRecords((current) => [{ ...draft, id: `nch-${current.length + 1}`, status: "Signed" }, ...current]);
+    setRecords((current) => [{ ...draft, id: `nch-${current.length + 1}`, status: "Signed", submittedBy: draft.handedOverBy, submittedAt: currentHandoverTime() }, ...current]);
     toast.success("Nursing clinical handoff signed");
   };
 
@@ -2089,40 +2113,269 @@ export function ShiftHandoverWorkspace() {
     setDraft(buildClinicalHandoffDraft(selectedPatient, draft.shift));
   };
 
+  const visibleHistoryRecords = records
+    .map((record, index) => {
+      const patient = icuPatients.find((item) => item.id === record.patientId);
+      return {
+        record,
+        index,
+        patientName: patient?.patientName ?? "",
+        searchRank: handoverSearchRank(
+          handoverHistoryQuery,
+          patient?.patientName ?? "",
+          `${patient?.bedNo ?? ""} ${patient?.mrn ?? ""} ${patient?.unit ?? ""} ${patient?.diagnosis ?? ""} ${record.shift} ${record.status} ${record.submittedBy} ${record.submittedAt} ${record.acknowledgedBy ?? ""} ${record.acknowledgedAt ?? ""} ${record.handedOverBy} ${record.takenOverBy} ${record.criticalInformation} ${record.pendingWorkSummary}`,
+        ),
+      };
+    })
+    .filter(({ record, searchRank }) => {
+      const statusMatch =
+        historyStatusFilter === "Signed" ? record.status === "Signed"
+          : historyStatusFilter === "Pending Acknowledgement" ? record.status === "Signed" || record.status === "Draft"
+            : historyStatusFilter === "Acknowledged" ? record.status === "Acknowledged"
+              : true;
+      return statusMatch && searchRank < 99;
+    })
+    .sort((left, right) => handoverHistoryQuery.trim()
+      ? left.searchRank - right.searchRank || left.patientName.localeCompare(right.patientName)
+      : left.index - right.index)
+    .map(({ record }) => record);
+  const historyStatusOptions = ["All", "Signed", "Pending Acknowledgement", "Acknowledged"];
+
+  const handoffRecordsTable = (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>Clinical Handoff Queue</CardTitle>
+          <CardDescription>Recent patient handoff records and incoming nurse acknowledgement.</CardDescription>
+        </div>
+        <Badge tone="info">{visibleHistoryRecords.length} records</Badge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <details className="group overflow-hidden rounded-md border border-border bg-surface-muted shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            <span>Filters</span>
+            <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+              <span className="truncate">{historyStatusFilter} | {visibleHistoryRecords.length} record(s)</span>
+              <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="border-t border-border p-3">
+            <div className="grid gap-2 md:grid-cols-[minmax(260px,1fr)_260px] md:items-end">
+              <label className="space-y-1 text-sm">
+                <span className="font-medium text-foreground">Search</span>
+                <span className="relative block">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input className="pl-9" value={handoverHistoryQuery} onChange={(event) => setHandoverHistoryQuery(event.target.value)} placeholder="Search patient name, bed, UHID, nurse..." />
+                </span>
+              </label>
+              <SelectField label="Status" value={historyStatusFilter} onChange={setHistoryStatusFilter} options={historyStatusOptions} />
+            </div>
+          </div>
+        </details>
+        <div className="overflow-x-auto">
+        <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr className="bg-surface-muted text-left text-xs uppercase text-muted-foreground">
+              <th className="rounded-l-md px-3 py-3">Patient</th>
+              <th className="px-3 py-3">Submitted</th>
+              <th className="px-3 py-3">Acknowledged</th>
+              <th className="px-3 py-3">Critical info</th>
+              <th className="px-3 py-3">Pending work</th>
+              <th className="px-3 py-3">Status</th>
+              <th className="rounded-r-md px-3 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleHistoryRecords.map((record) => {
+              const patient = icuPatients.find((item) => item.id === record.patientId);
+              return (
+                <tr className="border-b border-border" key={record.id}>
+                  <td className="px-3 py-3 align-top">
+                    <p className="font-semibold text-foreground">{patient?.bedNo} - {patient?.patientName}</p>
+                    <p className="text-xs text-muted-foreground">{patient?.mrn} | {patient?.unit}</p>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <p className="font-semibold text-foreground">{record.shift}</p>
+                    <p className="text-xs text-muted-foreground">Submitted by: {record.submittedBy}</p>
+                    <p className="text-xs text-muted-foreground">Submitted at: {record.submittedAt}</p>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    {record.status === "Acknowledged" ? (
+                      <>
+                        <p className="font-semibold text-foreground">Acknowledged by: {record.acknowledgedBy ?? record.takenOverBy}</p>
+                        <p className="text-xs text-muted-foreground">Acknowledged at: {record.acknowledgedAt ?? "16:25"}</p>
+                      </>
+                    ) : <p className="text-xs font-semibold text-amber-700">Pending acknowledgement</p>}
+                  </td>
+                  <td className="max-w-[280px] px-3 py-3 align-top text-xs text-muted-foreground">{record.criticalInformation}</td>
+                  <td className="max-w-[260px] px-3 py-3 align-top text-xs text-muted-foreground">{record.pendingWorkSummary || record.pendingInvestigations || record.pendingMedications}</td>
+                  <td className="px-3 py-3 align-top">
+                    <StatusPill tone={toneForStatus(record.status)}>{record.status}</StatusPill>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <div className="flex flex-col gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setSelectedHandoffRecord(record)}>View Handover</Button>
+                      {record.status !== "Acknowledged" ? (
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setRecords((current) => current.map((item) => item.id === record.id ? { ...item, status: "Acknowledged", acknowledgedBy: item.takenOverBy, acknowledgedAt: currentHandoverTime() } : item));
+                          toast.success(`${record.takenOverBy} acknowledged clinical handoff`);
+                        }}>
+                          <CheckCircle2 className="h-4 w-4" />Acknowledge
+                        </Button>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        </div>
+        <HandoffDetailsDialog record={selectedHandoffRecord} onOpenChange={(open) => !open && setSelectedHandoffRecord(null)} />
+      </CardContent>
+    </Card>
+  );
+
+  if (view === "history") {
+    return <div className="space-y-4">{handoffRecordsTable}</div>;
+  }
+
+  if (view === "patients" || view === "pending" || view === "critical") {
+    const reasonOptions = ["All reasons", "Abnormal vitals", "Medication overdue", "Active escalation", "High acuity"];
+    const patientFilterOptions = ["All Patients", "Pending", "Critical", "Active Escalation", "Ready for Handover"];
+    const activePatientFilter = view === "pending" ? "Pending" : view === "critical" ? "Critical" : handoverPatientFilter;
+    const patientQuery = handoverPatientQuery.trim();
+    const rows = icuPatients
+      .map((patient) => {
+        const draftForPatient = buildClinicalHandoffDraft(patient, draft.shift);
+        const pendingBreakdown = buildHandoverPendingBreakdown(patient.id);
+        const pendingCount = pendingBreakdown.total;
+        const criticalReason = buildCriticalPatientReason(patient);
+        const critical = patient.currentStatus === "Critical" || patient.criticalityScore >= 80 || icuAlerts.some((alert) => alert.patientId === patient.id && alert.severity === "Critical" && alert.status !== "Resolved");
+        const activeEscalation = draftForPatient.activeEscalations !== "No active escalation captured for this patient.";
+        const readiness = buildHandoverReadiness(patient, draftForPatient);
+        const ready = readiness.ready;
+        const draftRecord = records.some((record) => record.patientId === patient.id && record.status === "Draft");
+        return { patient, draftForPatient, pendingCount, pendingBreakdown, critical, criticalReason, activeEscalation, ready, readiness, draftRecord };
+      })
+      .filter((row) => {
+        if (activePatientFilter === "Pending") return row.pendingCount > 0;
+        if (activePatientFilter === "Critical") return row.critical;
+        if (activePatientFilter === "Active Escalation") return row.activeEscalation;
+        if (activePatientFilter === "Ready for Handover") return row.ready;
+        return true;
+      })
+      .map((row, index) => ({
+        ...row,
+        index,
+        searchRank: handoverSearchRank(
+          handoverPatientQuery,
+          row.patient.patientName,
+          `${row.patient.bedNo} ${row.patient.mrn} ${row.patient.unit} ${row.patient.diagnosis} ${row.criticalReason} ${row.patient.assignedUnitNurse} ${row.patient.assignedWardNurse}`,
+        ),
+      }))
+      .filter((row) => {
+        const reasonMatch = handoverReasonFilter === "All reasons" || row.criticalReason.toLowerCase().includes(handoverReasonFilter.toLowerCase());
+        return row.searchRank < 99
+          && (handoverUnitFilter === "All ICU units" || row.patient.unit === handoverUnitFilter)
+          && (activePatientFilter !== "Critical" || reasonMatch);
+      })
+      .sort((left, right) => patientQuery
+        ? left.searchRank - right.searchRank || left.patient.patientName.localeCompare(right.patient.patientName)
+        : left.index - right.index);
+
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle>Handover Patients</CardTitle>
+            </div>
+            <Badge tone="info">{rows.length} patients</Badge>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <details className="group overflow-hidden rounded-md border border-border bg-surface-muted shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                <span>Filters</span>
+                <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <span className="truncate">{activePatientFilter} | {handoverUnitFilter} | {handoverReasonFilter} | {rows.length} patient(s)</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+                </span>
+              </summary>
+              <div className="border-t border-border p-3">
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_220px_220px_220px] xl:items-end">
+                  <label className="space-y-1 text-sm">
+                    <span className="font-medium text-foreground">Search</span>
+                    <Input value={handoverPatientQuery} onChange={(event) => setHandoverPatientQuery(event.target.value)} placeholder="Search patient, bed, reason..." />
+                  </label>
+                  <SelectField label="Patient status" value={activePatientFilter} onChange={setHandoverPatientFilter} options={patientFilterOptions} />
+                  <SelectField label="Unit" value={handoverUnitFilter} onChange={setHandoverUnitFilter} options={["All ICU units", ...Array.from(new Set(icuPatients.map((patient) => patient.unit)))]} />
+                  <SelectField label="Reason" value={handoverReasonFilter} onChange={setHandoverReasonFilter} options={reasonOptions} />
+                </div>
+              </div>
+            </details>
+            {rows.map(({ patient, draftForPatient, pendingCount, pendingBreakdown, critical, criticalReason, activeEscalation, ready, readiness, draftRecord }) => (
+              <div className="rounded-md border border-border bg-background p-3" key={patient.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-foreground">{patient.bedNo} - {patient.patientName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{patient.mrn} | {patient.unit} | {patient.diagnosis}</p>
+                    <p className="mt-2 text-xs font-semibold text-danger">Reason: {criticalReason}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-700">Current: {patient.assignedUnitNurse} {" -> "} Next: {patient.assignedWardNurse}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Last updated: {criticalPatientLastUpdated(patient.id)}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {critical ? <StatusPill tone="critical">Critical</StatusPill> : null}
+                    {pendingCount ? <StatusPill tone="warning">{pendingCount} Pending</StatusPill> : null}
+                    {activeEscalation ? <StatusPill tone="danger">Active Escalation</StatusPill> : null}
+                    {ready ? <StatusPill tone="success">Ready</StatusPill> : null}
+                    {draftRecord ? <StatusPill tone="info">Draft</StatusPill> : null}
+                    <Button size="sm" asChild>
+                      <Link href={`/icu-command-center/nursing/shift-handover?view=submit&patientId=${patient.id}`}>Open Handover</Link>
+                    </Button>
+                  </div>
+                </div>
+                {pendingCount ? (
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    <button type="button" onClick={() => setExpandedPendingKey(expandedPendingKey === `${patient.id}:vitals` ? null : `${patient.id}:vitals`)}><Badge tone={pendingBreakdown.vitals ? "warning" : "muted"}>Vitals {pendingBreakdown.vitals}</Badge></button>
+                    <button type="button" onClick={() => setExpandedPendingKey(expandedPendingKey === `${patient.id}:medicines` ? null : `${patient.id}:medicines`)}><Badge tone={pendingBreakdown.medicines ? "warning" : "muted"}>Medicines {pendingBreakdown.medicines}</Badge></button>
+                    <button type="button" onClick={() => setExpandedPendingKey(expandedPendingKey === `${patient.id}:doctorOrders` ? null : `${patient.id}:doctorOrders`)}><Badge tone={pendingBreakdown.doctorOrders ? "warning" : "muted"}>Doctor orders {pendingBreakdown.doctorOrders}</Badge></button>
+                    <button type="button" onClick={() => setExpandedPendingKey(expandedPendingKey === `${patient.id}:nursingTasks` ? null : `${patient.id}:nursingTasks`)}><Badge tone={pendingBreakdown.nursingTasks ? "warning" : "muted"}>Nursing tasks {pendingBreakdown.nursingTasks}</Badge></button>
+                  </div>
+                ) : null}
+                {expandedPendingKey?.startsWith(`${patient.id}:`) ? (
+                  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+                    <p className="font-bold">{handoverPendingLabel(expandedPendingKey.split(":")[1])}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-4">
+                      {handoverPendingDetails(patient.id, expandedPendingKey.split(":")[1]).map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+                {!ready ? (
+                  <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                    <span className="font-semibold text-slate-900">Readiness blockers: </span>
+                    {readiness.blockers.join(" | ")}
+                  </div>
+                ) : null}
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  <div className="rounded-md bg-surface-muted p-2 text-xs text-muted-foreground"><span className="font-semibold text-foreground">Pending work</span><br />{draftForPatient.pendingWorkSummary.split("\n").slice(0, 2).join(" | ")}</div>
+                  <div className="rounded-md bg-surface-muted p-2 text-xs text-muted-foreground"><span className="font-semibold text-foreground">Escalation</span><br />{draftForPatient.activeEscalations.split("\n").slice(0, 2).join(" | ")}</div>
+                  <div className="rounded-md bg-surface-muted p-2 text-xs text-muted-foreground"><span className="font-semibold text-foreground">Next shift</span><br />{draftForPatient.nextShiftInstructions.split("\n").slice(0, 2).join(" | ")}</div>
+                </div>
+              </div>
+            ))}
+            {!rows.length ? <div className="rounded-md border border-border bg-background p-6 text-center text-sm text-muted-foreground">No patients found for this view.</div> : null}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <details className="group overflow-hidden rounded-md border border-border bg-surface shadow-sm">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-surface-muted [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0">
-            <span className="block text-sm font-semibold text-foreground">Shift handover summary</span>
-            <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-              {selectedPatient?.bedNo} - {selectedPatient?.patientName} | {draft.shift} | {completion}% complete
-            </span>
-          </span>
-          <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-        </summary>
-        <div className="border-t border-border">
-          <Card className="rounded-none border-0 bg-gradient-to-r from-sky-50 via-white to-emerald-50 shadow-none">
-            <CardHeader>
-              <div>
-                <CardTitle>Nursing Clinical Handoff</CardTitle>
-                <CardDescription>PDF format mapped to bedside ICU handoff: critical information, allergies, pending work, medicine, procedure, referral, and nurse sign-off.</CardDescription>
-              </div>
-              <Badge tone={completion >= 80 ? "success" : completion >= 55 ? "warning" : "danger"}>{completion}% complete</Badge>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <MetricTile label="Critical items" value={selectedPatient?.alerts.length ?? 0} tone={(selectedPatient?.alerts.length ?? 0) ? "critical" : "success"} icon={AlertTriangle} />
-              <MetricTile label="Pending medicine" value={patientPendingMedicationCount(selectedPatient?.id)} tone={patientPendingMedicationCount(selectedPatient?.id) ? "danger" : "success"} icon={Pill} />
-              <MetricTile label="Pending tasks" value={selectedPatient?.pendingTasks ?? 0} tone={(selectedPatient?.pendingTasks ?? 0) ? "warning" : "success"} icon={ListChecks} />
-              <MetricTile label="Shift code" value={draft.shift.split(" ")[0]} tone="info" icon={ClipboardCheck} />
-            </CardContent>
-          </Card>
-        </div>
-      </details>
-
-      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="space-y-4">
-          <Card className="xl:sticky xl:top-4">
+      <div className="space-y-4">
+        <div>
+          <Card>
             <CardHeader>
               <div>
                 <CardTitle>Patient Label</CardTitle>
@@ -2130,7 +2383,7 @@ export function ShiftHandoverWorkspace() {
               </div>
               <StatusPill tone={toneForStatus(selectedPatient?.currentStatus ?? "")}>{selectedPatient?.currentStatus ?? "No patient"}</StatusPill>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.1fr)_minmax(220px,1fr)_180px_minmax(260px,1fr)_minmax(220px,0.85fr)]">
               <SelectField
                 label="Patient / bed"
                 value={draft.patientId}
@@ -2152,7 +2405,7 @@ export function ShiftHandoverWorkspace() {
                 <p>{selectedPatient?.bedNo} | {selectedPatient?.unit}</p>
                 <p className="mt-2">{selectedPatient?.diagnosis}</p>
               </div>
-              <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800">
+              <div className="rounded-md border border-border bg-surface-muted p-3 text-xs text-muted-foreground md:col-span-2 xl:col-span-1">
                 <p className="font-semibold">Shift legend</p>
                 <p className="mt-1">K = Morning, Y = Evening, X = Night</p>
               </div>
@@ -2164,7 +2417,6 @@ export function ShiftHandoverWorkspace() {
           <CardHeader>
             <div>
               <CardTitle>Clinical Handoff Sheet</CardTitle>
-              <CardDescription>Outgoing nurse fills the sheet, incoming nurse acknowledges and continues pending care.</CardDescription>
             </div>
             <Badge tone="info">{draft.handedOverBy} {" -> "} {draft.takenOverBy}</Badge>
           </CardHeader>
@@ -2187,6 +2439,15 @@ export function ShiftHandoverWorkspace() {
                 <TextAreaField label="Food / drug allergies" value={draft.allergies} onChange={(value) => updateDraft("allergies", value)} placeholder="Known allergy, suspected reaction, allergy unknown..." />
               </ClinicalHandoffSection>
             </div>
+
+            <ClinicalHandoffSection
+              description="Auto-generated pending work for the incoming shift."
+              icon={ListChecks}
+              tone="warning"
+              title="Pending Work"
+            >
+              <TextAreaField label="Pending work summary" value={draft.pendingWorkSummary} onChange={(value) => updateDraft("pendingWorkSummary", value)} placeholder="Pending vitals, medicines, doctor orders, nursing tasks..." />
+            </ClinicalHandoffSection>
 
             <ClinicalHandoffSection
               description="Pending/planned investigations and reports to collect in next shift."
@@ -2213,27 +2474,35 @@ export function ShiftHandoverWorkspace() {
               </div>
             </ClinicalHandoffSection>
 
-            <div className="grid gap-3 lg:grid-cols-2">
-              <ClinicalHandoffSection
-                description="Procedure completed or pending further in next shift."
-                icon={ClipboardCheck}
-                tone="success"
-                title="Procedure"
-              >
-                <div className="grid gap-3 md:grid-cols-2">
-                  <TextAreaField half label="Done" value={draft.proceduresDone} onChange={(value) => updateDraft("proceduresDone", value)} placeholder="Line, dressing, transfusion, drain care..." />
-                  <TextAreaField half label="Planned further" value={draft.proceduresPlanned} onChange={(value) => updateDraft("proceduresPlanned", value)} placeholder="Procedure planned next shift..." />
-                </div>
-              </ClinicalHandoffSection>
-              <ClinicalHandoffSection
-                description="Any new consultant referral created during handoff window."
-                icon={FileSignature}
-                tone="info"
-                title="New Consultant Referral"
-              >
-                <TextAreaField label="Referral details" value={draft.consultantReferral} onChange={(value) => updateDraft("consultantReferral", value)} placeholder="Specialty, reason, pending response..." />
-              </ClinicalHandoffSection>
-            </div>
+            <ClinicalHandoffSection
+              description="Procedure completed or pending further in next shift."
+              icon={ClipboardCheck}
+              tone="success"
+              title="Procedure"
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <TextAreaField half label="Done" value={draft.proceduresDone} onChange={(value) => updateDraft("proceduresDone", value)} placeholder="Line, dressing, transfusion, drain care..." />
+                <TextAreaField half label="Planned further" value={draft.proceduresPlanned} onChange={(value) => updateDraft("proceduresPlanned", value)} placeholder="Procedure planned next shift..." />
+              </div>
+            </ClinicalHandoffSection>
+
+            <ClinicalHandoffSection
+              description="Active escalation status and next review point."
+              icon={AlertCircle}
+              tone="danger"
+              title="Active Escalations"
+            >
+              <TextAreaField label="Active escalation" value={draft.activeEscalations} onChange={(value) => updateDraft("activeEscalations", value)} placeholder="Issue, escalated to, current status, next review time..." />
+            </ClinicalHandoffSection>
+
+            <ClinicalHandoffSection
+              description="Clear instructions for the incoming nurse."
+              icon={MonitorDot}
+              tone="info"
+              title="Next Shift Instructions"
+            >
+              <TextAreaField label="Next shift instructions" value={draft.nextShiftInstructions} onChange={(value) => updateDraft("nextShiftInstructions", value)} placeholder="BP/SpO2 every 15 min, follow up ABG, confirm medicine dispense..." />
+            </ClinicalHandoffSection>
 
             <ClinicalHandoffSection
               description="Final nurse-to-nurse confirmation for this shift."
@@ -2248,43 +2517,46 @@ export function ShiftHandoverWorkspace() {
               </div>
             </ClinicalHandoffSection>
 
-            <ClinicalHandoffSection
-              description="Use only when assigned nurse leaves unit and patient responsibility is temporarily handed over."
-              icon={Clock}
-              tone="warning"
-              title="Nurse Leaving Unit Hand-Off"
-            >
-              <div className="grid gap-3 md:grid-cols-3">
-                <TextAreaField half label="Critical information" value={draft.unitLeaveCriticalInfo} onChange={(value) => updateDraft("unitLeaveCriticalInfo", value)} placeholder="Immediate bedside risk while nurse is away..." />
-                <SelectField label="Handed over by" value={draft.unitLeaveHandedOverBy} onChange={(value) => updateDraft("unitLeaveHandedOverBy", value)} options={nurseOptions} />
-                <SelectField label="Taken over by" value={draft.unitLeaveTakenOverBy} onChange={(value) => updateDraft("unitLeaveTakenOverBy", value)} options={nurseOptions} />
+            <details className="group rounded-md border border-border bg-background">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                Additional Handover Options
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="space-y-3 border-t border-border p-3">
+                <ClinicalHandoffSection
+                  description="Any new consultant referral created during handoff window."
+                  icon={FileSignature}
+                  tone="info"
+                  title="New Consultant Referral"
+                >
+                  <TextAreaField label="Referral details" value={draft.consultantReferral} onChange={(value) => updateDraft("consultantReferral", value)} placeholder="Specialty, reason, pending response..." />
+                </ClinicalHandoffSection>
+                <ClinicalHandoffSection
+                  description="Use only when assigned nurse leaves unit and patient responsibility is temporarily handed over."
+                  icon={Clock}
+                  tone="warning"
+                  title="Nurse Leaving Unit Hand-Off"
+                >
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <TextAreaField half label="Critical information" value={draft.unitLeaveCriticalInfo} onChange={(value) => updateDraft("unitLeaveCriticalInfo", value)} placeholder="Immediate bedside risk while nurse is away..." />
+                    <SelectField label="Handed over by" value={draft.unitLeaveHandedOverBy} onChange={(value) => updateDraft("unitLeaveHandedOverBy", value)} options={nurseOptions} />
+                    <SelectField label="Taken over by" value={draft.unitLeaveTakenOverBy} onChange={(value) => updateDraft("unitLeaveTakenOverBy", value)} options={nurseOptions} />
+                  </div>
+                </ClinicalHandoffSection>
+                <ClinicalHandoffSection
+                  description="On return, temporary owner hands back current patient status to assigned nurse."
+                  icon={ArrowRight}
+                  tone="info"
+                  title="On Return Handover"
+                >
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <TextAreaField half label="Critical information" value={draft.returnCriticalInfo} onChange={(value) => updateDraft("returnCriticalInfo", value)} placeholder="What changed while away..." />
+                    <SelectField label="Handed over by" value={draft.returnHandedOverBy} onChange={(value) => updateDraft("returnHandedOverBy", value)} options={nurseOptions} />
+                    <SelectField label="Taken over by" value={draft.returnTakenOverBy} onChange={(value) => updateDraft("returnTakenOverBy", value)} options={nurseOptions} />
+                  </div>
+                </ClinicalHandoffSection>
               </div>
-            </ClinicalHandoffSection>
-
-            <ClinicalHandoffSection
-              description="On return, temporary owner hands back current patient status to assigned nurse."
-              icon={ArrowRight}
-              tone="info"
-              title="On Return Handover"
-            >
-              <div className="grid gap-3 md:grid-cols-3">
-                <TextAreaField half label="Critical information" value={draft.returnCriticalInfo} onChange={(value) => updateDraft("returnCriticalInfo", value)} placeholder="What changed while away..." />
-                <SelectField label="Handed over by" value={draft.returnHandedOverBy} onChange={(value) => updateDraft("returnHandedOverBy", value)} options={nurseOptions} />
-                <SelectField label="Taken over by" value={draft.returnTakenOverBy} onChange={(value) => updateDraft("returnTakenOverBy", value)} options={nurseOptions} />
-              </div>
-            </ClinicalHandoffSection>
-
-            <div className="rounded-md border border-border bg-surface-muted p-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Source basis</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Critical info, medicine, and pending work are prefilled from patient record, alerts, medication chart, I/O, and task list. Nurse can edit before saving.
-                  </p>
-                </div>
-                <Badge tone="info">{sourceSummary?.metrics.length ?? 0} source groups</Badge>
-              </div>
-            </div>
+            </details>
 
             <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
               <Button variant="outline" onClick={resetDraft}>Reset</Button>
@@ -2294,69 +2566,6 @@ export function ShiftHandoverWorkspace() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Clinical Handoff Queue</CardTitle>
-            <CardDescription>Recent patient handoff records and incoming nurse acknowledgement.</CardDescription>
-          </div>
-          <Badge tone="info">{records.length} records</Badge>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
-            <thead>
-              <tr className="bg-surface-muted text-left text-xs uppercase text-muted-foreground">
-                <th className="rounded-l-md px-3 py-3">Patient</th>
-                <th className="px-3 py-3">Shift / date</th>
-                <th className="px-3 py-3">Critical info</th>
-                <th className="px-3 py-3">Pending work</th>
-                <th className="px-3 py-3">Nurse route</th>
-                <th className="rounded-r-md px-3 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {records.map((record) => {
-                const patient = icuPatients.find((item) => item.id === record.patientId);
-                return (
-                  <tr className="border-b border-border" key={record.id}>
-                    <td className="px-3 py-3 align-top">
-                      <p className="font-semibold text-foreground">{patient?.bedNo} - {patient?.patientName}</p>
-                      <p className="text-xs text-muted-foreground">{patient?.mrn} | {patient?.unit}</p>
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <p className="font-semibold text-foreground">{record.shift}</p>
-                      <p className="text-xs text-muted-foreground">{record.handoffDate}</p>
-                    </td>
-                    <td className="max-w-[280px] px-3 py-3 align-top text-xs text-muted-foreground">{record.criticalInformation}</td>
-                    <td className="max-w-[260px] px-3 py-3 align-top text-xs text-muted-foreground">{record.pendingInvestigations || record.pendingMedications}</td>
-                    <td className="px-3 py-3 align-top">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{record.handedOverBy}</span>
-                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-800">{record.takenOverBy}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <div className="flex flex-col gap-2">
-                        <StatusPill tone={toneForStatus(record.status)}>{record.status}</StatusPill>
-                        {record.status !== "Acknowledged" ? (
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setRecords((current) => current.map((item) => item.id === record.id ? { ...item, status: "Acknowledged" } : item));
-                            toast.success(`${record.takenOverBy} acknowledged clinical handoff`);
-                          }}>
-                            <CheckCircle2 className="h-4 w-4" />Acknowledge
-                          </Button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -2369,7 +2578,10 @@ function buildClinicalHandoffDraft(patient?: IcuPatient, shift = "K - Morning (0
   const highAlertMeds = meds.filter((row) => row.doubleVerification !== "Not required" || row.route.toLowerCase().includes("infusion"));
   const pendingMeds = meds.filter((row) => ["Due", "Late", "Held"].includes(row.status));
   const tasks = icuTasks.filter((row) => row.patientId === patientId && row.status !== "Completed");
+  const vitals = icuVitals.filter((row) => row.patientId === patientId && row.abnormal);
   const ioBalance = intakeOutputRows.filter((row) => row.patientId === patientId).reduce((sum, row) => sum + row.balanceMl, 0);
+  const pendingWork = buildClinicalPendingWorkSummary(vitals, pendingMeds, tasks);
+  const activeEscalations = buildClinicalActiveEscalationSummary(patient, alerts, tasks);
 
   return {
     patientId,
@@ -2385,6 +2597,7 @@ function buildClinicalHandoffDraft(patient?: IcuPatient, shift = "K - Morning (0
     pendingReports: alerts.some((alert) => alert.type.toLowerCase().includes("lab") || alert.source.toLowerCase().includes("lab"))
       ? "Lab report pending collection and doctor review."
       : "No pending report collection captured.",
+    pendingWorkSummary: pendingWork,
     highAlertMedications: highAlertMeds.length
       ? highAlertMeds.map((med) => `${med.medication} ${med.dose} ${med.route} (${med.doubleVerification})`).join("; ")
       : "No high-alert medication running.",
@@ -2398,6 +2611,8 @@ function buildClinicalHandoffDraft(patient?: IcuPatient, shift = "K - Morning (0
       ? "Airway/ventilator checks completed and documented."
       : "Routine line, drain, and bedside safety checks completed.",
     proceduresPlanned: tasks.length ? tasks.slice(0, 3).map((task) => task.title).join("; ") : "No planned procedure captured.",
+    activeEscalations,
+    nextShiftInstructions: buildClinicalNextShiftInstructions(patient, vitals, pendingMeds, tasks, alerts),
     consultantReferral: clinicalHandoffReferralText(patient, alerts),
     handedOverBy: pair.outgoingNurse,
     takenOverBy: pair.incomingNurse,
@@ -2411,9 +2626,75 @@ function buildClinicalHandoffDraft(patient?: IcuPatient, shift = "K - Morning (0
   };
 }
 
+function HandoffDetailsDialog({ record, onOpenChange }: { record: ClinicalHandoffRecord | null; onOpenChange: (open: boolean) => void }) {
+  const patient = record ? icuPatients.find((item) => item.id === record.patientId) : undefined;
+  return (
+    <Dialog.Root open={Boolean(record)} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[88vh] w-[min(880px,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-slate-300 bg-white shadow-2xl outline-none">
+          <div className="flex items-start justify-between gap-3 border-b border-border p-4">
+            <div>
+              <Dialog.Title className="text-lg font-black text-slate-950">Handover Details</Dialog.Title>
+              <Dialog.Description className="mt-1 text-sm text-slate-500">{patient ? `${patient.bedNo} - ${patient.patientName}` : "Read-only submitted handover"}</Dialog.Description>
+            </div>
+            <Dialog.Close asChild><Button size="icon" variant="ghost" aria-label="Close"><X className="h-4 w-4" /></Button></Dialog.Close>
+          </div>
+          {record ? (
+            <div className="space-y-4 p-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <ReadOnlyField label="Submitted by" value={record.submittedBy} />
+                <ReadOnlyField label="Submitted at" value={record.submittedAt} />
+                <ReadOnlyField label="Status" value={record.status} />
+                <ReadOnlyField label="Acknowledged by" value={record.acknowledgedBy ?? "Pending"} />
+                <ReadOnlyField label="Acknowledged at" value={record.acknowledgedAt ?? "Pending"} />
+                <ReadOnlyField label="Shift" value={record.shift} />
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <ReadOnlyTextBlock label="Critical information" value={record.criticalInformation} />
+                <ReadOnlyTextBlock label="Allergies" value={record.allergies} />
+                <ReadOnlyTextBlock label="Pending work" value={record.pendingWorkSummary} />
+                <ReadOnlyTextBlock label="Investigations" value={`${record.pendingInvestigations}\n${record.pendingReports}`} />
+                <ReadOnlyTextBlock label="Medicine" value={`${record.highAlertMedications}\n${record.pendingMedications}\n${record.otherMedicationInfo}`} />
+                <ReadOnlyTextBlock label="Active escalations" value={record.activeEscalations} />
+                <ReadOnlyTextBlock label="Next shift instructions" value={record.nextShiftInstructions} />
+                <ReadOnlyTextBlock label="Confirmation" value={`${record.handedOverBy} -> ${record.takenOverBy}\n${record.signatureConfirmation}`} />
+              </div>
+            </div>
+          ) : null}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function ReadOnlyTextBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-surface-muted p-3">
+      <p className="text-xs font-bold uppercase text-muted-foreground">{label}</p>
+      <p className="mt-2 whitespace-pre-line text-sm text-foreground">{value || "-"}</p>
+    </div>
+  );
+}
+
+function currentHandoverTime() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function handoverSearchRank(query: string, patientName: string, otherText: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return 0;
+  const normalizedName = patientName.toLowerCase();
+  const normalizedOther = otherText.toLowerCase();
+  if (normalizedName.startsWith(normalizedQuery)) return 0;
+  if (normalizedName.includes(normalizedQuery)) return 1;
+  if (normalizedOther.startsWith(normalizedQuery)) return 2;
+  if (normalizedOther.includes(normalizedQuery)) return 3;
+  return 99;
+}
+
 function ClinicalHandoffSection({
   children,
-  description,
   icon: Icon,
   title,
   tone,
@@ -2432,7 +2713,6 @@ function ClinicalHandoffSection({
         </span>
         <div>
           <p className="text-sm font-semibold text-foreground">{title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
       {children}
@@ -2444,12 +2724,15 @@ function calculateClinicalHandoffCompletion(draft: NursingClinicalHandoffDraft) 
   const requiredFields: Array<keyof NursingClinicalHandoffDraft> = [
     "criticalInformation",
     "allergies",
+    "pendingWorkSummary",
     "pendingInvestigations",
     "pendingReports",
     "highAlertMedications",
     "pendingMedications",
     "proceduresDone",
     "proceduresPlanned",
+    "activeEscalations",
+    "nextShiftInstructions",
     "handedOverBy",
     "takenOverBy",
     "signatureConfirmation",
@@ -2461,6 +2744,68 @@ function calculateClinicalHandoffCompletion(draft: NursingClinicalHandoffDraft) 
 function patientPendingMedicationCount(patientId?: string) {
   if (!patientId) return 0;
   return medicationRows.filter((row) => row.patientId === patientId && ["Due", "Late", "Held"].includes(row.status)).length;
+}
+
+function buildHandoverPendingBreakdown(patientId: string) {
+  const vitals = icuVitals.filter((row) => row.patientId === patientId && row.abnormal).length;
+  const medicines = patientPendingMedicationCount(patientId);
+  const openTasks = icuTasks.filter((task) => task.patientId === patientId && task.status !== "Completed");
+  const doctorOrders = openTasks.filter((task) => /doctor|order|instruction/i.test(`${task.taskType} ${task.title} ${task.createdBy}`)).length;
+  const nursingTasks = openTasks.length - doctorOrders;
+  return {
+    vitals,
+    medicines,
+    doctorOrders,
+    nursingTasks,
+    total: vitals + medicines + doctorOrders + nursingTasks,
+  };
+}
+
+function handoverPendingLabel(kind: string) {
+  if (kind === "vitals") return "Pending vitals";
+  if (kind === "medicines") return "Pending medicines";
+  if (kind === "doctorOrders") return "Pending doctor orders";
+  return "Pending nursing tasks";
+}
+
+function handoverPendingDetails(patientId: string, kind: string) {
+  if (kind === "vitals") {
+    const rows = icuVitals.filter((row) => row.patientId === patientId && row.abnormal);
+    return rows.length ? rows.map((row) => `${row.time}: SpO2 ${row.spo2}%, BP ${row.bp}, GCS ${row.gcs}, urine ${row.urineOutput} ml/hr`) : ["No pending vitals"];
+  }
+  if (kind === "medicines") {
+    const rows = medicationRows.filter((row) => row.patientId === patientId && ["Due", "Late", "Held"].includes(row.status));
+    return rows.length ? rows.map((row) => `${row.medication} ${row.dose} ${row.route} - ${row.status} at ${row.scheduledTime}`) : ["No pending medicines"];
+  }
+  const openTasks = icuTasks.filter((task) => task.patientId === patientId && task.status !== "Completed");
+  const rows = kind === "doctorOrders"
+    ? openTasks.filter((task) => /doctor|order|instruction/i.test(`${task.taskType} ${task.title} ${task.createdBy}`))
+    : openTasks.filter((task) => !/doctor|order|instruction/i.test(`${task.taskType} ${task.title} ${task.createdBy}`));
+  return rows.length ? rows.map((task) => `${task.title} - ${task.status}, due ${task.dueTime}, assigned to ${task.assignedTo}`) : [`No ${handoverPendingLabel(kind).toLowerCase()}`];
+}
+
+function buildHandoverReadiness(patient: IcuPatient, draft: NursingClinicalHandoffDraft) {
+  const criticalOpenTasks = icuTasks.filter((task) => task.patientId === patient.id && task.priority === "Critical" && task.status !== "Completed");
+  const requiredFields: Array<keyof NursingClinicalHandoffDraft> = [
+    "criticalInformation",
+    "pendingWorkSummary",
+    "activeEscalations",
+    "nextShiftInstructions",
+    "handedOverBy",
+    "takenOverBy",
+    "signatureConfirmation",
+  ];
+  const missingRequired = requiredFields.filter((field) => !draft[field]?.trim());
+  const blockers = [
+    criticalOpenTasks.length ? "Pending critical task" : "",
+    !draft.nextShiftInstructions.trim() ? "Handover note / next shift instructions missing" : "",
+    !draft.takenOverBy.trim() || draft.handedOverBy === draft.takenOverBy ? "Next nurse not selected" : "",
+    missingRequired.length ? "Required fields incomplete" : "",
+  ].filter(Boolean);
+  return {
+    ready: blockers.length === 0,
+    blockers,
+  };
 }
 
 function clinicalHandoffAllergyText(patient?: IcuPatient) {
@@ -2488,6 +2833,75 @@ function clinicalHandoffReferralText(patient: IcuPatient | undefined, alerts: Ic
   if (patient.unit === "Transplant ICU") return "Transplant team review pending for immunosuppression and renal output.";
   if (patient.unit === "Respiratory ICU") return "Respiratory therapist/consultant review for NIV response.";
   return "No new consultant referral captured.";
+}
+
+function buildClinicalPendingWorkSummary(vitals: Array<{ time: string; spo2: number; bp: string; gcs: number }>, meds: IcuMedication[], tasks: IcuTask[]) {
+  const rows = [
+    vitals.length ? `Pending vitals: repeat abnormal vitals (${vitals[0].time}: SpO2 ${vitals[0].spo2}%, BP ${vitals[0].bp}, GCS ${vitals[0].gcs})` : "Pending vitals: none flagged",
+    meds.length ? `Pending medicines: ${meds.map((med) => `${med.medication} ${med.status} at ${med.scheduledTime}`).slice(0, 3).join("; ")}` : "Pending medicines: none",
+    tasks.some((task) => /doctor|order|instruction/i.test(`${task.taskType} ${task.title}`))
+      ? `Pending doctor orders: ${tasks.filter((task) => /doctor|order|instruction/i.test(`${task.taskType} ${task.title}`)).map((task) => task.title).slice(0, 2).join("; ")}`
+      : "Pending doctor orders: none flagged",
+    tasks.length ? `Pending nursing tasks: ${tasks.map((task) => `${task.title} (${task.dueTime})`).slice(0, 4).join("; ")}` : "Pending nursing tasks: none",
+  ];
+  return rows.join("\n");
+}
+
+function buildClinicalActiveEscalationSummary(patient: IcuPatient | undefined, alerts: IcuAlert[], tasks: IcuTask[]) {
+  const activeAlerts = alerts.filter((alert) => alert.severity === "Critical" || alert.severity === "High" || alert.status !== "Resolved");
+  const escalatedTasks = tasks.filter((task) => task.status === "Escalated" || task.priority === "Critical");
+  const firstAlert = activeAlerts[0];
+  const firstTask = escalatedTasks[0];
+  if (firstAlert) {
+    return [
+      `Issue: ${firstAlert.type} - ${firstAlert.message}`,
+      `Escalated to: ${firstAlert.owner === "Duty Doctor" ? patient?.dutyDoctor ?? "Duty Doctor" : firstAlert.owner}`,
+      `Current status: ${firstAlert.status}`,
+      "Next review time: 15 min",
+    ].join("\n");
+  }
+  if (firstTask) {
+    return [
+      `Issue: ${firstTask.title}`,
+      `Escalated to: ${firstTask.escalationOwner ?? patient?.dutyDoctor ?? "Duty Doctor"}`,
+      `Current status: ${firstTask.status}`,
+      `Next review time: ${firstTask.dueTime}`,
+    ].join("\n");
+  }
+  return "No active escalation captured for this patient.";
+}
+
+function buildClinicalNextShiftInstructions(patient: IcuPatient | undefined, vitals: Array<{ spo2: number; bp: string }>, meds: IcuMedication[], tasks: IcuTask[], alerts: IcuAlert[]) {
+  const instructions = [
+    vitals.length ? `BP/SpO2 every 15 min until stable. Last abnormal: SpO2 ${vitals[0].spo2}%, BP ${vitals[0].bp}.` : "Continue scheduled vitals monitoring.",
+    alerts.some((alert) => /respiratory|spo2|oxygen|vent/i.test(`${alert.type} ${alert.message}`)) ? "Watch for respiratory distress and oxygen escalation need." : "",
+    alerts.some((alert) => /abg|lab|report/i.test(`${alert.type} ${alert.message} ${alert.source}`)) ? "Follow up pending ABG/lab report and inform doctor." : "",
+    meds.length ? `Confirm ${meds[0].medication} dose after pharmacy/bedside availability.` : "",
+    tasks.length ? `Doctor/nursing review pending: ${tasks[0].title}.` : "",
+    patient?.currentStatus === "Critical" ? "Duty doctor review pending before next major care change." : "",
+  ].filter(Boolean);
+  return instructions.join("\n");
+}
+
+function buildCriticalPatientReason(patient: IcuPatient) {
+  const reasons = [
+    patient.diagnosis,
+    icuVitals.some((vital) => vital.patientId === patient.id && vital.abnormal) ? "abnormal vitals" : "",
+    medicationRows.some((medicine) => medicine.patientId === patient.id && medicine.status === "Late") ? "medication overdue" : "",
+    icuAlerts.some((alert) => alert.patientId === patient.id && alert.status !== "Resolved") ? "active escalation" : "",
+    patient.criticalityScore >= 80 ? "high acuity score" : "",
+  ].filter(Boolean);
+  return reasons.join(" + ");
+}
+
+function criticalPatientLastUpdated(patientId: string) {
+  const times = [
+    ...icuVitals.filter((vital) => vital.patientId === patientId).map((vital) => vital.time),
+    ...medicationRows.filter((medicine) => medicine.patientId === patientId).map((medicine) => medicine.actualTime || medicine.scheduledTime),
+    ...icuAlerts.filter((alert) => alert.patientId === patientId).map((alert) => alert.createdAt),
+    ...icuTasks.filter((task) => task.patientId === patientId).map((task) => task.dueTime),
+  ].filter(Boolean);
+  return times[0] ?? "15:58";
 }
 
 export function buildWholeShiftSummary(patient: IcuPatient, nurse: string, shift: string) {
@@ -4786,7 +5200,7 @@ export function DoctorOrderEntryWorkspace() {
   return (
     <div className="space-y-4">
       {selectedPatient ? (
-        <section className="overflow-x-auto rounded-lg border border-blue-100 bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-3 text-white shadow-sm">
+        <section className="overflow-x-auto rounded-lg border border-[#dcd8ff] bg-gradient-to-r from-[#7064EC] via-[#6878E8] to-[#6888E8] px-4 py-3 text-white shadow-sm">
           <div className="flex min-w-max items-center gap-8 text-sm font-bold">
             <span className="text-base">{selectedPatient.patientName}</span>
             <span>MR: {selectedPatient.mrn}</span>
@@ -5275,7 +5689,7 @@ function MedicationPatientStrip({
   unitFilter: string;
 }) {
   return (
-    <div className="max-w-full overflow-x-auto rounded-md border border-sky-200 bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-3 text-white shadow-sm">
+    <div className="max-w-full overflow-x-auto rounded-md border border-[#dcd8ff] bg-gradient-to-r from-[#7064EC] via-[#6878E8] to-[#6888E8] px-4 py-3 text-white shadow-sm">
       <div className="flex min-w-max items-center gap-6 text-sm font-semibold">
         <span className="text-base font-bold">{patient?.patientName ?? "All ICU patients"}</span>
         <span>{patient ? `MR: ${patient.mrn}` : unitFilter}</span>

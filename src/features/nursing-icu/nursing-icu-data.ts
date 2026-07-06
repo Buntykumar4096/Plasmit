@@ -150,6 +150,8 @@ export type DoctorInstruction = {
   patientId: string;
   bedNo: string;
   doctor: string;
+  doctorRole: string;
+  orderedAt: string;
   instructionType: string;
   instruction: string;
   priority: IcuPriority;
@@ -206,7 +208,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Ritu Anand",
     dutyDoctor: "Dr. Mohan Singh",
     assignedUnitNurse: "Unit Nurse Meera",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Arjun",
     admissionSource: "Post-surgical unit",
     currentStatus: "Ventilated",
     criticalityScore: 8,
@@ -228,7 +230,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Ritu Anand",
     dutyDoctor: "Dr. Aman Verma",
     assignedUnitNurse: "Unit Nurse Priya",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Meera",
     admissionSource: "General ward",
     currentStatus: "Stable ICU care",
     criticalityScore: 6,
@@ -250,7 +252,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Mohan Singh",
     dutyDoctor: "Dr. Neha Malik",
     assignedUnitNurse: "Unit Nurse Meera",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Neha",
     admissionSource: "Direct ICU admission",
     currentStatus: "Ready for transfer",
     criticalityScore: 3,
@@ -294,7 +296,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Ritu Anand",
     dutyDoctor: "Dr. Aman Verma",
     assignedUnitNurse: "Unit Nurse Meera",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Arjun",
     admissionSource: "Emergency",
     currentStatus: "Ventilated",
     criticalityScore: 8,
@@ -316,7 +318,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Ritu Anand",
     dutyDoctor: "Dr. Aman Verma",
     assignedUnitNurse: "Unit Nurse Priya",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Meera",
     admissionSource: "Emergency",
     currentStatus: "Stable ICU care",
     criticalityScore: 6,
@@ -338,7 +340,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Sameer Mehta",
     dutyDoctor: "Dr. Neha Malik",
     assignedUnitNurse: "Unit Nurse Priya",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Neha",
     admissionSource: "General ward",
     currentStatus: "Stable ICU care",
     criticalityScore: 5,
@@ -382,7 +384,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Imran Shah",
     dutyDoctor: "Dr. Mohan Singh",
     assignedUnitNurse: "Unit Nurse Priya",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Arjun",
     admissionSource: "Post-surgical unit",
     currentStatus: "Stable ICU care",
     criticalityScore: 5,
@@ -404,7 +406,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Ritu Anand",
     dutyDoctor: "Dr. Aman Verma",
     assignedUnitNurse: "Unit Nurse Priya",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Meera",
     admissionSource: "Emergency",
     currentStatus: "Stable ICU care",
     criticalityScore: 4,
@@ -426,7 +428,7 @@ export const icuPatients: IcuPatient[] = [
     consultingDoctor: "Dr. Kavita Rao",
     dutyDoctor: "Dr. Neha Malik",
     assignedUnitNurse: "Unit Nurse Priya",
-    assignedWardNurse: "Ward Nurse Kavita",
+    assignedWardNurse: "Ward Nurse Neha",
     admissionSource: "Emergency",
     currentStatus: "Stable ICU care",
     criticalityScore: 6,
@@ -569,11 +571,11 @@ export const transfusionRows: IcuBloodTransfusion[] = [
 ];
 
 export const doctorInstructions: DoctorInstruction[] = [
-  { id: "ins-001", patientId: "icu-001", bedNo: "ICU-A01", doctor: "Dr. Sameer Mehta", instructionType: "Monitoring", instruction: "Repeat vitals every 15 minutes until BP stabilizes", priority: "Critical", dueTime: "Now", status: "Pending", assignedNurse: "Ward Nurse Kavita", remarks: "Escalate to duty doctor if MAP < 65" },
-  { id: "ins-002", patientId: "icu-002", bedNo: "ICU-A02", doctor: "Dr. Neha Malik", instructionType: "Result review", instruction: "Review ABG and ventilator settings", priority: "High", dueTime: "20 min", status: "In progress", assignedNurse: "Ward Nurse Arjun", remarks: "ABG sent" },
-  { id: "ins-003", patientId: "icu-004", bedNo: "ICU-B04", doctor: "Dr. Sameer Mehta", instructionType: "Transfer", instruction: "Prepare transfer to medical ward", priority: "Routine", dueTime: "Today", status: "Pending", assignedNurse: "Unit Nurse Meera", remarks: "Need pharmacy and billing clearance" },
-  { id: "ins-004", patientId: "icu-005", bedNo: "ICU-T05", doctor: "Dr. Kavita Rao", instructionType: "Transplant review", instruction: "Track urine output hourly and follow tacrolimus level", priority: "High", dueTime: "30 min", status: "Pending", assignedNurse: "Ward Nurse Neha", remarks: "Inform transplant team if urine output drops" },
-  { id: "ins-005", patientId: "icu-006", bedNo: "ICU-R06", doctor: "Dr. Sameer Mehta", instructionType: "Respiratory review", instruction: "Repeat ABG after NIV setting change", priority: "Critical", dueTime: "Now", status: "In progress", assignedNurse: "Ward Nurse Arjun", remarks: "Prepare intubation readiness if NIV fails" },
+  { id: "ins-001", patientId: "icu-001", bedNo: "ICU-A01", doctor: "Dr. Sameer Mehta", doctorRole: "ICU Consultant", orderedAt: "08:40 AM", instructionType: "Monitoring", instruction: "Repeat vitals every 15 minutes until BP stabilizes", priority: "Critical", dueTime: "Now", status: "Pending", assignedNurse: "Ward Nurse Kavita", remarks: "Escalate to duty doctor if MAP < 65" },
+  { id: "ins-002", patientId: "icu-002", bedNo: "ICU-A02", doctor: "Dr. Neha Malik", doctorRole: "Cardiac Surgeon", orderedAt: "09:05 AM", instructionType: "Result review", instruction: "Review ABG and ventilator settings", priority: "High", dueTime: "20 min", status: "In progress", assignedNurse: "Ward Nurse Arjun", remarks: "ABG sent" },
+  { id: "ins-003", patientId: "icu-004", bedNo: "ICU-B04", doctor: "Dr. Sameer Mehta", doctorRole: "ICU Consultant", orderedAt: "09:20 AM", instructionType: "Transfer", instruction: "Prepare transfer to medical ward", priority: "Routine", dueTime: "Today", status: "Pending", assignedNurse: "Ward Nurse Kavita", remarks: "Need pharmacy and billing clearance" },
+  { id: "ins-004", patientId: "icu-005", bedNo: "ICU-T05", doctor: "Dr. Kavita Rao", doctorRole: "Transplant Consultant", orderedAt: "09:35 AM", instructionType: "Transplant review", instruction: "Track urine output hourly and follow tacrolimus level", priority: "High", dueTime: "30 min", status: "Pending", assignedNurse: "Ward Nurse Neha", remarks: "Inform transplant team if urine output drops" },
+  { id: "ins-005", patientId: "icu-006", bedNo: "ICU-R06", doctor: "Dr. Sameer Mehta", doctorRole: "ICU Consultant", orderedAt: "09:50 AM", instructionType: "Respiratory review", instruction: "Repeat ABG after NIV setting change", priority: "Critical", dueTime: "Now", status: "In progress", assignedNurse: "Ward Nurse Arjun", remarks: "Prepare intubation readiness if NIV fails" },
 ];
 
 export const icuAlerts: IcuAlert[] = [
