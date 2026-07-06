@@ -333,8 +333,6 @@ type Note = {
   objective?: string;
   medicalAssessment?: string;
   plan?: string;
-  primaryDiagnosis?: string;
-  secondaryDiagnoses?: string;
   practitionerId?: string;
   patientId?: string;
   encounterId?: string;
@@ -1165,7 +1163,7 @@ export function NotesPage() {
   const [activeTab, setActiveTab] = React.useState("all");
   const [specialty, setSpecialty] = React.useState("All Specialties");
   const [category, setCategory] = React.useState<string>("All Categories");
-  const [author, setAuthor] = React.useState("All Authors");
+  const [author, setAuthor] = React.useState("");
   const [status, setStatus] = React.useState("All Status");
   const [priority, setPriority] = React.useState("All Priorities");
   const [query, setQuery] = React.useState("");
@@ -1262,7 +1260,7 @@ export function NotesPage() {
           (!noteId.trim() || String(note.id) === noteId.trim()) &&
           (category === "All Categories" || note.category === category) &&
           (specialty === "All Specialties" || note.specialty === specialty) &&
-          (author === "All Authors" || note.author === author) &&
+          (author === "" || note.author === author) &&
           (status === "All Status" || note.status === status) &&
           (priority === "All Priorities" || note.priority === priority) &&
           (noteType === "All Note Types" || getNoteType(note) === noteType) &&
@@ -1285,7 +1283,7 @@ export function NotesPage() {
   function resetFilters() {
     setCategory(filterLockedCategory ?? activeCategory?.label ?? "All Categories");
     setSpecialty("All Specialties");
-    setAuthor("All Authors");
+    setAuthor("");
     setStatus("All Status");
     setPriority("All Priorities");
     setQuery("");
@@ -1697,7 +1695,6 @@ function NotesFilterPanel(props: {
   const [searchDraft, setSearchDraft] = React.useState(props.query);
   const [filtersExpanded, setFiltersExpanded] = React.useState(props.initiallyExpanded);
   const allSpecialties = Array.from(new Set(props.allNotes.map((note) => note.specialty)));
-  const allAuthors = Array.from(new Set(props.allNotes.map((note) => note.author)));
   const allSigners = Array.from(new Set(props.allNotes.map((note) => note.signedBy).filter((value): value is string => Boolean(value))));
   const allNoteTypes = Array.from(new Set(props.allNotes.map(getNoteType)));
 
@@ -1750,7 +1747,6 @@ function NotesFilterPanel(props: {
 
         <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-[minmax(280px,1.35fr)_repeat(5,minmax(130px,1fr))]">
           <FilterRadioGroup label="Priority" name="notes-overview-priority" value={props.priority} options={["All Priorities", "High", "Medium", "Low"]} onChange={props.onPriorityChange} />
-          <FilterSelect label="Author" value={props.author} options={["All Authors", ...allAuthors]} onChange={props.onAuthorChange} />
           <FilterSelect label="Signed by" value={props.signer} options={["All Signers", ...allSigners]} onChange={props.onSignerChange} />
           <FilterSelect label="Visit scope" value={props.visitScope} options={["All Patient Visits", "Current Visit", "Specific Visit"]} onChange={props.onVisitScopeChange} />
           <FilterSelect label="Follow-up" value={props.followUpFilter} options={["All Follow-up", "Required", "Not Required", "Overdue"]} onChange={props.onFollowUpFilterChange} />
@@ -1998,7 +1994,6 @@ function FilterView(props: {
   const [pageSize, setPageSize] = React.useState(10);
   const [page, setPage] = React.useState(1);
   const allSpecialties = Array.from(new Set(props.allNotes.map((note) => note.specialty)));
-  const allAuthors = Array.from(new Set(props.allNotes.map((note) => note.author)));
   const allSigners = Array.from(new Set(props.allNotes.map((note) => note.signedBy).filter((value): value is string => Boolean(value))));
   const allNoteTypes = Array.from(new Set(props.allNotes.map(getNoteType)));
   const sortedNotes = React.useMemo(
@@ -2006,7 +2001,6 @@ function FilterView(props: {
       [...props.notes].sort((left, right) => {
         if (sortOrder === "Oldest first") return compareNoteDates(left, right);
         if (sortOrder === "Priority") return priorityRank(left.priority) - priorityRank(right.priority);
-        if (sortOrder === "Author") return left.author.localeCompare(right.author);
         if (sortOrder === "Note title") return left.title.localeCompare(right.title);
         return compareNoteDates(right, left);
       }),
@@ -2092,7 +2086,6 @@ function FilterView(props: {
 
           <div className="space-y-3 border-t border-border pt-4">
             <div className="text-[11px] font-semibold uppercase text-muted-foreground">Workflow</div>
-            <FilterSelect label="Author" value={props.author} options={["All Authors", ...allAuthors]} onChange={props.onAuthorChange} />
             <FilterSelect label="Signed by" value={props.signer} options={["All Signers", ...allSigners]} onChange={props.onSignerChange} />
             <div className="grid gap-3 sm:grid-cols-2">
               <FilterSelect label="Status" value={props.status} options={["All Status", "Signed", "Draft", "Pending Review"]} onChange={props.onStatusChange} />
@@ -2133,7 +2126,7 @@ function FilterView(props: {
             <p className="text-xs text-muted-foreground">{props.notes.length} matching clinical notes</p>
           </div>
           <div className="grid w-full grid-cols-[minmax(150px,1fr)_92px] gap-3 lg:w-auto">
-            <FilterSelect className="min-w-0" label="Sort" value={sortOrder} options={["Newest first", "Oldest first", "Priority", "Author", "Note title"]} onChange={setSortOrder} />
+            <FilterSelect className="min-w-0" label="Sort" value={sortOrder} options={["Newest first", "Oldest first", "Priority", "Note title"]} onChange={setSortOrder} />
             <FilterSelect className="min-w-0" label="Per page" value={String(pageSize)} options={["10", "25", "50", "100"]} onChange={(value) => setPageSize(Number(value))} />
           </div>
         </div>
@@ -2222,12 +2215,6 @@ function NewNoteModal({
   const [objective, setObjective] = React.useState("");
   const [medicalAssessment, setMedicalAssessment] = React.useState("");
   const [plan, setPlan] = React.useState("");
-  const [primaryDiagnosis, setPrimaryDiagnosis] = React.useState("");
-  const [secondaryDiagnoses, setSecondaryDiagnoses] = React.useState("");
-  const [customPrimaryDiagnosis, setCustomPrimaryDiagnosis] = React.useState("");
-  const [customSecondaryDiagnosis, setCustomSecondaryDiagnosis] = React.useState("");
-  const [primaryDiagnosisPopupOpen, setPrimaryDiagnosisPopupOpen] = React.useState(false);
-  const [secondaryDiagnosisPopupOpen, setSecondaryDiagnosisPopupOpen] = React.useState(false);
   const [practitionerId, setPractitionerId] = React.useState("");
   const [patientId, setPatientId] = React.useState("10000098");
   const [encounterId, setEncounterId] = React.useState("ENC123456789");
@@ -2260,10 +2247,6 @@ function NewNoteModal({
       : "Clinical note is required.";
   const hasPatientVisitContext = isMedicalNote || isSurgeryNote || isOperativeNote || isPharmacyNote || isAlliedHealthNote || shouldSaveSpecialInstruction;
   const isAmendment = isMedicalNote && editingNote?.status === "Signed";
-  const diagnosisOptions = React.useMemo(() => {
-    const baseOptions = medicalDiagnosisBySpecialty[specialty] ?? medicalDiagnosisBySpecialty["General Medicine"];
-    return [...baseOptions, diagnosisOtherOption];
-  }, [specialty]);
   const observedPainTotal = painScale === "NRS" ? undefined : calculateObservedPainScore(painScale, painDomainScores);
   const savedPainScore = painScale === "NRS" ? painScore : observedPainTotal?.toString() ?? "";
   const painSeverity =
@@ -2342,17 +2325,6 @@ function NewNoteModal({
     setObjective(editingNote?.objective ?? "");
     setMedicalAssessment(editingNote?.medicalAssessment ?? "");
     setPlan(editingNote?.plan ?? "");
-    const savedDiagnosisOptions = medicalDiagnosisBySpecialty[savedSpecialty] ?? medicalDiagnosisBySpecialty["General Medicine"];
-    const savedPrimaryDiagnosis = editingNote?.primaryDiagnosis ?? "";
-    const savedSecondaryDiagnosis = editingNote?.secondaryDiagnoses ?? "";
-    const customPrimary = Boolean(savedPrimaryDiagnosis) && !savedDiagnosisOptions.includes(savedPrimaryDiagnosis);
-    const customSecondary = Boolean(savedSecondaryDiagnosis) && !savedDiagnosisOptions.includes(savedSecondaryDiagnosis);
-    setPrimaryDiagnosis(customPrimary ? diagnosisOtherOption : savedPrimaryDiagnosis);
-    setSecondaryDiagnoses(customSecondary ? diagnosisOtherOption : savedSecondaryDiagnosis);
-    setCustomPrimaryDiagnosis(customPrimary ? savedPrimaryDiagnosis : "");
-    setCustomSecondaryDiagnosis(customSecondary ? savedSecondaryDiagnosis : "");
-    setPrimaryDiagnosisPopupOpen(false);
-    setSecondaryDiagnosisPopupOpen(false);
     setPractitionerId(editingNote?.practitionerId ?? "");
     setPatientId(editingNote?.patientId ?? "10000098");
     setEncounterId(editingNote?.encounterId ?? "ENC123456789");
@@ -2405,14 +2377,6 @@ function NewNoteModal({
     }
     if (category === "Special Instruction Notes") {
       setAdditionalProgress((current) => ({ ...current, noteType: inferAdditionalNoteType(value) }));
-    }
-    if (category === "Medical Notes") {
-      setPrimaryDiagnosis("");
-      setSecondaryDiagnoses("");
-      setCustomPrimaryDiagnosis("");
-      setCustomSecondaryDiagnosis("");
-      setPrimaryDiagnosisPopupOpen(false);
-      setSecondaryDiagnosisPopupOpen(false);
     }
   }
 
@@ -2542,12 +2506,10 @@ function NewNoteModal({
       patientId: hasPatientVisitContext ? patientId.trim() : undefined,
       plan: isMedicalNote ? plan.trim() : undefined,
       practitionerId: undefined,
-      primaryDiagnosis: isMedicalNote ? (primaryDiagnosis === diagnosisOtherOption ? customPrimaryDiagnosis : primaryDiagnosis).trim() : undefined,
       priority,
       pharmacy: isPharmacyNote ? pharmacy : undefined,
       pulse: isNurseNote ? pulse : undefined,
       safetyRisk: isNurseNote ? safetyRisk.trim() : undefined,
-      secondaryDiagnoses: isMedicalNote ? (secondaryDiagnoses === diagnosisOtherOption ? customSecondaryDiagnosis : secondaryDiagnoses).trim() : undefined,
       serviceDateTime: isOperativeNote
           ? operative.operativeDate || undefined
           : serviceDateTime || undefined,
@@ -2589,9 +2551,11 @@ function NewNoteModal({
         ) : null}
 
         <div className="grid items-start gap-3 sm:grid-cols-2">
-          {!isOperativeNote ? <FormField label="Author">
-            <Input onChange={(event) => setAuthor(event.target.value)} placeholder="Enter author name" value={author} />
-          </FormField> : null}
+          {isMedicalNote && medicalNoteSection === "ED Notes" ? (
+            <FormField label="Name">
+              <Input onChange={(event) => setAuthor(event.target.value)} placeholder="Enter name" value={author} />
+            </FormField>
+          ) : null}
           <PriorityRadioGroup onChange={setPriority} value={priority} />
           {!isAdditionalProgressNote && !isPharmacyNote ? (
             <FormField label="Specialty">
@@ -2825,40 +2789,6 @@ function NewNoteModal({
                   />
                 </FormField>
               </div>
-              {isMedicalNote ? <FormField label="Primary diagnosis">
-                <SelectWithOtherPopup
-                  customValue={customPrimaryDiagnosis}
-                  error={false}
-                  onChange={(value) => {
-                    setPrimaryDiagnosis(value);
-                    setPrimaryDiagnosisPopupOpen(value === diagnosisOtherOption);
-                    if (value !== diagnosisOtherOption) setCustomPrimaryDiagnosis("");
-                  }}
-                  onCustomValueChange={setCustomPrimaryDiagnosis}
-                  onOpenChange={setPrimaryDiagnosisPopupOpen}
-                  open={primaryDiagnosisPopupOpen}
-                  options={diagnosisOptions}
-                  placeholder="Enter primary diagnosis"
-                  value={primaryDiagnosis}
-                />
-              </FormField> : null}
-              {isMedicalNote ? <FormField label="Secondary diagnosis">
-                <SelectWithOtherPopup
-                  customValue={customSecondaryDiagnosis}
-                  error={false}
-                  onChange={(value) => {
-                    setSecondaryDiagnoses(value);
-                    setSecondaryDiagnosisPopupOpen(value === diagnosisOtherOption);
-                    if (value !== diagnosisOtherOption) setCustomSecondaryDiagnosis("");
-                  }}
-                  onCustomValueChange={setCustomSecondaryDiagnosis}
-                  onOpenChange={setSecondaryDiagnosisPopupOpen}
-                  open={secondaryDiagnosisPopupOpen}
-                  options={diagnosisOptions}
-                  placeholder="Enter secondary diagnosis"
-                  value={secondaryDiagnoses}
-                />
-              </FormField> : null}
             </div>
         ) : null}
 
@@ -4567,7 +4497,9 @@ function NoteDetailsModal({
       {note ? (
         <div className="space-y-4">
           <div className="grid gap-3 rounded-md border border-border bg-surface-muted/45 p-3 sm:grid-cols-2 lg:grid-cols-4">
-            <DetailField label="Author" value={note.author} />
+            {note.category === "Medical Notes" && (note.medicalNoteSection ?? "ED Notes") === "ED Notes" ? (
+              <DetailField label="Name" value={note.author} />
+            ) : null}
             <DetailField label="Date & Time" value={note.date} />
             <div>
               <div className="text-[11px] font-semibold text-muted-foreground">Status</div>
@@ -4590,14 +4522,6 @@ function NoteDetailsModal({
                   <DetailField label="Encounter ID" value={note.encounterId || "Not linked"} />
                   <DetailField label="Authenticated Signer" value={note.authenticatedSigner || note.signedBy || "Not authenticated"} />
                   <DetailField label="FHIR Document Target" value="DocumentReference" />
-                  <DetailField label="Diagnosis Target" value="Condition" />
-                </div>
-              </div>
-              <div>
-                <h4 className="text-xs font-semibold text-muted-foreground">Diagnoses</h4>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  <NarrativeField label="Primary Diagnosis" value={note.primaryDiagnosis} />
-                  <NarrativeField label="Secondary Diagnoses" value={note.secondaryDiagnoses} />
                 </div>
               </div>
               {hasStructuredMedicalNote(note) ? (
@@ -5189,7 +5113,7 @@ function NotesTable({ actions, notes: rows, compact = false }: { actions: NoteTa
       <table className="w-full min-w-[780px] border-collapse text-xs">
         <thead className="bg-surface-muted/70 text-muted-foreground">
           <tr>
-            {["Note Title", "Category", "Specialty", "Author", "Date & Time", "Status", "Priority", "Actions"].map((heading) => (
+            {["Note Title", "Category", "Specialty", "Date & Time", "Status", "Priority", "Actions"].map((heading) => (
               <th className="border-b border-border px-3 py-2 text-left text-[11px] font-semibold" key={heading}>{heading}</th>
             ))}
           </tr>
@@ -5200,7 +5124,6 @@ function NotesTable({ actions, notes: rows, compact = false }: { actions: NoteTa
               <td className="border-b border-border px-3 py-2.5 font-medium">{note.title}</td>
               <td className="border-b border-border px-3 py-2.5 text-muted-foreground">{getCategoryDisplayLabel(note.category)}</td>
               <td className="border-b border-border px-3 py-2.5">{note.specialty}</td>
-              <td className="border-b border-border px-3 py-2.5">{note.author}</td>
               <td className="whitespace-nowrap border-b border-border px-3 py-2.5 text-muted-foreground">{note.date}</td>
               <td className="border-b border-border px-3 py-2.5"><StatusLabel status={note.status} /></td>
               <td className="border-b border-border px-3 py-2.5"><PriorityLabel priority={note.priority} /></td>
