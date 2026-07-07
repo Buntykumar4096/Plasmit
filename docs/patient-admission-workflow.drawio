@@ -1,0 +1,329 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="patient_admission_workflow" name="patient_admission_workflow">
+    <mxGraphModel dx="1340" dy="571" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2360" pageHeight="1280" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#111827;" value="Patient Admission Workflow" vertex="1">
+          <mxGeometry height="36" width="2240" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_reception" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#93C5FD;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="40" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_doctor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#86EFAC;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="320" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_desk" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FDBA74;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="600" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_consent" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#C4B5FD;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="880" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_billing" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FDA4AF;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="1160" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_bed" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#67E8F9;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="1440" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_transport" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#A1A1AA;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="1720" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_nurse" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6EE7B7;" value="" vertex="1">
+          <mxGeometry height="1065" width="280" x="2000" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_reception" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1E3A8A;" value="Reception / Registration" vertex="1">
+          <mxGeometry height="70" width="280" x="40" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_doctor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#14532D;" value="Doctor" vertex="1">
+          <mxGeometry height="70" width="280" x="320" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_desk" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFEDD5;strokeColor=#EA580C;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#7C2D12;" value="Admission Desk" vertex="1">
+          <mxGeometry height="70" width="280" x="600" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_consent" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#9333EA;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#581C87;" value="Patient / Attendant" vertex="1">
+          <mxGeometry height="70" width="280" x="880" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_billing" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE4E6;strokeColor=#E11D48;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#881337;" value="Billing / Insurance" vertex="1">
+          <mxGeometry height="70" width="280" x="1160" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_bed" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#0891B2;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#164E63;" value="Bed Management" vertex="1">
+          <mxGeometry height="70" width="280" x="1440" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_transport" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E4E4E7;strokeColor=#52525B;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#27272A;" value="Transport / Patient Shift" vertex="1">
+          <mxGeometry height="70" width="280" x="1720" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="role_nurse" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#064E3B;" value="Ward Nurse / Receiving Unit" vertex="1">
+          <mxGeometry height="70" width="280" x="2000" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#15803D;fontSize=12;fontStyle=1;strokeWidth=2;" value="Start" vertex="1">
+          <mxGeometry height="50" width="80" x="140" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontSize=12;spacing=8;strokeWidth=2;" value="A1. Patient lookup&lt;br&gt;Existing UHID / new registration" vertex="1">
+          <mxGeometry height="70" width="240" x="60" y="235" as="geometry" />
+        </mxCell>
+        <mxCell id="d_patient" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=12;spacing=8;fontStyle=1;strokeWidth=2;" value="Patient type?" vertex="1">
+          <mxGeometry height="88" width="150" x="105" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontSize=12;spacing=8;strokeWidth=2;" value="A2. Existing UHID / New UHID&lt;br&gt;Emergency: temporary ID" vertex="1">
+          <mxGeometry height="70" width="240" x="60" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="reg_fix" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontSize=11;spacing=6;strokeWidth=2;" value="Correct registration&lt;br&gt;Name, DOB, UHID, mobile, duplicate" vertex="1">
+          <mxGeometry height="70" width="240" x="60" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontSize=12;spacing=8;strokeWidth=2;" value="A3. Clinical assessment&lt;br&gt;Diagnosis and admission need" vertex="1">
+          <mxGeometry height="70" width="240" x="340" y="235" as="geometry" />
+        </mxCell>
+        <mxCell id="d_admit" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=12;spacing=8;fontStyle=1;strokeWidth=2;" value="Admission required?" vertex="1">
+          <mxGeometry height="88" width="160" x="380" y="408" as="geometry" />
+        </mxCell>
+        <mxCell id="no_admit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#B91C1C;fontSize=11;spacing=6;strokeWidth=2;" value="No admission&lt;br&gt;OPD / observation / discharge" vertex="1">
+          <mxGeometry height="56" width="230" x="350" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontSize=12;spacing=8;strokeWidth=2;" value="A4. Admission order&lt;br&gt;Diagnosis, priority, reason, ward, instructions" vertex="1">
+          <mxGeometry height="78" width="240" x="340" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor_fix" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontSize=11;spacing=6;strokeWidth=2;" value="Doctor correction&lt;br&gt;Complete missing clinical information" vertex="1">
+          <mxGeometry height="70" width="240" x="340" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEDD5;strokeColor=#EA580C;fontSize=12;spacing=8;strokeWidth=2;" value="A5. Admission Desk verification&lt;br&gt;Validate request and record failure reason" vertex="1">
+          <mxGeometry height="78" width="240" x="620" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="d_complete" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=12;spacing=8;fontStyle=1;strokeWidth=2;" value="Request complete?" vertex="1">
+          <mxGeometry height="88" width="160" x="660" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="d_issue" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=12;spacing=8;fontStyle=1;strokeWidth=2;" value="Issue type?" vertex="1">
+          <mxGeometry height="88" width="150" x="665" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="issue_clinical" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FED7AA;strokeColor=#C2410C;fontSize=11;spacing=6;strokeWidth=2;" value="Clinical missing&lt;br&gt;Return to Doctor" vertex="1">
+          <mxGeometry height="58" width="240" x="620" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="issue_registration" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FED7AA;strokeColor=#C2410C;fontSize=11;spacing=6;strokeWidth=2;" value="Registration / duplicate issue&lt;br&gt;Return to Reception" vertex="1">
+          <mxGeometry height="58" width="240" x="620" y="1012" as="geometry" />
+        </mxCell>
+        <mxCell id="issue_insurance" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FED7AA;strokeColor=#C2410C;fontSize=11;spacing=6;strokeWidth=2;" value="Insurance details missing&lt;br&gt;Return to Billing" vertex="1">
+          <mxGeometry height="58" width="240" x="620" y="1082" as="geometry" />
+        </mxCell>
+        <mxCell id="s6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#9333EA;fontSize=12;spacing=8;strokeWidth=2;" value="A6. Obtain consents&lt;br&gt;Admission, general, insurance, privacy" vertex="1">
+          <mxGeometry height="78" width="240" x="900" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="consent_pending" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#9333EA;fontSize=11;spacing=6;strokeWidth=2;" value="Consent pending&lt;br&gt;Patient / attendant completion" vertex="1">
+          <mxGeometry height="58" width="240" x="900" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="s7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE4E6;strokeColor=#E11D48;fontSize=12;spacing=8;strokeWidth=2;" value="A7. Financial review&lt;br&gt;Insurance / corporate / cash" vertex="1">
+          <mxGeometry height="70" width="240" x="1180" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="d_finance" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=12;spacing=8;fontStyle=1;strokeWidth=2;" value="Financial cleared?" vertex="1">
+          <mxGeometry height="88" width="165" x="1218" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="billing_hold" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE4E6;strokeColor=#E11D48;fontSize=11;spacing=6;strokeWidth=2;" value="Billing hold&lt;br&gt;Insurance / advance / corporate approval / cash deposit pending" vertex="1">
+          <mxGeometry height="82" width="240" x="1180" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="s8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#0891B2;fontSize=12;spacing=8;strokeWidth=2;" value="A8. Search requested ward / bed" vertex="1">
+          <mxGeometry height="70" width="240" x="1460" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="d_bed" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=12;spacing=8;fontStyle=1;strokeWidth=2;" value="Bed available?" vertex="1">
+          <mxGeometry height="88" width="155" x="1502.5" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="waitlist" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#0891B2;fontSize=11;spacing=6;strokeWidth=2;" value="Waitlist&lt;br&gt;Alternate ward - ICU upgrade - expected discharge - bed assigned" vertex="1">
+          <mxGeometry height="82" width="240" x="1460" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="s9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#0891B2;fontSize=12;spacing=8;strokeWidth=2;" value="A9. Reserve and assign bed&lt;br&gt;Available - Reserved" vertex="1">
+          <mxGeometry height="70" width="240" x="1460" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="s10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E4E4E7;strokeColor=#52525B;fontSize=12;spacing=8;strokeWidth=2;" value="A10. Arrange transport" vertex="1">
+          <mxGeometry height="70" width="140" x="1840" y="614" as="geometry" />
+        </mxCell>
+        <mxCell id="s11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E4E4E7;strokeColor=#52525B;fontSize=12;spacing=8;strokeWidth=2;" value="A11. Patient shift" vertex="1">
+          <mxGeometry height="70" width="240" x="1740" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="s12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;fontSize=12;spacing=8;strokeWidth=2;" value="A12. Ward arrival and identity verification&lt;br&gt;Wristband, UHID, name, DOB, bed, doctor order" vertex="1">
+          <mxGeometry height="88" width="240" x="2020" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="s13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;fontSize=12;spacing=8;strokeWidth=2;" value="A13. Bed occupied&lt;br&gt;Reserved - Occupied" vertex="1">
+          <mxGeometry height="70" width="240" x="2020" y="698" as="geometry" />
+        </mxCell>
+        <mxCell id="s14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;fontSize=12;spacing=8;strokeWidth=2;" value="A14. Notify treating doctor&lt;br&gt;Patient reached ward" vertex="1">
+          <mxGeometry height="70" width="240" x="2020" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="s15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;fontSize=12;spacing=8;strokeWidth=2;" value="A15. Initial assessment&lt;br&gt;Vitals, admission assessment, handover" vertex="1">
+          <mxGeometry height="70" width="240" x="2020" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="s16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;fontSize=12;spacing=8;strokeWidth=2;" value="A16. Inpatient care started" vertex="1">
+          <mxGeometry height="70" width="240" x="2020" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#15803D;fontSize=12;fontStyle=1;strokeWidth=2;" value="Complete" vertex="1">
+          <mxGeometry height="50" width="90" x="2095" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="cancel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#B91C1C;fontSize=12;spacing=8;strokeWidth=2;" value="Pre-admission final states: Cancelled - Left Against Medical Advice - Transferred - Expired Before Admission" vertex="1">
+          <mxGeometry height="62" width="980" x="60" y="1180" as="geometry" />
+        </mxCell>
+        <mxCell id="emergency" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontSize=12;spacing=8;fontStyle=1;strokeWidth=2;" value="Emergency fast track: Emergency arrival - Temporary ID - Emergency treatment - Doctor admission order - Emergency bed - Formal registration - Billing later" vertex="1">
+          <mxGeometry height="62" width="1180" x="1080" y="1180" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="d_patient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="d_patient" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s2" value="Old / New / Emergency">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="30" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="s3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="d_admit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="d_admit" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#991B1B;strokeColor=#DC2626;strokeWidth=2;" target="no_admit" value="No">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="35" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="d_admit" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#14532D;strokeColor=#16A34A;strokeWidth=2;" target="s4" value="Yes">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-35" as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="560" />
+              <mxPoint x="460" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="s4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="s5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="d_complete">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="d_complete" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#991B1B;strokeColor=#DC2626;strokeWidth=2;" target="d_issue" value="No">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="35" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="d_issue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#7C2D12;strokeColor=#C2410C;strokeWidth=2;" target="issue_clinical" value="Clinical">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="42" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="d_issue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#7C2D12;strokeColor=#C2410C;strokeWidth=2;" target="issue_registration" value="Registration">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="48" y="8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="d_issue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#7C2D12;strokeColor=#C2410C;strokeWidth=2;" target="issue_insurance" value="Insurance">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="42" y="16" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="issue_clinical" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;labelBackgroundColor=#FFFFFF;fontColor=#9A3412;strokeColor=#EA580C;strokeWidth=3;" target="doctor_fix">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="doctor_fix" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;labelBackgroundColor=#FFFFFF;fontColor=#9A3412;strokeColor=#EA580C;strokeWidth=3;" target="s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="issue_registration" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;labelBackgroundColor=#FFFFFF;fontColor=#9A3412;strokeColor=#EA580C;strokeWidth=3;" target="reg_fix">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="reg_fix" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;labelBackgroundColor=#FFFFFF;fontColor=#9A3412;strokeColor=#EA580C;strokeWidth=3;" target="s5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="issue_insurance" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;labelBackgroundColor=#FFFFFF;fontColor=#9A3412;strokeColor=#EA580C;strokeWidth=3;" target="s7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="d_complete" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#14532D;strokeColor=#16A34A;strokeWidth=2;" target="s6" value="Yes">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-35" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e20a" edge="1" parent="1" source="s6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="consent_pending">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="consent_pending" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="s7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1150" y="834" />
+              <mxPoint x="1150" y="555" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="s7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="d_finance">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e22" edge="1" parent="1" source="d_finance" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#991B1B;strokeColor=#DC2626;strokeWidth=2;" target="billing_hold" value="No">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="35" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e23" edge="1" parent="1" source="billing_hold" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;labelBackgroundColor=#FFFFFF;fontColor=#9A3412;strokeColor=#EA580C;strokeWidth=3;" target="s7" value="Resolved">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="58" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="1300" y="840" />
+              <mxPoint x="1390" y="840" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e24" edge="1" parent="1" source="d_finance" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#14532D;strokeColor=#16A34A;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="s8" value="Yes">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-25" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="1420" y="654" />
+              <mxPoint x="1420" y="225" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e25" edge="1" parent="1" source="s8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="d_bed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e26" edge="1" parent="1" source="d_bed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#991B1B;strokeColor=#DC2626;strokeWidth=2;" target="waitlist" value="No">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="38" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e27" edge="1" parent="1" source="waitlist" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;labelBackgroundColor=#FFFFFF;fontColor=#9A3412;strokeColor=#EA580C;strokeWidth=3;" target="s8">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1710" y="596" />
+              <mxPoint x="1710" y="225" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e28" edge="1" parent="1" source="d_bed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#14532D;strokeColor=#16A34A;strokeWidth=2;" target="s9" value="Yes">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-38" y="8" as="offset" />
+            <Array as="points">
+              <mxPoint x="1580" y="535" />
+              <mxPoint x="1580" y="670" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e29" edge="1" parent="1" source="s9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e30" edge="1" parent="1" source="s10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e31" edge="1" parent="1" source="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e32" edge="1" parent="1" source="s12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e33" edge="1" parent="1" source="s13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e34" edge="1" parent="1" source="s14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e35" edge="1" parent="1" source="s15" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="s16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e36" edge="1" parent="1" source="s16" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#FFFFFF;fontColor=#111827;strokeColor=#2563EB;strokeWidth=2;" target="end">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

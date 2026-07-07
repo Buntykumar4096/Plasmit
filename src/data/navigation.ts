@@ -19,7 +19,6 @@ import {
   FilePenLine,
   FileClock,
   FlaskConical,
-  Gauge,
   HeartPulse,
   Home,
   IdCard,
@@ -66,42 +65,9 @@ function notesRoute(category?: string) {
   return category ? `/notes/all-notes?category=${category}` : "/notes/all-notes";
 }
 
-function notes1Route(category?: string, specialty?: string) {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (specialty) params.set("specialty", specialty);
-  const query = params.toString();
-  return query ? `/notes1?${query}` : "/notes1";
+function note1Route(category?: string) {
+  return category ? `/note1/all-notes?category=${category}` : "/note1/all-notes";
 }
-
-function note1CategoryMenu(id: string, label: string, specialties: string[]) {
-  return {
-    id: `notes1-${id}`,
-    label,
-    route: notes1Route(id),
-    children: specialties.length
-      ? [
-          { id: `notes1-${id}-all`, label: `All ${label}`, route: notes1Route(id) },
-          ...specialties.map((specialty) => ({
-            id: `notes1-${id}-${specialty.toLowerCase().replaceAll(" ", "-")}`,
-            label: specialty,
-            route: notes1Route(id, specialty),
-          })),
-        ]
-      : undefined,
-  };
-}
-
-const notes1Menu = [
-  { id: "notes1-all", label: "All Notes", route: "/notes1" },
-  note1CategoryMenu("medical", "Medical Notes", ["ED Notes", "Physician Notes"]),
-  note1CategoryMenu("surgery", "Surgical Notes", ["Neurosurgery", "Ophthalmology", "ENT", "Cardiothoracic Surgery", "Thoracic Surgery", "Hepatobiliary Surgery", "General Surgery", "Colorectal Surgery", "Upper GI Surgery", "Lower GI Surgery", "Vascular Surgery", "Orthopedic Surgery", "Interventional Radiology", "Gynecology", "Transplant Surgery", "Plastic and Reconstructive Surgery", "Maxillo-facial Surgery", "Urology", "Others"]),
-  note1CategoryMenu("operative", "Operative Notes", ["Neurosurgery", "Ophthalmology", "ENT", "Cardiothoracic Surgery", "Thoracic Surgery", "Hepatobiliary Surgery", "General Surgery", "Colorectal Surgery", "Upper GI Surgery", "Lower GI Surgery", "Vascular Surgery", "Orthopedic Surgery", "Interventional Radiology", "Gynecology", "Transplant Surgery", "Plastic and Reconstructive Surgery", "Maxillo-facial Surgery", "Urology", "Others"]),
-  note1CategoryMenu("nurse", "Nurse Notes", ["ICU Nurse", "Ward Nurse", "ED Nurse"]),
-  note1CategoryMenu("pharmacy", "Pharmacy Notes", []),
-  note1CategoryMenu("allied", "Allied Health Notes", ["Physiotherapy", "Dietitian", "Social Worker", "Occupational Therapy", "Speech Therapy", "Psychology"]),
-  { id: "notes1-filter", label: "Filter Notes", route: "/notes1?filters=open" },
-];
 
 const notesMenu = [
   { id: "notes-all", label: "All Notes", route: notesRoute() },
@@ -111,6 +77,16 @@ const notesMenu = [
   { id: "notes-nurse", label: "Nurse Notes", route: notesRoute("nurse") },
   { id: "notes-pharmacy", label: "Pharmacy Notes", route: notesRoute("pharmacy") },
   { id: "notes-allied", label: "Allied Health Notes", route: notesRoute("allied") },
+];
+
+const note1Menu = [
+  { id: "note1-all", label: "All Notes", route: note1Route() },
+  { id: "note1-medical", label: "Medical Notes", route: note1Route("medical") },
+  { id: "note1-surgery", label: "Surgery Notes", route: note1Route("surgery") },
+  { id: "note1-operative", label: "Operative Notes", route: note1Route("operative") },
+  { id: "note1-nurse", label: "Nurse Notes", route: note1Route("nurse") },
+  { id: "note1-pharmacy", label: "Pharmacy Notes", route: note1Route("pharmacy") },
+  { id: "note1-allied", label: "Allied Health Notes", route: note1Route("allied") },
 ];
 
 export const navigationItems: NavigationItem[] = [
@@ -160,8 +136,8 @@ export const navigationItems: NavigationItem[] = [
   { id: "patient-history-list", label: "Patient History List", icon: ListChecks, route: "/patient-history-list", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"], status: "ready" },
   { id: "poct-add", label: "Add POCT", icon: ClipboardPlus, route: "/poct/add", group: "POCT", allowedRoles: allRoles, status: "ready" },
   { id: "poct-results", label: "View POCT Result", icon: FileClock, route: "/poct/results", group: "POCT", allowedRoles: allRoles, status: "ready" },
-  { id: "notes", label: "Notes", icon: FilePenLine, route: "/notes/all-notes", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: notesMenu },
-  { id: "notes1", label: "Notes1", icon: FilePenLine, route: "/notes1", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: notes1Menu },
+  { id: "notes", label: "Notes1", icon: FilePenLine, route: "/notes/all-notes", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: notesMenu },
+  { id: "note1", label: "Notes", icon: FilePenLine, route: "/note1/all-notes", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: note1Menu },
   { id: "appointments", label: "Appointment", icon: CalendarClock, route: "/appointments", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Receptionist", "Doctor", "Nurse", "Billing Executive", "Management"], status: "ready" },
   {
     id: "diagnostic-hub",
@@ -192,15 +168,15 @@ export const navigationItems: NavigationItem[] = [
       { id: "tele-icu-escalated-cases", label: "Escalated Cases", route: "/remote-monitoring/escalated-cases", status: "ready" },
     ],
   },
-  // {
-  //   id: "admission",
-  //   label: "Admission",
-  //   icon: DoorOpen,
-  //   route: "/admission",
-  //   group: "Clinical",
-  //   allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"],
-  //   status: "ready",
-  // },
+  {
+    id: "admission",
+    label: "Admission",
+    icon: DoorOpen,
+    route: "/admission",
+    group: "Clinical",
+    allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Billing Executive", "Management"],
+    status: "ready",
+  },
   // { id: "opd", label: "OPD", icon: Stethoscope, route: "/opd", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Receptionist", "Pharmacist", "Lab Technician", "Management"], status: "ready" },
   // { id: "clinical-examination", label: "Clinical Exam", icon: ClipboardList, route: "/clinical-examination", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready" },
   // { id: "rapid-review", label: "Rapid Review", icon: Activity, route: "/rapid-review", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready" },

@@ -856,8 +856,8 @@ export function DiagnosticHubPage() {
             <Badge tone="info">{filteredReports.length} matches</Badge>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
-              <label className="flex h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm text-muted-foreground focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+            <div className="grid grid-cols-2 gap-2 md:gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+              <label className="col-span-2 flex h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm text-muted-foreground focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
                 <Search className="h-4 w-4" />
                 <input
                   className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
@@ -878,7 +878,7 @@ export function DiagnosticHubPage() {
 
       {criticalReviewOpen ? (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex-row items-center">
             <div>
               <CardTitle>Critical Review Queue</CardTitle>
             </div>
@@ -950,7 +950,7 @@ export function DiagnosticHubPage() {
               </div>
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-                  <thead className="bg-[#f7f7fb] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <thead className="bg-[#FFFFFF] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     <tr>
                       {["Report ID", "Test Name", "Category", "Status", "Collected On", "Issued On", "Ordered By", "Actions"].map((heading) => (
                         <th className="border-b border-border px-4 py-3" key={heading}>{heading}</th>
@@ -1187,7 +1187,7 @@ export function DiagnosticCategoryPage({ category }: { category: DiagnosticCateg
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse text-left text-sm">
-                <thead className="bg-[#f7f7fb] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <thead className="bg-[#FFFFFF] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   <tr>
                     {["Order ID", "Test / Study", "Sample / Modality", "Status", "Owner", "ETA / Issued", "Actions"].map((heading) => (
                       <th className="border-b border-border px-4 py-3" key={heading}>{heading}</th>
@@ -1321,7 +1321,7 @@ export function DiagnosticReportDetailsPage() {
           </div>
           <div className="overflow-hidden rounded-xl border border-border">
             <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="bg-[#f7f7fb] text-xs font-semibold uppercase text-muted-foreground">
+              <thead className="bg-[#FFFFFF] text-xs font-semibold uppercase text-muted-foreground">
                 <tr>
                   {["Test", "Result", "Unit", "Reference Range", "Status"].map((heading) => <th className="px-4 py-3" key={heading}>{heading}</th>)}
                 </tr>
@@ -1381,7 +1381,7 @@ function GroupedLabReportCard() {
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-border">
-          <div className="grid min-w-[760px] grid-cols-[minmax(240px,1.8fr)_120px_120px_minmax(160px,1fr)_120px] bg-[#f7f7fb] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="grid min-w-[760px] grid-cols-[minmax(240px,1.8fr)_120px_120px_minmax(160px,1fr)_120px] bg-[#FFFFFF] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <div>Test Description</div>
             <div className="text-right">Value(s)</div>
             <div className="text-right">Unit(s)</div>
@@ -1470,7 +1470,7 @@ function ReportDetailsDashboard() {
       <ReportDetailAlertBanner onToggleSummary={() => setSummaryOpen((current) => !current)} summaryOpen={summaryOpen} />
       {summaryOpen ? <ReportHealthSummary /> : null}
       <ReportDetailAttachmentsCompact />
-      <section className="grid max-w-full gap-3 overflow-x-hidden md:gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <section className="max-w-full space-y-3 overflow-x-hidden md:space-y-4">
         <ReportDetailGroupList activeCategory={activeCategory} onSelectCategory={setActiveCategory} />
         <main className="min-w-0 max-w-full space-y-3 overflow-x-hidden md:space-y-4">
           <ReportDetailActiveCategory category={selectedCategory} key={activeCategory} />
@@ -1533,9 +1533,9 @@ function ReportDetailAlertBanner({ onToggleSummary, summaryOpen }: { onToggleSum
 
 function ReportHealthSummary() {
   const summary = [
-    { label: "Blood Counts", value: "ESR 32 mm/hr", status: "Please watchout", tone: "danger" },
-    { label: "Liver Profile", value: "SGPT / ALT 52.5 U/L", status: "Please watchout", tone: "danger" },
-    { label: "Inflammation Marker", value: "CRP 32.87 mg/L", status: "Please watchout", tone: "danger" },
+    { label: "Blood Counts", value: "ESR 32 mm/hr", status: "Clinical review required", tone: "danger" },
+    { label: "Liver Profile", value: "SGPT / ALT 52.5 U/L", status: "Clinical review required", tone: "danger" },
+    { label: "Inflammation Marker", value: "CRP 32.87 mg/L", status: "Clinical review required", tone: "danger" },
     { label: "Anemia Studies", value: "CBC indices stable", status: "Looks good", tone: "success" },
   ] as const;
 
@@ -1663,30 +1663,24 @@ function ReportDetailGroupList({
 }) {
   return (
     <Card className="min-w-0 max-w-full overflow-hidden">
-      <CardHeader className="hidden xl:flex">
-        <div>
-          <CardTitle>Report Groups</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-px bg-border p-0 xl:block xl:bg-transparent">
+      <CardContent className="flex gap-2 overflow-x-auto p-2 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]" role="tablist" aria-label="Report groups">
         {reportDetailCategoryGroups.map((group) => {
           const Icon = group.icon;
           const active = group.label === activeCategory;
           return (
             <button
               className={cn(
-                "w-full min-w-0 bg-white px-2.5 py-2 text-left text-xs transition hover:bg-surface-muted xl:border-b xl:border-border xl:px-4 xl:py-3 xl:text-sm xl:last:border-0",
-                active && "bg-primary text-primary-foreground hover:bg-primary",
+                "flex h-10 shrink-0 items-center gap-2 rounded-md border border-border bg-white px-3 text-sm font-semibold text-muted-foreground transition hover:border-primary/40 hover:bg-primary-soft hover:text-foreground",
+                active && "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground",
               )}
               key={group.label}
               onClick={() => onSelectCategory(group.label)}
+              role="tab"
+              aria-selected={active}
               type="button"
             >
-              <div className="flex min-h-7 items-center gap-1.5 xl:min-h-8 xl:gap-3">
-                <Icon className={cn("h-4 w-4 shrink-0 xl:h-5 xl:w-5", active ? "text-primary-foreground" : group.tone)} />
-                <span className="min-w-0 flex-1 truncate font-semibold">{group.label}</span>
-                <ChevronRight className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-muted-foreground")} />
-              </div>
+              <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary-foreground" : group.tone)} />
+              <span>{group.label}</span>
             </button>
           );
         })}
@@ -1809,7 +1803,7 @@ function ReportDetailActiveCategory({ category }: { category: (typeof reportDeta
 
   return (
     <Card className="min-w-0 max-w-full overflow-hidden">
-      <CardHeader className="items-center gap-2 px-3 py-2 md:px-[var(--density-card-header-x)] md:py-[var(--density-card-header-y)]">
+      <CardHeader className="flex-row items-center gap-2 px-3 py-2 md:px-[var(--density-card-header-x)] md:py-[var(--density-card-header-y)]">
         <div className="flex min-w-0 items-center gap-2 md:gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-danger/10 text-danger md:h-11 md:w-11 md:rounded-xl">
             <Icon className="h-5 w-5 md:h-6 md:w-6" />
@@ -1849,7 +1843,7 @@ function ReportDetailFindingGroup({
         <ChevronUp className="h-4 w-4 text-primary" />
       </div>
       <div>
-        <div className="hidden grid-cols-[1.2fr_0.65fr_0.55fr_0.9fr_0.65fr_1.25fr] gap-3 border-b border-border bg-[#f7f7fb] px-4 py-3 text-xs font-semibold text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[1.2fr_0.65fr_0.55fr_0.9fr_0.65fr_1.25fr] gap-3 border-b border-border bg-[#FFFFFF] px-4 py-3 text-xs font-semibold text-muted-foreground lg:grid">
           {["Test Name", "Result", "Unit", "Reference Range", "Status", "Observation"].map((heading) => <div key={heading}>{heading}</div>)}
         </div>
         {group.rows.map((row) => (
@@ -2868,3 +2862,4 @@ function TrendStat({ label, value, tone, icon: Icon }: { label: string; value: s
     </div>
   );
 }
+
