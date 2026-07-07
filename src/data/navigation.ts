@@ -66,45 +66,12 @@ function notesRoute(category?: string) {
   return category ? `/notes/all-notes?category=${category}` : "/notes/all-notes";
 }
 
-function notes1Route(category?: string, specialty?: string) {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (specialty) params.set("specialty", specialty);
-  const query = params.toString();
-  return query ? `/notes1?${query}` : "/notes1";
-}
-
-function note1CategoryMenu(id: string, label: string, specialties: string[]) {
-  return {
-    id: `notes1-${id}`,
-    label,
-    route: notes1Route(id),
-    children: specialties.length
-      ? [
-          { id: `notes1-${id}-all`, label: `All ${label}`, route: notes1Route(id) },
-          ...specialties.map((specialty) => ({
-            id: `notes1-${id}-${specialty.toLowerCase().replaceAll(" ", "-")}`,
-            label: specialty,
-            route: notes1Route(id, specialty),
-          })),
-        ]
-      : undefined,
-  };
-}
-
-const notes1Menu = [
-  { id: "notes1-all", label: "All Notes", route: "/notes1" },
-  note1CategoryMenu("medical", "Medical Notes", ["ED Notes", "Physician Notes"]),
-  note1CategoryMenu("surgery", "Surgical Notes", ["Neurosurgery", "Ophthalmology", "ENT", "Cardiothoracic Surgery", "Thoracic Surgery", "Hepatobiliary Surgery", "General Surgery", "Colorectal Surgery", "Upper GI Surgery", "Lower GI Surgery", "Vascular Surgery", "Orthopedic Surgery", "Interventional Radiology", "Gynecology", "Transplant Surgery", "Plastic and Reconstructive Surgery", "Maxillo-facial Surgery", "Urology", "Others"]),
-  note1CategoryMenu("operative", "Operative Notes", ["Neurosurgery", "Ophthalmology", "ENT", "Cardiothoracic Surgery", "Thoracic Surgery", "Hepatobiliary Surgery", "General Surgery", "Colorectal Surgery", "Upper GI Surgery", "Lower GI Surgery", "Vascular Surgery", "Orthopedic Surgery", "Interventional Radiology", "Gynecology", "Transplant Surgery", "Plastic and Reconstructive Surgery", "Maxillo-facial Surgery", "Urology", "Others"]),
-  note1CategoryMenu("nurse", "Nurse Notes", ["ICU Nurse", "Ward Nurse", "ED Nurse"]),
-  note1CategoryMenu("pharmacy", "Pharmacy Notes", []),
-  note1CategoryMenu("allied", "Allied Health Notes", ["Physiotherapy", "Dietitian", "Social Worker", "Occupational Therapy", "Speech Therapy", "Psychology"]),
-  { id: "notes1-filter", label: "Filter Notes", route: "/notes1?filters=open" },
-];
-
 const notesMenu = [
   { id: "notes-all", label: "All Notes", route: notesRoute() },
+  { id: "notes-ed", label: "ED Notes", route: notesRoute("ed") },
+  { id: "notes-procedural", label: "Procedural Notes", route: notesRoute("procedural") },
+  { id: "notes-icu", label: "ICU Notes", route: notesRoute("icu") },
+  { id: "notes-admission", label: "Admission Notes", route: notesRoute("admission") },
   { id: "notes-medical", label: "Medical Notes", route: notesRoute("medical") },
   { id: "notes-surgery", label: "Surgery Notes", route: notesRoute("surgery") },
   { id: "notes-operative", label: "Operative Notes", route: notesRoute("operative") },
@@ -161,7 +128,6 @@ export const navigationItems: NavigationItem[] = [
   { id: "poct-add", label: "Add POCT", icon: ClipboardPlus, route: "/poct/add", group: "POCT", allowedRoles: allRoles, status: "ready" },
   { id: "poct-results", label: "View POCT Result", icon: FileClock, route: "/poct/results", group: "POCT", allowedRoles: allRoles, status: "ready" },
   { id: "notes", label: "Notes", icon: FilePenLine, route: "/notes/all-notes", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: notesMenu },
-  { id: "notes1", label: "Notes1", icon: FilePenLine, route: "/notes1", group: "Patient Management", allowedRoles: ["Super Admin", "Hospital Admin", "Doctor", "Nurse", "Management"], status: "ready", children: notes1Menu },
   { id: "appointments", label: "Appointment", icon: CalendarClock, route: "/appointments", group: "Clinical", allowedRoles: ["Super Admin", "Hospital Admin", "Receptionist", "Doctor", "Nurse", "Billing Executive", "Management"], status: "ready" },
   {
     id: "diagnostic-hub",
