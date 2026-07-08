@@ -23,10 +23,10 @@ export const themePresets: ThemePreset[] = [
     id: "clinical-blue",
     label: "Patient Indigo",
     description: "Default operational HMS palette",
-    primary: "#6878e8",
-    hsl: "232 74% 66%",
+    primary: "#5b6eff",
+    hsl: "232 100% 68%",
     foreground: "0 0% 100%",
-    soft: "232 74% 96%",
+    soft: "232 100% 97%",
   },
   {
     id: "care-green",

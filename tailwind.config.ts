@@ -65,7 +65,7 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        soft: "0 1px 2px hsl(var(--shadow-color) / 0.08), 0 8px 24px hsl(var(--shadow-color) / 0.08)",
+        soft: "0 1px 2px hsl(var(--shadow-color) / 0.06), 0 8px 22px hsl(var(--shadow-color) / 0.06)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "ui-sans-serif", "system-ui"],

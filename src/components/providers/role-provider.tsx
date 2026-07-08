@@ -9,6 +9,7 @@ type RoleContextValue = {
   role: Role;
   setRole: (role: Role) => void;
   roles: Role[];
+  hydrated: boolean;
 };
 
 const RoleContext = React.createContext<RoleContextValue | null>(null);
@@ -20,9 +21,11 @@ function readSavedRole(): Role {
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = React.useState<Role>("Unit Nurse");
+  const [hydrated, setHydrated] = React.useState(false);
 
   React.useEffect(() => {
     setRoleState(readSavedRole());
+    setHydrated(true);
   }, []);
 
   const setRole = React.useCallback((nextRole: Role) => {
@@ -30,7 +33,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem("plasmit-role", nextRole);
   }, []);
 
-  const value = React.useMemo(() => ({ role, setRole, roles }), [role, setRole]);
+  const value = React.useMemo(() => ({ role, setRole, roles, hydrated }), [hydrated, role, setRole]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

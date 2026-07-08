@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-dvh max-w-full bg-[#F5F7FA] text-foreground">
+    <div className="min-h-dvh max-w-full bg-background text-foreground">
       <div className="flex min-h-dvh min-w-0 max-w-full">
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={handleCollapsedChange} />
         <div className="flex min-w-0 flex-1 flex-col">

@@ -4,38 +4,38 @@
 
 :root {
   color-scheme: light;
-  --background: 216 33% 97%;
-  --foreground: 222 47% 11%;
+  --background: 220 23% 97%;
+  --foreground: 221 39% 11%;
   --surface: 0 0% 100%;
-  --surface-muted: 214 45% 96%;
+  --surface-muted: 220 20% 98%;
   --surface-elevated: 0 0% 100%;
-  --border: 214 32% 90%;
-  --input: 214 32% 86%;
-  --ring: 232 74% 66%;
-  --primary: 232 74% 66%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 232 100% 68%;
+  --primary: 232 100% 68%;
   --primary-foreground: 0 0% 100%;
-  --primary-soft: 232 74% 96%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 94%;
-  --muted-foreground: 215 16% 47%;
-  --success: 142 72% 29%;
+  --primary-soft: 232 100% 97%;
+  --secondary: 220 20% 98%;
+  --secondary-foreground: 221 39% 11%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
+  --success: 142 71% 45%;
   --success-foreground: 0 0% 100%;
-  --warning: 35 92% 33%;
+  --warning: 38 92% 50%;
   --warning-foreground: 0 0% 100%;
-  --danger: 0 74% 42%;
+  --danger: 0 84% 60%;
   --danger-foreground: 0 0% 100%;
-  --info: 199 89% 39%;
+  --info: 232 100% 68%;
   --info-foreground: 0 0% 100%;
-  --critical: 338 78% 44%;
+  --critical: 348 83% 47%;
   --critical-foreground: 0 0% 100%;
   --sidebar: 0 0% 100%;
-  --sidebar-foreground: 224 38% 13%;
-  --sidebar-active: 232 74% 66%;
+  --sidebar-foreground: 221 39% 11%;
+  --sidebar-active: 232 100% 68%;
   --sidebar-active-foreground: 0 0% 100%;
   --header: 0 0% 100%;
-  --header-border: 222 28% 90%;
-  --shadow-color: 222 47% 11%;
+  --header-border: 220 13% 91%;
+  --shadow-color: 249 19% 18%;
   --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --radius: 0.75rem;
   --density-card-padding: 1.25rem;
@@ -53,22 +53,22 @@
 
 .dark {
   color-scheme: light;
-  --background: 216 33% 97%;
-  --foreground: 222 47% 11%;
+  --background: 220 23% 97%;
+  --foreground: 221 39% 11%;
   --surface: 0 0% 100%;
-  --surface-muted: 214 45% 96%;
+  --surface-muted: 220 20% 98%;
   --surface-elevated: 0 0% 100%;
-  --border: 214 32% 90%;
-  --input: 214 32% 86%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 94%;
-  --muted-foreground: 215 16% 47%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --secondary: 220 20% 98%;
+  --secondary-foreground: 221 39% 11%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
   --sidebar: 0 0% 100%;
-  --sidebar-foreground: 224 38% 13%;
+  --sidebar-foreground: 221 39% 11%;
   --header: 0 0% 100%;
-  --header-border: 222 28% 90%;
-  --shadow-color: 222 47% 11%;
+  --header-border: 220 13% 91%;
+  --shadow-color: 249 19% 18%;
 }
 
 * {
@@ -84,8 +84,11 @@ html {
 body {
   min-height: 100%;
   overflow-x: clip;
-  background: #f5f7fa;
+  background: #f5f6fa;
   color: hsl(var(--foreground));
+  font-family: var(--font-inter);
+  font-size: 14px;
+  line-height: 1.5;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
@@ -153,4 +156,12 @@ body {
   --density-control-x-lg: 1.25rem;
   --density-table-cell-y: 0.4375rem;
   --density-table-cell-x: 0.75rem;
+}
+
+.rounded-2xl {
+  border-radius: 12px;
+}
+
+.rounded-xl {
+  border-radius: 8px;
 }

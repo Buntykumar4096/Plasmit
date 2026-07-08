@@ -2020,6 +2020,7 @@ type ClinicalHandoffRecord = NursingClinicalHandoffDraft & {
 export function ShiftHandoverWorkspace() {
   const searchParams = useSearchParams();
   const view = searchParams.get("view") ?? "submit";
+  const activeHandoverTab = view === "history" ? "history" : "submit";
   const requestedPatientId = searchParams.get("patientId");
   const firstPatient = icuPatients[0];
   const nurseOptions = React.useMemo(
@@ -2146,7 +2147,6 @@ export function ShiftHandoverWorkspace() {
       <CardHeader>
         <div>
           <CardTitle>Clinical Handoff Queue</CardTitle>
-          <CardDescription>Recent patient handoff records and incoming nurse acknowledgement.</CardDescription>
         </div>
         <Badge tone="info">{visibleHistoryRecords.length} records</Badge>
       </CardHeader>
@@ -2235,10 +2235,6 @@ export function ShiftHandoverWorkspace() {
       </CardContent>
     </Card>
   );
-
-  if (view === "history") {
-    return <div className="space-y-4">{handoffRecordsTable}</div>;
-  }
 
   if (view === "patients" || view === "pending" || view === "critical") {
     const reasonOptions = ["All reasons", "Abnormal vitals", "Medication overdue", "Active escalation", "High acuity"];
@@ -2372,14 +2368,20 @@ export function ShiftHandoverWorkspace() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-4">
-        <div>
+    <Tabs key={`${activeHandoverTab}-${requestedPatientId ?? "all"}`} defaultValue={activeHandoverTab} className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TabsList className="flex h-auto flex-wrap gap-2 bg-surface-muted p-1">
+          <TabsTrigger className="min-h-9 px-4" value="submit">Submit Handover</TabsTrigger>
+          <TabsTrigger className="min-h-9 px-4" value="history">Handover History</TabsTrigger>
+        </TabsList>
+        <Badge tone="info">{selectedPatient?.bedNo} - {selectedPatient?.patientName}</Badge>
+      </div>
+      <TabsContent className="mt-0 space-y-4" value="submit">
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <div>
                 <CardTitle>Patient Label</CardTitle>
-                <CardDescription>Selected ICU patient and shift context.</CardDescription>
               </div>
               <StatusPill tone={toneForStatus(selectedPatient?.currentStatus ?? "")}>{selectedPatient?.currentStatus ?? "No patient"}</StatusPill>
             </CardHeader>
@@ -2411,9 +2413,8 @@ export function ShiftHandoverWorkspace() {
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        <Card>
+          <Card>
           <CardHeader>
             <div>
               <CardTitle>Clinical Handoff Sheet</CardTitle>
@@ -2564,9 +2565,13 @@ export function ShiftHandoverWorkspace() {
               <Button onClick={signHandoff}><ClipboardCheck className="h-4 w-4" />Sign handoff</Button>
             </div>
           </CardContent>
-        </Card>
-      </div>
-    </div>
+          </Card>
+        </div>
+      </TabsContent>
+      <TabsContent className="mt-0" value="history">
+        {handoffRecordsTable}
+      </TabsContent>
+    </Tabs>
   );
 }
 

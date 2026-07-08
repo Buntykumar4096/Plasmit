@@ -6,22 +6,22 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-sans text-sm font-semibold outline-none shadow-sm transition-all duration-200 ease-[ease] focus-visible:ring-2 focus-visible:ring-[#6878E8] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:shadow-sm disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-sans text-sm font-semibold outline-none transition-all duration-150 ease-[ease] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-[#6878E8] text-white hover:bg-[#5B6CE0] hover:shadow-md active:bg-[#4F46D8]",
-        secondary: "border border-[#E5E7EB] bg-white text-gray-700 hover:bg-[#F8FAFC] hover:shadow-md active:bg-slate-100",
-        outline: "border border-[#E5E7EB] bg-white text-gray-700 hover:bg-[#F8FAFC] hover:shadow-md active:bg-slate-100",
-        ghost: "bg-transparent text-gray-700 shadow-none hover:bg-[#F8FAFC] hover:shadow-sm active:bg-slate-100",
-        danger: "bg-red-600 text-white hover:bg-red-700 hover:shadow-md active:bg-red-800",
-        success: "bg-green-600 text-white hover:bg-green-700 hover:shadow-md active:bg-green-800",
+        default: "bg-primary text-primary-foreground shadow-[0_8px_18px_hsl(var(--primary)/0.18)] hover:bg-[#495cf0] hover:shadow-[0_9px_20px_hsl(var(--primary)/0.24)] active:bg-[#4050df]",
+        secondary: "border border-border bg-white text-slate-700 shadow-sm hover:bg-surface-muted active:bg-slate-100",
+        outline: "border border-border bg-white text-slate-700 shadow-sm hover:bg-surface-muted active:bg-slate-100",
+        ghost: "bg-transparent text-slate-700 hover:bg-surface-muted active:bg-slate-100",
+        danger: "bg-danger text-danger-foreground shadow-sm hover:bg-red-600",
+        success: "bg-success text-success-foreground shadow-sm hover:bg-green-600",
       },
       size: {
-        sm: "h-11 px-6",
-        md: "h-11 px-6",
-        lg: "h-11 px-6",
-        icon: "h-11 w-11 p-0",
+        sm: "h-[var(--density-control-height-sm)] px-4",
+        md: "h-[var(--density-control-height)] px-4",
+        lg: "h-[var(--density-control-height-lg)] px-5",
+        icon: "h-[var(--density-control-height)] w-[var(--density-control-height)] p-0",
       },
     },
     defaultVariants: {

@@ -13,7 +13,7 @@ import { hospitalContext } from "@/data/mock";
 
 export function TopHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white px-3 py-2 md:px-5">
+    <header className="sticky top-0 z-40 border-b border-header-border bg-header px-3 py-2 md:px-5">
       <div className="flex min-h-12 items-center gap-3">
         <MobileNavigation />
         <div className="min-w-0 flex-1 border-l border-slate-100 pl-3 lg:border-l-0 lg:pl-0">
@@ -29,7 +29,7 @@ export function TopHeader() {
               />
             </span>
             
-            <span className="hidden rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500 sm:inline">{hospitalContext.branch}</span>
+            <span className="hidden rounded-full border border-border bg-surface-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground sm:inline">{hospitalContext.branch}</span>
           </div>
         </div>
         <CommandSearch />

@@ -23,7 +23,7 @@ export function StatCard({
   currency?: boolean;
 }) {
   return (
-    <Card className="min-h-[150px] p-5 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(15,23,42,0.08)]">
+    <Card className="min-h-[150px] p-5 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_hsl(var(--shadow-color)/0.08)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</p>
@@ -31,7 +31,7 @@ export function StatCard({
             {currency ? formatCurrency(value) : formatCompactNumber(value)}
           </div>
         </div>
-        <div className="rounded-xl border border-sky-100 bg-sky-50 p-2.5 text-sky-600">
+        <div className="rounded-xl border border-primary/25 bg-primary-soft p-2.5 text-primary">
           <Icon className="h-5 w-5" />
         </div>
       </div>

@@ -53,9 +53,9 @@ export function AppSidebar({
         <details open={active || undefined} key={child.id}>
           <summary
             className={cn(
-              "group flex min-h-9 w-full cursor-pointer list-none items-center rounded-xl px-3 py-2 text-xs font-semibold outline-none transition duration-150 hover:bg-sky-50 hover:text-sky-700 focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden",
+              "group flex min-h-9 w-full cursor-pointer list-none items-center rounded-xl px-3 py-2 text-xs font-semibold outline-none transition duration-150 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden",
               depth > 0 && "text-[11px]",
-              active && "bg-sky-50 text-sky-700 ring-1 ring-sky-100",
+              active && "bg-primary/10 text-primary ring-1 ring-primary/15",
             )}
           >
             <span className="min-w-0 flex-1 truncate text-left">{child.label}</span>
@@ -71,8 +71,8 @@ export function AppSidebar({
     return (
       <Link
         className={cn(
-          "flex min-h-9 items-center rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 outline-none transition duration-150 hover:bg-sky-50 hover:text-sky-700 focus-visible:ring-2 focus-visible:ring-ring",
-          active && "bg-primary text-white shadow-[0_10px_22px_rgba(104,120,232,0.18)] hover:bg-primary hover:text-white",
+          "flex min-h-9 items-center rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 outline-none transition duration-150 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring",
+          active && "bg-primary text-white shadow-[0_8px_18px_hsl(var(--primary)/0.18)] hover:bg-primary hover:text-white",
         )}
         href={child.route}
         key={child.id}
@@ -86,11 +86,11 @@ export function AppSidebar({
   return (
     <aside
       className={cn(
-        "hidden h-dvh shrink-0 border-r border-slate-200 bg-white text-slate-900 shadow-[12px_0_32px_rgba(15,23,42,0.04)] transition-all duration-150 lg:sticky lg:top-0 lg:z-50 lg:flex lg:flex-col",
+        "hidden h-dvh shrink-0 border-r border-border bg-white text-slate-900 shadow-[1px_0_2px_hsl(var(--shadow-color)/0.06)] transition-all duration-150 lg:sticky lg:top-0 lg:z-50 lg:flex lg:flex-col",
         collapsed ? "w-[76px]" : "w-[286px]",
       )}
     >
-      <div className={cn("border-b border-slate-100 bg-white", collapsed ? "p-3" : "px-3 py-4")}>
+      <div className={cn("border-b border-border bg-white", collapsed ? "p-3" : "px-3 py-4")}>
         <div className={cn("flex items-center bg-white", collapsed ? "h-14 justify-center overflow-hidden" : "h-[96px] justify-start")}>
           <Image
             alt="Plasmit Healthcare IT Vector"
@@ -106,7 +106,7 @@ export function AppSidebar({
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
         {groups.map((group) => (
           <div className="mb-5" key={group}>
-            {!collapsed ? <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{group}</div> : null}
+            {!collapsed ? <div className="px-3 pb-2 text-[10px] font-bold uppercase text-muted-foreground">{group}</div> : null}
             <div className="space-y-1.5">
               {visibleItems
                 .filter((item) => item.group === group)
@@ -121,8 +121,8 @@ export function AppSidebar({
                       <details open={active || undefined} key={item.id}>
                         <summary
                           className={cn(
-                            "group flex min-h-11 w-full cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 outline-none transition duration-150 hover:bg-sky-50 hover:text-sky-700 focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden",
-                            active && "bg-primary text-white shadow-[0_12px_24px_rgba(104,120,232,0.2)] hover:bg-primary hover:text-white",
+                            "group flex min-h-11 w-full cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 outline-none transition duration-150 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden",
+                            active && "bg-primary text-white shadow-[0_8px_18px_hsl(var(--primary)/0.18)] hover:bg-primary hover:text-white",
                           )}
                         >
                           <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -140,8 +140,8 @@ export function AppSidebar({
                     <Link
                       aria-label={collapsed ? item.label : undefined}
                       className={cn(
-                        "group flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 outline-none transition duration-150 hover:bg-sky-50 hover:text-sky-700 focus-visible:ring-2 focus-visible:ring-ring",
-                        active && "bg-primary text-white shadow-[0_12px_24px_rgba(104,120,232,0.2)] hover:bg-primary hover:text-white",
+                        "group flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 outline-none transition duration-150 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring",
+                        active && "bg-primary text-white shadow-[0_8px_18px_hsl(var(--primary)/0.18)] hover:bg-primary hover:text-white",
                         collapsed && "justify-center",
                       )}
                       href={item.route}
@@ -160,9 +160,9 @@ export function AppSidebar({
         ))}
       </nav>
 
-      <div className="border-t border-slate-100 p-3">
+      <div className="border-t border-border p-3">
         <Button
-          className={cn("w-full border-slate-200 bg-white text-slate-600 hover:bg-sky-50 hover:text-sky-700", collapsed && "px-0")}
+          className={cn("w-full border-border bg-white text-slate-600 hover:bg-primary/5 hover:text-primary", collapsed && "px-0")}
           onClick={() => onCollapsedChange(!collapsed)}
           variant="ghost"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}

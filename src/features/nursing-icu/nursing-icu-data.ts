@@ -194,7 +194,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "10 min ago",
     pendingTasks: 7,
     alerts: ["SpO2 low", "Medication overdue", "Critical lab pending"],
-    unit: "Pediatric ICU",
+    unit: "General ICU",
     admissionTime: "Today 08:10",
   },
   {
@@ -216,7 +216,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "5 min ago",
     pendingTasks: 5,
     alerts: ["Ventilator check due", "ABG result due"],
-    unit: "Cardiothoracic ICU",
+    unit: "General ICU",
     admissionTime: "Today 06:45",
   },
   {
@@ -238,7 +238,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "25 min ago",
     pendingTasks: 3,
     alerts: ["Neuro observation due"],
-    unit: "Neuro ICU",
+    unit: "General ICU",
     admissionTime: "Yesterday 22:30",
   },
   {
@@ -282,7 +282,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "15 min ago",
     pendingTasks: 4,
     alerts: ["Tacrolimus level pending", "Strict intake output"],
-    unit: "Transplant ICU",
+    unit: "General ICU",
     admissionTime: "Today 05:50",
   },
   {
@@ -304,7 +304,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "8 min ago",
     pendingTasks: 6,
     alerts: ["ABG repeat due", "High CO2 watch"],
-    unit: "Respiratory ICU",
+    unit: "General ICU",
     admissionTime: "Today 07:25",
   },
   {
@@ -348,7 +348,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "18 min ago",
     pendingTasks: 2,
     alerts: ["Strict intake output"],
-    unit: "Medical ICU",
+    unit: "General ICU",
     admissionTime: "Yesterday 18:30",
   },
   {
@@ -370,7 +370,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "25 min ago",
     pendingTasks: 2,
     alerts: ["Potassium review due"],
-    unit: "Medical ICU",
+    unit: "General ICU",
     admissionTime: "Today 03:40",
   },
   {
@@ -392,7 +392,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "20 min ago",
     pendingTasks: 4,
     alerts: ["Drain output review"],
-    unit: "Surgical ICU",
+    unit: "General ICU",
     admissionTime: "Yesterday 21:10",
   },
   {
@@ -414,7 +414,7 @@ export const icuPatients: IcuPatient[] = [
     lastVitalsTime: "16 min ago",
     pendingTasks: 2,
     alerts: ["Neuro check due"],
-    unit: "Neuro ICU",
+    unit: "General ICU",
     admissionTime: "Today 10:05",
   },
   {

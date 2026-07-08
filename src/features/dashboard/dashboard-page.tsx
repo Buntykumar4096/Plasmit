@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -16,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { useRole } from "@/components/providers/role-provider";
@@ -25,13 +27,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { StatusPill } from "@/components/ui/status-pill";
 import { StatCard } from "@/components/ui/stat-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getNursingRolePermission } from "@/data/icu-nursing-role-permissions";
 import { dashboardQuickActions } from "@/data/navigation";
 import { appointmentTimeline, bedOccupancy, dashboardStats, departmentActivity, recentActivity } from "@/data/mock";
 
 const statIcons = [Stethoscope, IdCard, CalendarClock, Users, BedDouble, BedDouble, FlaskConical, Pill, CreditCard, AlertTriangle];
 
 export function DashboardPage() {
-  const { role } = useRole();
+  const router = useRouter();
+  const { hydrated, role } = useRole();
+  const nursingPermission = getNursingRolePermission(role);
+
+  React.useEffect(() => {
+    if (hydrated && nursingPermission) {
+      router.replace(nursingPermission.defaultRoute);
+    }
+  }, [hydrated, nursingPermission, router]);
+
+  if (hydrated && nursingPermission) {
+    return null;
+  }
+
   const roleMessage =
     role === "Doctor"
       ? "Clinical queue, patient safety, and pending reviews are emphasized for your role."

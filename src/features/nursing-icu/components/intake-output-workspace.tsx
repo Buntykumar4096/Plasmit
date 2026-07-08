@@ -134,6 +134,8 @@ const sourceOptions: SourceFilter[] = [
 ];
 
 const captureSourceOptions: IcuIntakeOutput["source"][] = sourceOptions.filter((source): source is IcuIntakeOutput["source"] => source !== "All sources");
+const matrixPageSize = 8;
+const ledgerPageSize = 8;
 
 const matrixRows: MatrixRow[] = [
   { label: "Intake", type: "section" },
@@ -184,6 +186,7 @@ function IntakeOutputWorkspaceInner({
   const [sourceFilter, setSourceFilter] = React.useState<SourceFilter>("All sources");
   const [query, setQuery] = React.useState("");
   const [quickAddOpen, setQuickAddOpen] = React.useState(false);
+  const [matrixPage, setMatrixPage] = React.useState(1);
   const [manualRows, setManualRows] = React.useState<IcuIntakeOutput[]>([]);
   const [activeCell, setActiveCell] = React.useState<ActiveCell>(null);
   const [draft, setDraft] = React.useState<IoDraft>({
@@ -395,7 +398,7 @@ function IntakeOutputWorkspaceInner({
             <FluidGraphReviewPanel alerts={alerts} previousBalance={previousBalance} rows={scopedRows} series={graphSeries} />
           </div>
         ) : effectiveMode === "Table" ? (
-          <FluidBalanceMatrix buckets={buckets} rows={scopedRows} activeCell={activeCell} onSelectCell={setActiveCell} />
+          <FluidBalanceMatrix buckets={buckets} rows={scopedRows} activeCell={activeCell} page={matrixPage} pageSize={matrixPageSize} onPageChange={setMatrixPage} onSelectCell={setActiveCell} />
         ) : (
           <FluidBalanceGraph series={graphSeries} />
         )}
@@ -473,7 +476,28 @@ function FieldBlock({ label, children, className }: { label: string; children: R
   );
 }
 
-function FluidBalanceMatrix({ buckets, rows, activeCell, onSelectCell }: { buckets: Bucket[]; rows: IcuIntakeOutput[]; activeCell: ActiveCell; onSelectCell: (cell: ActiveCell) => void }) {
+function FluidBalanceMatrix({
+  activeCell,
+  buckets,
+  onPageChange,
+  onSelectCell,
+  page,
+  pageSize,
+  rows,
+}: {
+  activeCell: ActiveCell;
+  buckets: Bucket[];
+  onPageChange: (page: number) => void;
+  onSelectCell: (cell: ActiveCell) => void;
+  page: number;
+  pageSize: number;
+  rows: IcuIntakeOutput[];
+}) {
+  const totalPages = Math.max(1, Math.ceil(matrixRows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * pageSize;
+  const visibleRows = matrixRows.slice(start, start + pageSize);
+
   return (
     <Card className="overflow-hidden border-slate-200">
       <CardContent className="p-0">
@@ -491,7 +515,7 @@ function FluidBalanceMatrix({ buckets, rows, activeCell, onSelectCell }: { bucke
               </tr>
             </thead>
             <tbody>
-              {matrixRows.map((row) => (
+              {visibleRows.map((row) => (
                 <tr className={cn(row.type === "section" ? "bg-slate-100 font-bold text-slate-900" : row.type === "group" ? "bg-slate-50 font-bold text-slate-800" : row.type === "total" || row.type === "net" ? "bg-slate-100 font-bold" : "bg-white", "border-b border-slate-100")} key={`${row.type}-${row.label}`}>
                   <td className={cn("sticky left-0 z-10 border-r border-slate-200 px-3 py-2", row.type === "section" ? "bg-slate-100 text-slate-900" : row.type === "group" ? "bg-slate-50 text-slate-800" : row.type === "total" || row.type === "net" ? "bg-slate-100 text-slate-950" : "bg-white text-slate-900", row.subRow ? "pl-7 text-sm" : "")}>
                     {row.subRow ? <span className="mr-2 text-slate-400">-</span> : null}{row.label}
@@ -519,6 +543,13 @@ function FluidBalanceMatrix({ buckets, rows, activeCell, onSelectCell }: { bucke
             </tbody>
           </table>
         </div>
+        <FluidPaginationControls
+          label="Intake / output rows"
+          page={safePage}
+          pageSize={pageSize}
+          total={matrixRows.length}
+          onPageChange={onPageChange}
+        />
       </CardContent>
     </Card>
   );
@@ -691,55 +722,111 @@ function FluidScenarioLine({ title, detail, tone }: { title: string; detail: str
 }
 
 function FluidLedger({ rows }: { rows: IcuIntakeOutput[] }) {
+  const [open, setOpen] = React.useState(false);
+  const [page, setPage] = React.useState(1);
+  const totalPages = Math.max(1, Math.ceil(rows.length / ledgerPageSize));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * ledgerPageSize;
+  const visibleRows = rows.slice(start, start + ledgerPageSize);
+
   return (
     <Card className="border-slate-200">
-      <CardHeader className="border-b border-slate-100 bg-white">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <button
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3 text-left transition hover:bg-slate-50"
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="min-w-0">
           <CardTitle>Source Ledger</CardTitle>
-          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{rows.length} visible</span>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                {["Time", "Entry", "Quantity", "Status", "Recorded by"].map((heading) => (
-                  <th className="border-b border-slate-200 px-3 py-2 text-left" key={heading}>{heading}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr className="border-b border-slate-100 last:border-0" key={row.id}>
-                  <td className="px-3 py-2 font-semibold text-slate-900">
-                    <span className="block">{row.time}</span>
-                    <span className="text-xs font-medium text-slate-500">{row.date}</span>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="font-semibold text-slate-900">{row.component}</div>
-                    <div className="text-xs text-slate-500">{row.kind} | {row.category} | {row.route}</div>
-                  </td>
-                  <td className="px-3 py-2 font-bold text-slate-900">{row.quantityMl} ml</td>
-                  <td className="px-3 py-2">
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{row.status}</span>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="font-semibold text-slate-900">{row.nurse}</div>
-                    <div className="text-xs text-slate-500">{row.source}</div>
-                  </td>
-                </tr>
-              ))}
-              {!rows.length ? (
+          <span className="mt-1 block text-xs text-slate-500">{rows.length} visible source record(s)</span>
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{open ? "Hide" : "Show"}</span>
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm">
+            <ChevronDown className={cn("h-4 w-4 transition-transform", open ? "rotate-180" : "")} />
+          </span>
+        </span>
+      </button>
+      {open ? (
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] border-collapse text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
-                  <td className="px-3 py-8 text-center text-sm text-slate-500" colSpan={5}>No intake/output records found for the selected filters.</td>
+                  {["Time", "Entry", "Quantity", "Status", "Recorded by"].map((heading) => (
+                    <th className="border-b border-slate-200 px-3 py-2 text-left" key={heading}>{heading}</th>
+                  ))}
                 </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
+              </thead>
+              <tbody>
+                {visibleRows.map((row) => (
+                  <tr className="border-b border-slate-100 last:border-0" key={row.id}>
+                    <td className="px-3 py-2 font-semibold text-slate-900">
+                      <span className="block">{row.time}</span>
+                      <span className="text-xs font-medium text-slate-500">{row.date}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="font-semibold text-slate-900">{row.component}</div>
+                      <div className="text-xs text-slate-500">{row.kind} | {row.category} | {row.route}</div>
+                    </td>
+                    <td className="px-3 py-2 font-bold text-slate-900">{row.quantityMl} ml</td>
+                    <td className="px-3 py-2">
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{row.status}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="font-semibold text-slate-900">{row.nurse}</div>
+                      <div className="text-xs text-slate-500">{row.source}</div>
+                    </td>
+                  </tr>
+                ))}
+                {!rows.length ? (
+                  <tr>
+                    <td className="px-3 py-8 text-center text-sm text-slate-500" colSpan={5}>No intake/output records found for the selected filters.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+          <FluidPaginationControls
+            label="Source ledger"
+            page={safePage}
+            pageSize={ledgerPageSize}
+            total={rows.length}
+            onPageChange={setPage}
+          />
+        </CardContent>
+      ) : null}
     </Card>
+  );
+}
+
+function FluidPaginationControls({
+  label,
+  onPageChange,
+  page,
+  pageSize,
+  total,
+}: {
+  label: string;
+  onPageChange: (page: number) => void;
+  page: number;
+  pageSize: number;
+  total: number;
+}) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const start = total ? (page - 1) * pageSize + 1 : 0;
+  const end = Math.min(total, page * pageSize);
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+      <span className="font-semibold">{label}: {start}-{end} of {total}</span>
+      <div className="flex items-center gap-2">
+        <Button className="h-8 px-3 text-xs" disabled={page <= 1} size="sm" variant="outline" onClick={() => onPageChange(Math.max(1, page - 1))}>Previous</Button>
+        <span className="min-w-16 text-center font-bold text-slate-700">Page {page} / {totalPages}</span>
+        <Button className="h-8 px-3 text-xs" disabled={page >= totalPages} size="sm" variant="outline" onClick={() => onPageChange(Math.min(totalPages, page + 1))}>Next</Button>
+        </div>
+      </div>
   );
 }
 
