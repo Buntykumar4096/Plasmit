@@ -8,10 +8,8 @@ import {
   Check,
   CreditCard,
   Download,
-  FileText,
   FlaskConical,
   HeartPulse,
-  Hospital,
   IdCard,
   ImageUp,
   Loader2,
@@ -229,7 +227,7 @@ function cardsSection(): ComponentVariantSectionItem {
   return { title: "Card Components", description: "Copy-paste ready card patterns.", items: cards.map(([title, Icon, iconName, badge]) => ({ title, description: `${title} for hospital dashboard screens.`, preview: cardPreview(title, Icon, badge), code: sampleCardCode(title, iconName, badge) })) };
 }
 
-function tablePreview(title: string) {
+function tablePreview() {
   return (
     <div className="w-full overflow-x-auto rounded-lg border border-border bg-surface">
       <table className="w-full min-w-[480px] text-left text-sm">
@@ -242,7 +240,7 @@ function tablePreview(title: string) {
 
 function tablesSection(): ComponentVariantSectionItem {
   const names = ["Basic Table", "Patient Table", "Appointment Table", "Billing Table", "Pharmacy Stock Table", "Lab Test Table", "Table with Search", "Table with Filter", "Table with Pagination", "Table with Action Dropdown"];
-  return { title: "Table Components", description: "Responsive tables with badges, filters, and actions.", items: names.map((title) => ({ title, description: `${title} reusable table pattern.`, preview: tablePreview(title), code: `import { Badge } from "@/components/ui/badge";\nimport { Button } from "@/components/ui/button";\n\nexport function ${componentName(title)}() {\n  return (\n    <div className="overflow-x-auto rounded-lg border border-border bg-surface">\n      <table className="w-full min-w-[480px] text-left text-sm">\n        <thead className="bg-surface-muted text-xs uppercase text-muted-foreground">\n          <tr><th className="p-2">Token</th><th className="p-2">Patient</th><th className="p-2">Status</th><th className="p-2">Action</th></tr>\n        </thead>\n        <tbody>\n          <tr className="border-t border-border"><td className="p-2">OPD-014</td><td className="p-2">Aisha Khan</td><td className="p-2"><Badge tone="warning">Waiting</Badge></td><td className="p-2"><Button size="sm" variant="outline">View</Button></td></tr>\n        </tbody>\n      </table>\n    </div>\n  );\n}` })) };
+  return { title: "Table Components", description: "Responsive tables with badges, filters, and actions.", items: names.map((title) => ({ title, description: `${title} reusable table pattern.`, preview: tablePreview(), code: `import { Badge } from "@/components/ui/badge";\nimport { Button } from "@/components/ui/button";\n\nexport function ${componentName(title)}() {\n  return (\n    <div className="overflow-x-auto rounded-lg border border-border bg-surface">\n      <table className="w-full min-w-[480px] text-left text-sm">\n        <thead className="bg-surface-muted text-xs uppercase text-muted-foreground">\n          <tr><th className="p-2">Token</th><th className="p-2">Patient</th><th className="p-2">Status</th><th className="p-2">Action</th></tr>\n        </thead>\n        <tbody>\n          <tr className="border-t border-border"><td className="p-2">OPD-014</td><td className="p-2">Aisha Khan</td><td className="p-2"><Badge tone="warning">Waiting</Badge></td><td className="p-2"><Button size="sm" variant="outline">View</Button></td></tr>\n        </tbody>\n      </table>\n    </div>\n  );\n}` })) };
 }
 
 function chartPreview(type: "line" | "bar" | "area" | "pie") {

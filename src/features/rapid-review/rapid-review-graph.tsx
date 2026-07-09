@@ -476,7 +476,7 @@ export function RapidReviewGraphTab({
       </div>
 
       {isAllVitalsGraph && selectedPatient ? (
-        <AllVitalsGraphDashboard patient={selectedPatient} data={combinedGraphData} dateSummary={filterSummary} />
+        <AllVitalsGraphDashboard data={combinedGraphData} />
       ) : viewMode !== "Table only" && selectedPatient ? (
         <ReviewGraphPanel patient={selectedPatient} data={graphData} metric={metric} dateSummary={filterSummary} />
       ) : null}
@@ -844,15 +844,7 @@ function ReviewGraphTable({
   );
 }
 
-function AllVitalsGraphDashboard({
-  patient,
-  data,
-  dateSummary,
-}: {
-  patient: RapidReviewPatient;
-  data: CombinedReviewGraphPoint[];
-  dateSummary: string;
-}) {
+function AllVitalsGraphDashboard({ data }: { data: CombinedReviewGraphPoint[] }) {
   return (
     <div className="space-y-4">
       {allVitalsGraphSections.map((section) => (

@@ -1238,6 +1238,7 @@ export function DiagnosticCategoryPage({ category }: { category: DiagnosticCateg
             <CardContent>
               <div className="text-xs font-medium text-muted-foreground">{label}</div>
               <div className="mt-1 text-2xl font-bold text-foreground">{value}</div>
+              <div className="mt-1 text-[11px] font-medium text-muted-foreground">{helper}</div>
             </CardContent>
           </Card>
         ))}
@@ -3291,12 +3292,6 @@ function EntrySelect({ label, value, onChange, options }: { label: string; value
   );
 }
 
-function diagnosticEntryPriorityTone(priority: DiagnosticEntryOrder["priority"]): StatusTone {
-  if (priority === "Critical") return "danger";
-  if (priority === "Urgent") return "warning";
-  return "info";
-}
-
 function diagnosticEntryStatusTone(status: DiagnosticEntryOrder["status"]): StatusTone {
   if (status === "Critical validation") return "danger";
   if (status === "Sample received") return "success";
@@ -3317,6 +3312,7 @@ function DiagnosticHeader({
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-white px-4 py-4 shadow-soft md:px-5 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
@@ -3358,6 +3354,7 @@ function InfoBlock({ label, value, helper }: { label: string; value: string; hel
     <div className="border-border lg:border-l lg:pl-5">
       <div className="text-xs font-semibold text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm font-bold text-foreground">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{helper}</div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { AlertTriangle, Ambulance, BarChart3, BedDouble, Bell, Clock3, CreditCard, FileCheck2, FlaskConical, LayoutDashboard, Monitor, Pill, ScanSearch, Stethoscope, UserRound } from "lucide-react";
+import { AlertTriangle, Ambulance, BarChart3, BedDouble, Clock3, CreditCard, FileCheck2, FlaskConical, LayoutDashboard, Monitor, Pill, ScanSearch, Stethoscope, UserRound } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSplitWorkflowOrders, getSplitWorkflowTokens, journeyStages, mockBottlenecks, mockJourneyEvents, mockJourneyPatients, mockRadiologyOrders, mockSmartAlerts, splitWorkflowConfigs, trackerBoards } from "@/features/patient-journey/patient-journey-data";
 import { DetailLine, JourneyStageColumn, JourneyTimeline, Patient360Drawer, PatientJourneyAccessBanner, PatientJourneyCard, PatientJourneyCenterWindow, ProtectedPatientJourney, SmartAlertPanel, Snapshot, StageStepper, journeyTone, waitLabel } from "@/features/patient-journey/patient-journey-shared";
-import type { BottleneckMetric, PatientJourneyRecord, PatientJourneyStage, RadiologyJourneyOrder, RadiologyModality, RadiologyOrderStatus, RadiologyPriority, RadiologySource, ServiceToken, ServiceWorkOrder, SplitWorkflowKey, SplitWorkflowPriority, TrackerKey } from "@/features/patient-journey/patient-journey-types";
+import type { BottleneckMetric, PatientJourneyRecord, RadiologyJourneyOrder, RadiologyModality, RadiologyOrderStatus, RadiologyPriority, RadiologySource, ServiceToken, ServiceWorkOrder, SplitWorkflowKey, SplitWorkflowPriority, TrackerKey } from "@/features/patient-journey/patient-journey-types";
 
 const trackerIconMap: Record<TrackerKey, typeof LayoutDashboard> = {
   emergency: Ambulance,

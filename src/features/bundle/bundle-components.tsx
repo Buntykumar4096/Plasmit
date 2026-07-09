@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronRight, Copy } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/shell/page-header";

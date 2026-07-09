@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
   ChevronDown,
-  Droplets,
   Plus,
   RefreshCcw,
   Search,
@@ -223,7 +222,6 @@ function IntakeOutputWorkspaceInner({
   const previousBalance = React.useMemo(() => summarizeRows(previousRows).balance, [previousRows]);
   const alerts = React.useMemo(() => buildFluidAlerts(scopedRows, totals.balance), [scopedRows, totals.balance]);
   const graphSeries = React.useMemo(() => buildGraphSeries(scopedRows, buckets), [buckets, scopedRows]);
-  const isCumulative = view === "Cumulative";
   const effectiveMode: IoMode = isFluidBalanceView ? "Graph" : mode;
 
   const resetFilters = () => {
@@ -430,15 +428,6 @@ function FluidWorkspaceLoading() {
           <div className="h-24 rounded-md border border-slate-200 bg-slate-50" key={index} />
         ))}
       </div>
-    </div>
-  );
-}
-
-function FluidHeaderMetric({ label, value, tone }: { label: string; value: string; tone: StatusTone }) {
-  return (
-    <div className="rounded-md border border-white/20 bg-white/15 px-3 py-2">
-      <div className="text-[11px] font-semibold uppercase text-sky-100">{label}</div>
-      <div className={cn("mt-1 text-lg font-bold text-white", tone === "danger" || tone === "critical" ? "text-rose-50" : "")}>{value}</div>
     </div>
   );
 }
