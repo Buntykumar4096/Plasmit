@@ -28,7 +28,8 @@ export function RoleSwitcher({ className }: { className?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { role, setRole, roles } = useRole();
-  const selectableRoles = pathname.startsWith("/icu-command-center") ? icuCommandSwitcherRoles : roles;
+  const baseSelectableRoles = pathname.startsWith("/icu-command-center") ? icuCommandSwitcherRoles : roles;
+  const selectableRoles = baseSelectableRoles.includes(role) ? baseSelectableRoles : [role, ...baseSelectableRoles];
 
   return (
     <Select.Root value={role} onValueChange={(value) => {
@@ -38,21 +39,27 @@ export function RoleSwitcher({ className }: { className?: string }) {
     }}>
       <Select.Trigger
         className={cn(
-          "flex h-11 w-36 min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none transition duration-150 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 focus:ring-4 focus:ring-sky-100 md:w-44",
+          "flex h-11 w-36 min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none transition duration-150 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 focus:ring-4 focus:ring-sky-100 data-[placeholder]:text-slate-500 md:w-44",
           className,
         )}
+        aria-label="Change active role"
       >
         <Select.Value />
         <Select.Icon>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-[80] max-h-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)]">
-          <Select.Viewport className="p-1">
+        <Select.Content
+          align="start"
+          className="z-[110] max-h-[min(22rem,calc(100dvh-6rem))] w-[var(--radix-select-trigger-width)] min-w-[220px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)]"
+          position="popper"
+          sideOffset={6}
+        >
+          <Select.Viewport className="max-h-[min(22rem,calc(100dvh-6rem))] overflow-y-auto p-1">
             {selectableRoles.map((item) => (
               <Select.Item
-                className="cursor-pointer rounded-lg px-2 py-2 text-sm text-slate-700 outline-none hover:bg-sky-50 focus:bg-sky-50 data-[state=checked]:bg-primary data-[state=checked]:text-white"
+                className="cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition hover:bg-sky-50 focus:bg-sky-50 data-[state=checked]:bg-primary data-[state=checked]:text-white"
                 key={item}
                 value={item}
               >

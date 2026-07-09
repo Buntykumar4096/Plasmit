@@ -442,7 +442,7 @@ const admissionPatientCandidates: AdmissionPatientCandidate[] = [
     risk: "High",
     isolation: "Contact precaution",
     sourceDetail: "Ward escalation after persistent SpO2 below target despite oxygen support.",
-    handoverBy: "Ward Nurse Kavita",
+    handoverBy: "Bedside Nurse Kavita",
     acceptanceStatus: "Accepted",
     notes: "Ward-to-ICU step-up; review ABG and repeat vitals on arrival.",
   },
@@ -579,7 +579,7 @@ const admissionSourceScenarios: Record<string, AdmissionSourceScenario> = {
 const admissionHandoverOptions: Record<string, string[]> = {
   Emergency: ["ER Nurse Ritu", "ER Duty Doctor + ER Nurse Ritu", "ER Charge Nurse Pooja", "Emergency Desk Coordinator"],
   "Emergency direct ICU": ["ER Duty Doctor + ER Nurse Ritu", "ER Charge Nurse Pooja + ICU Doctor", "Code Blue Team Lead", "Emergency Desk Coordinator"],
-  "General ward": ["Ward Nurse Kavita", "Ward Nurse Arjun", "Ward Doctor + Ward Nurse", "Floor Coordinator"],
+  "General ward": ["Bedside Nurse Kavita", "Bedside Nurse Arjun", "Ward Doctor + Bedside Nurse", "Floor Coordinator"],
   "Post-surgical unit": ["OT Nurse Sanjana", "Anesthetist + OT Nurse", "Recovery Nurse Lead", "Surgical Team Coordinator"],
   "HDU step-up": ["HDU Nurse Lead", "HDU Duty Doctor + Nurse", "Step-up Coordinator", "Respiratory Therapist"],
   "External hospital transfer": ["Referring hospital coordinator", "Ambulance paramedic", "External hospital duty doctor", "Transfer desk coordinator"],
@@ -1524,7 +1524,7 @@ function buildMedicationDoseRows(orders: DoctorMedicationOrder[]): MedicationDos
         shift: medicationShiftForTime(time),
         actualTime: status === "Administered" ? time : "-",
         status,
-        administeredBy: status === "Administered" ? "Ward Nurse Arjun" : "-",
+        administeredBy: status === "Administered" ? "Bedside Nurse Arjun" : "-",
         reason: order.indication,
         orderType: order.orderType,
         doctor: order.doctor,
@@ -1974,10 +1974,10 @@ const clinicalHandoffShiftOptions = [
 ];
 
 const clinicalHandoffPairs: Record<string, { outgoingNurse: string; incomingNurse: string }> = {
-  "K - Morning (07:00-15:00)": { outgoingNurse: "Night Nurse Leena", incomingNurse: "Ward Nurse Kavita" },
-  "Y - Evening (15:00-23:00)": { outgoingNurse: "Ward Nurse Kavita", incomingNurse: "Ward Nurse Arjun" },
-  "X - Night (23:00-07:00)": { outgoingNurse: "Ward Nurse Arjun", incomingNurse: "Night Nurse Leena" },
-  "Emergency / temporary handoff": { outgoingNurse: "Unit Nurse Priya", incomingNurse: "Ward Nurse Neha" },
+  "K - Morning (07:00-15:00)": { outgoingNurse: "Night Nurse Leena", incomingNurse: "Bedside Nurse Kavita" },
+  "Y - Evening (15:00-23:00)": { outgoingNurse: "Bedside Nurse Kavita", incomingNurse: "Bedside Nurse Arjun" },
+  "X - Night (23:00-07:00)": { outgoingNurse: "Bedside Nurse Arjun", incomingNurse: "Night Nurse Leena" },
+  "Emergency / temporary handoff": { outgoingNurse: "Unit Nurse Priya", incomingNurse: "Bedside Nurse Neha" },
 };
 
 type NursingClinicalHandoffDraft = {
@@ -2025,9 +2025,9 @@ export function ShiftHandoverWorkspace() {
   const firstPatient = icuPatients[0];
   const nurseOptions = React.useMemo(
     () => Array.from(new Set([
-      "Ward Nurse Kavita",
-      "Ward Nurse Arjun",
-      "Ward Nurse Neha",
+      "Bedside Nurse Kavita",
+      "Bedside Nurse Arjun",
+      "Bedside Nurse Neha",
       "Night Nurse Leena",
       "Unit Nurse Priya",
       "Unit Nurse Meera",
@@ -2054,7 +2054,7 @@ export function ShiftHandoverWorkspace() {
       id: "nch-001",
       status: "Signed",
       signatureConfirmation: "Digital signature captured",
-      submittedBy: "Ward Nurse Kavita",
+      submittedBy: "Bedside Nurse Kavita",
       submittedAt: "16:10",
     },
     {
@@ -2064,7 +2064,7 @@ export function ShiftHandoverWorkspace() {
       signatureConfirmation: "Received with exceptions",
       submittedBy: "Night Nurse Leena",
       submittedAt: "16:10",
-      acknowledgedBy: "Ward Nurse Arjun",
+      acknowledgedBy: "Bedside Nurse Arjun",
       acknowledgedAt: "16:25",
     },
   ]);
@@ -3310,7 +3310,7 @@ function TaskDashboardTable({
                       />
                     </td>
                     <td className="px-4 py-2 align-middle">
-                      <p className="text-sm font-bold text-slate-950">{topTask?.assignedTo ?? row.patient?.assignedWardNurse ?? "Ward Nurse"}</p>
+                      <p className="text-sm font-bold text-slate-950">{topTask?.assignedTo ?? row.patient?.assignedWardNurse ?? "Bedside Nurse"}</p>
                     </td>
                     <td className="px-3 py-2 align-middle">
                       <TaskMatrixActionButtons task={topTask} bedNo={row.bedNo} onOpenAction={onOpenAction} />
@@ -3867,8 +3867,8 @@ function NursingAssessmentWorkspace({
         remarks: `${findings} | Intervention: ${intervention}`,
         source: "Nursing assessment",
         assignedBy: patient.assignedWardNurse,
-        assignedByRole: "Ward Nurse",
-        assignedToRole: "Ward Nurse",
+        assignedByRole: "Bedside Nurse",
+        assignedToRole: "Bedside Nurse",
         assignmentReason: "Assessment needs follow-up",
         escalationOwner: patient.dutyDoctor,
         requiresAcknowledgement: true,
@@ -4023,7 +4023,7 @@ function CreateNurseTaskPanel({ onCreateTask }: { onCreateTask: (draft: NurseTas
   const selectedScenario = getNurseTaskScenario(draft.scenarioId) ?? nurseTaskScenarios[0];
   const sourceScenarios = nurseTaskScenarios.filter((scenario) => scenario.source === draft.source);
   const patientOptions = icuPatients.map((patient) => patient.id);
-  const nurseOptions = Array.from(new Set([...allNurses, "Night Nurse Leena", "Ward Nurse Neha", "Head Nurse Sana"]));
+  const nurseOptions = Array.from(new Set([...allNurses, "Night Nurse Leena", "Bedside Nurse Neha", "Head Nurse Sana"]));
 
   const applyScenario = (scenario: NurseTaskScenario) => {
     const assignment = getTaskAssignmentDefaults(scenario.source, selectedPatient, scenario);
@@ -4178,10 +4178,10 @@ function formatNurseTaskDueTime(draft: NurseTaskDraft) {
 }
 
 function getTaskAssignmentDefaults(source: NurseTaskSource, patient?: IcuPatient, scenario?: NurseTaskScenario) {
-  const assignedToRole = source === "Head nurse supervision" ? "Unit Nurse" : "Ward Nurse";
+  const assignedToRole = source === "Head nurse supervision" ? "Unit Nurse" : "Bedside Nurse";
   const base = {
-    assignedBy: patient?.assignedWardNurse ?? "Ward Nurse Current",
-    assignedByRole: "Ward Nurse",
+    assignedBy: patient?.assignedWardNurse ?? "Bedside Nurse Current",
+    assignedByRole: "Bedside Nurse",
     assignedToRole,
     assignmentReason: scenario?.remarks ?? "Nursing task assignment",
     escalationOwner: source === "Head nurse supervision" ? "Head Nurse Sana" : "Duty Doctor",
@@ -4210,7 +4210,7 @@ function getTaskAssignmentDefaults(source: NurseTaskSource, patient?: IcuPatient
     return { ...base, assignedBy: "Lab / Radiology Department", assignedByRole: "Lab", assignmentReason: "Sample, imaging, or report coordination", escalationOwner: "Duty Doctor", requiresAcknowledgement: true };
   }
   if (source === "Shift handover") {
-    return { ...base, assignedBy: "Outgoing Nurse", assignedByRole: "Ward Nurse", assignmentReason: "Pending task carried forward from previous shift", escalationOwner: "Head Nurse Sana", requiresAcknowledgement: true };
+    return { ...base, assignedBy: "Outgoing Nurse", assignedByRole: "Bedside Nurse", assignmentReason: "Pending task carried forward from previous shift", escalationOwner: "Head Nurse Sana", requiresAcknowledgement: true };
   }
   if (source === "Admission / transfer") {
     return { ...base, assignedBy: patient?.assignedUnitNurse ?? "Unit Nurse Priya", assignedByRole: "Unit Nurse", assignmentReason: "Admission, transfer, or clearance workflow", escalationOwner: "Head Nurse Sana", requiresAcknowledgement: true };
@@ -4282,8 +4282,8 @@ type DoctorEntryOrder = DoctorEntryDraft & {
 const doctorEntryCategoryOptions: DoctorEntryOrderCategory[] = ["Medication", "Investigation", "Imaging", "Procedure", "Nursing Care", "Diet / Fluid", "Ventilation"];
 
 const doctorEntryAssignments = [
-  "Ward Nurse Kavita",
-  "Ward Nurse Arjun",
+  "Bedside Nurse Kavita",
+  "Bedside Nurse Arjun",
   "Unit Nurse Priya",
   "Pharmacy",
   "Diagnostics",
@@ -4293,18 +4293,18 @@ const doctorEntryAssignments = [
 
 const doctorEntryTemplates: Record<DoctorEntryOrderCategory, Array<Pick<DoctorEntryDraft, "orderName" | "doseOrDetail" | "route" | "frequency" | "timing" | "assignedTo" | "priority" | "instruction">>> = {
   Medication: [
-    { orderName: "Meropenem", doseOrDetail: "1 g", route: "IV", frequency: "q8h", timing: "08:00, 16:00, 00:00", assignedTo: "Ward Nurse Kavita", priority: "High", instruction: "Administer after pharmacy dispense and allergy check." },
-    { orderName: "Noradrenaline", doseOrDetail: "0.05 mcg/kg/min", route: "Infusion", frequency: "Continuous", timing: "Now", assignedTo: "Ward Nurse Kavita", priority: "STAT", instruction: "Titrate to MAP target and document pump check." },
-    { orderName: "Insulin regular", doseOrDetail: "Sliding scale", route: "SC", frequency: "Before meals", timing: "12:00, 18:00", assignedTo: "Ward Nurse Kavita", priority: "High", instruction: "Check blood sugar before administration and double verify dose." },
-    { orderName: "Pantoprazole", doseOrDetail: "40 mg", route: "IV", frequency: "OD", timing: "09:00", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Administer once daily before feeds." },
-    { orderName: "Paracetamol", doseOrDetail: "650 mg", route: "Oral/NG", frequency: "SOS fever", timing: "PRN", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Give if temperature is above 38 C or pain score is above 5." },
-    { orderName: "Furosemide", doseOrDetail: "20 mg", route: "IV", frequency: "OD", timing: "10:00", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Review BP, potassium, and urine output before dose." },
-    { orderName: "Enoxaparin", doseOrDetail: "40 mg", route: "SC", frequency: "OD", timing: "20:00", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Hold for bleeding, low platelets, or procedure plan." },
-    { orderName: "Levetiracetam", doseOrDetail: "500 mg", route: "IV", frequency: "BD", timing: "08:00, 20:00", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Monitor seizure activity and sedation." },
+    { orderName: "Meropenem", doseOrDetail: "1 g", route: "IV", frequency: "q8h", timing: "08:00, 16:00, 00:00", assignedTo: "Bedside Nurse Kavita", priority: "High", instruction: "Administer after pharmacy dispense and allergy check." },
+    { orderName: "Noradrenaline", doseOrDetail: "0.05 mcg/kg/min", route: "Infusion", frequency: "Continuous", timing: "Now", assignedTo: "Bedside Nurse Kavita", priority: "STAT", instruction: "Titrate to MAP target and document pump check." },
+    { orderName: "Insulin regular", doseOrDetail: "Sliding scale", route: "SC", frequency: "Before meals", timing: "12:00, 18:00", assignedTo: "Bedside Nurse Kavita", priority: "High", instruction: "Check blood sugar before administration and double verify dose." },
+    { orderName: "Pantoprazole", doseOrDetail: "40 mg", route: "IV", frequency: "OD", timing: "09:00", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Administer once daily before feeds." },
+    { orderName: "Paracetamol", doseOrDetail: "650 mg", route: "Oral/NG", frequency: "SOS fever", timing: "PRN", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Give if temperature is above 38 C or pain score is above 5." },
+    { orderName: "Furosemide", doseOrDetail: "20 mg", route: "IV", frequency: "OD", timing: "10:00", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Review BP, potassium, and urine output before dose." },
+    { orderName: "Enoxaparin", doseOrDetail: "40 mg", route: "SC", frequency: "OD", timing: "20:00", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Hold for bleeding, low platelets, or procedure plan." },
+    { orderName: "Levetiracetam", doseOrDetail: "500 mg", route: "IV", frequency: "BD", timing: "08:00, 20:00", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Monitor seizure activity and sedation." },
     { orderName: "Salbutamol nebulization", doseOrDetail: "2.5 mg", route: "Nebulization", frequency: "q6h", timing: "06:00, 12:00, 18:00, 00:00", assignedTo: "Respiratory Therapist", priority: "Routine", instruction: "Record wheeze, SpO2, and heart rate response." },
-    { orderName: "Potassium chloride correction", doseOrDetail: "20 mEq", route: "IV infusion", frequency: "Once", timing: "Now", assignedTo: "Ward Nurse Kavita", priority: "High", instruction: "Give only with pump and ECG monitoring as per protocol." },
-    { orderName: "Vancomycin", doseOrDetail: "1 g", route: "IV", frequency: "BD", timing: "10:00, 22:00", assignedTo: "Ward Nurse Arjun", priority: "High", instruction: "Send trough level before fourth dose if continued." },
-    { orderName: "Propofol", doseOrDetail: "10-50 mcg/kg/min", route: "Infusion", frequency: "Continuous", timing: "Now", assignedTo: "Ward Nurse Kavita", priority: "STAT", instruction: "Target ordered sedation score and monitor BP closely." },
+    { orderName: "Potassium chloride correction", doseOrDetail: "20 mEq", route: "IV infusion", frequency: "Once", timing: "Now", assignedTo: "Bedside Nurse Kavita", priority: "High", instruction: "Give only with pump and ECG monitoring as per protocol." },
+    { orderName: "Vancomycin", doseOrDetail: "1 g", route: "IV", frequency: "BD", timing: "10:00, 22:00", assignedTo: "Bedside Nurse Arjun", priority: "High", instruction: "Send trough level before fourth dose if continued." },
+    { orderName: "Propofol", doseOrDetail: "10-50 mcg/kg/min", route: "Infusion", frequency: "Continuous", timing: "Now", assignedTo: "Bedside Nurse Kavita", priority: "STAT", instruction: "Target ordered sedation score and monitor BP closely." },
   ],
   Investigation: [
     { orderName: "ABG with lactate", doseOrDetail: "Arterial sample", route: "Lab", frequency: "Once", timing: "Now", assignedTo: "Diagnostics", priority: "STAT", instruction: "Inform duty doctor immediately if lactate is rising." },
@@ -4316,7 +4316,7 @@ const doctorEntryTemplates: Record<DoctorEntryOrderCategory, Array<Pick<DoctorEn
     { orderName: "Urine routine and culture", doseOrDetail: "Catheter sample", route: "Lab", frequency: "Once", timing: "Today", assignedTo: "Diagnostics", priority: "Routine", instruction: "Use aseptic sample collection technique." },
     { orderName: "Procalcitonin", doseOrDetail: "Serum", route: "Lab", frequency: "Once", timing: "Morning sample", assignedTo: "Diagnostics", priority: "High", instruction: "Trend with sepsis plan and antibiotic review." },
     { orderName: "Troponin I", doseOrDetail: "Serum", route: "Lab", frequency: "Once", timing: "Now", assignedTo: "Diagnostics", priority: "STAT", instruction: "Notify duty doctor if positive or rising." },
-    { orderName: "Blood sugar monitoring", doseOrDetail: "Capillary glucose", route: "Bedside", frequency: "q6h", timing: "06:00, 12:00, 18:00, 00:00", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Follow insulin correction order if value is out of range." },
+    { orderName: "Blood sugar monitoring", doseOrDetail: "Capillary glucose", route: "Bedside", frequency: "q6h", timing: "06:00, 12:00, 18:00, 00:00", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Follow insulin correction order if value is out of range." },
   ],
   Imaging: [
     { orderName: "Portable chest X-ray", doseOrDetail: "AP view", route: "Portable", frequency: "Once", timing: "Today", assignedTo: "Radiology", priority: "High", instruction: "Confirm line position and lung fields." },
@@ -4332,37 +4332,37 @@ const doctorEntryTemplates: Record<DoctorEntryOrderCategory, Array<Pick<DoctorEn
     { orderName: "Central line review", doseOrDetail: "Right IJ line", route: "Bedside", frequency: "Once", timing: "Next round", assignedTo: "Unit Nurse Priya", priority: "Routine", instruction: "Keep sterile tray and consent status ready." },
     { orderName: "Tracheostomy planning", doseOrDetail: "Airway procedure", route: "OT / bedside", frequency: "Once", timing: "After family consent", assignedTo: "Unit Nurse Priya", priority: "High", instruction: "Coordinate anesthesia, consent, and ventilator readiness." },
     { orderName: "Arterial line insertion", doseOrDetail: "Radial artery", route: "Bedside", frequency: "Once", timing: "Now", assignedTo: "Unit Nurse Priya", priority: "High", instruction: "Prepare sterile set, pressure bag, and waveform monitoring." },
-    { orderName: "Urinary catheter insertion", doseOrDetail: "Foley catheter", route: "Bedside", frequency: "Once", timing: "Now", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Use aseptic technique and record urine output hourly." },
+    { orderName: "Urinary catheter insertion", doseOrDetail: "Foley catheter", route: "Bedside", frequency: "Once", timing: "Now", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Use aseptic technique and record urine output hourly." },
     { orderName: "Pleural tap", doseOrDetail: "Diagnostic/therapeutic", route: "Bedside", frequency: "Once", timing: "After consent", assignedTo: "Unit Nurse Priya", priority: "High", instruction: "Keep ultrasound, sterile tray, and sample bottles ready." },
-    { orderName: "Dialysis catheter care", doseOrDetail: "Dressing and patency check", route: "Bedside", frequency: "Once", timing: "Before dialysis", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Check dressing, bleeding, infection, and line patency." },
-    { orderName: "Wound dressing", doseOrDetail: "Surgical wound", route: "Bedside", frequency: "OD", timing: "Morning", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Document wound status, soakage, and discharge." },
+    { orderName: "Dialysis catheter care", doseOrDetail: "Dressing and patency check", route: "Bedside", frequency: "Once", timing: "Before dialysis", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Check dressing, bleeding, infection, and line patency." },
+    { orderName: "Wound dressing", doseOrDetail: "Surgical wound", route: "Bedside", frequency: "OD", timing: "Morning", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Document wound status, soakage, and discharge." },
     { orderName: "Drain removal review", doseOrDetail: "Abdominal drain", route: "Bedside", frequency: "Once", timing: "Next round", assignedTo: "Unit Nurse Priya", priority: "Routine", instruction: "Record last 24-hour output before review." },
   ],
   "Nursing Care": [
-    { orderName: "Repeat vitals", doseOrDetail: "BP, SpO2, pulse", route: "Bedside", frequency: "Every 15 minutes", timing: "For 1 hour", assignedTo: "Ward Nurse Kavita", priority: "High", instruction: "Escalate if BP remains below target." },
-    { orderName: "Neuro observation", doseOrDetail: "GCS and pupils", route: "Bedside", frequency: "Hourly", timing: "Next 6 hours", assignedTo: "Ward Nurse Arjun", priority: "High", instruction: "Call duty doctor for drop in GCS." },
-    { orderName: "Strict intake/output", doseOrDetail: "All sources", route: "Bedside chart", frequency: "Hourly", timing: "Current shift", assignedTo: "Ward Nurse Kavita", priority: "High", instruction: "Inform if urine output falls below 0.5 ml/kg/hr." },
-    { orderName: "Pressure sore prevention", doseOrDetail: "Two-hourly position change", route: "Bedside", frequency: "q2h", timing: "All shifts", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Document position change and skin condition." },
-    { orderName: "Oral care", doseOrDetail: "Ventilator oral care", route: "Bedside", frequency: "q4h", timing: "All shifts", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Use VAP prevention bundle documentation." },
-    { orderName: "Line site check", doseOrDetail: "Central line and arterial line", route: "Bedside", frequency: "Every shift", timing: "Each shift", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Report redness, discharge, loose dressing, or line issue." },
-    { orderName: "Pain score monitoring", doseOrDetail: "NRS / behavioral pain score", route: "Bedside", frequency: "q4h", timing: "All shifts", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Escalate uncontrolled pain after analgesia." },
-    { orderName: "Fall prevention", doseOrDetail: "High-risk precautions", route: "Bedside", frequency: "Continuous", timing: "All shifts", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Maintain side rails, call bell, and supervised mobilization." },
+    { orderName: "Repeat vitals", doseOrDetail: "BP, SpO2, pulse", route: "Bedside", frequency: "Every 15 minutes", timing: "For 1 hour", assignedTo: "Bedside Nurse Kavita", priority: "High", instruction: "Escalate if BP remains below target." },
+    { orderName: "Neuro observation", doseOrDetail: "GCS and pupils", route: "Bedside", frequency: "Hourly", timing: "Next 6 hours", assignedTo: "Bedside Nurse Arjun", priority: "High", instruction: "Call duty doctor for drop in GCS." },
+    { orderName: "Strict intake/output", doseOrDetail: "All sources", route: "Bedside chart", frequency: "Hourly", timing: "Current shift", assignedTo: "Bedside Nurse Kavita", priority: "High", instruction: "Inform if urine output falls below 0.5 ml/kg/hr." },
+    { orderName: "Pressure sore prevention", doseOrDetail: "Two-hourly position change", route: "Bedside", frequency: "q2h", timing: "All shifts", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Document position change and skin condition." },
+    { orderName: "Oral care", doseOrDetail: "Ventilator oral care", route: "Bedside", frequency: "q4h", timing: "All shifts", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Use VAP prevention bundle documentation." },
+    { orderName: "Line site check", doseOrDetail: "Central line and arterial line", route: "Bedside", frequency: "Every shift", timing: "Each shift", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Report redness, discharge, loose dressing, or line issue." },
+    { orderName: "Pain score monitoring", doseOrDetail: "NRS / behavioral pain score", route: "Bedside", frequency: "q4h", timing: "All shifts", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Escalate uncontrolled pain after analgesia." },
+    { orderName: "Fall prevention", doseOrDetail: "High-risk precautions", route: "Bedside", frequency: "Continuous", timing: "All shifts", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Maintain side rails, call bell, and supervised mobilization." },
   ],
   "Diet / Fluid": [
-    { orderName: "Fluid restriction", doseOrDetail: "1500 ml/day", route: "I/O chart", frequency: "24 hours", timing: "From now", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Record oral, IV, tube feed, urine, and drains." },
-    { orderName: "Enteral feed", doseOrDetail: "50 ml/hr", route: "NG tube", frequency: "Continuous", timing: "Start 14:00", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Hold if vomiting, high aspirate, or desaturation." },
-    { orderName: "NPO", doseOrDetail: "Nil per oral", route: "Diet order", frequency: "Until review", timing: "Now", assignedTo: "Ward Nurse Kavita", priority: "High", instruction: "Hold oral feeds and medications unless doctor allows NG route." },
-    { orderName: "Normal saline", doseOrDetail: "100 ml/hr", route: "IV", frequency: "Continuous", timing: "Now", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Review fluid balance and edema every shift." },
-    { orderName: "Ringer lactate bolus", doseOrDetail: "500 ml", route: "IV", frequency: "Once", timing: "Now", assignedTo: "Ward Nurse Kavita", priority: "STAT", instruction: "Recheck BP, pulse, SpO2, and urine output after bolus." },
-    { orderName: "Dextrose saline", doseOrDetail: "75 ml/hr", route: "IV", frequency: "Continuous", timing: "Now", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Monitor blood sugar and sodium." },
-    { orderName: "Tube feed advancement", doseOrDetail: "Increase by 20 ml/hr", route: "NG tube", frequency: "q6h", timing: "If tolerated", assignedTo: "Ward Nurse Kavita", priority: "Routine", instruction: "Hold escalation if vomiting, distension, or high aspirate." },
-    { orderName: "Free water flush", doseOrDetail: "30 ml", route: "NG tube", frequency: "q4h", timing: "All shifts", assignedTo: "Ward Nurse Arjun", priority: "Routine", instruction: "Document flush volume in intake chart." },
+    { orderName: "Fluid restriction", doseOrDetail: "1500 ml/day", route: "I/O chart", frequency: "24 hours", timing: "From now", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Record oral, IV, tube feed, urine, and drains." },
+    { orderName: "Enteral feed", doseOrDetail: "50 ml/hr", route: "NG tube", frequency: "Continuous", timing: "Start 14:00", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Hold if vomiting, high aspirate, or desaturation." },
+    { orderName: "NPO", doseOrDetail: "Nil per oral", route: "Diet order", frequency: "Until review", timing: "Now", assignedTo: "Bedside Nurse Kavita", priority: "High", instruction: "Hold oral feeds and medications unless doctor allows NG route." },
+    { orderName: "Normal saline", doseOrDetail: "100 ml/hr", route: "IV", frequency: "Continuous", timing: "Now", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Review fluid balance and edema every shift." },
+    { orderName: "Ringer lactate bolus", doseOrDetail: "500 ml", route: "IV", frequency: "Once", timing: "Now", assignedTo: "Bedside Nurse Kavita", priority: "STAT", instruction: "Recheck BP, pulse, SpO2, and urine output after bolus." },
+    { orderName: "Dextrose saline", doseOrDetail: "75 ml/hr", route: "IV", frequency: "Continuous", timing: "Now", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Monitor blood sugar and sodium." },
+    { orderName: "Tube feed advancement", doseOrDetail: "Increase by 20 ml/hr", route: "NG tube", frequency: "q6h", timing: "If tolerated", assignedTo: "Bedside Nurse Kavita", priority: "Routine", instruction: "Hold escalation if vomiting, distension, or high aspirate." },
+    { orderName: "Free water flush", doseOrDetail: "30 ml", route: "NG tube", frequency: "q4h", timing: "All shifts", assignedTo: "Bedside Nurse Arjun", priority: "Routine", instruction: "Document flush volume in intake chart." },
   ],
   Ventilation: [
     { orderName: "NIV support", doseOrDetail: "IPAP/EPAP as tolerated", route: "Mask", frequency: "Continuous", timing: "Now", assignedTo: "Respiratory Therapist", priority: "STAT", instruction: "Repeat ABG after setting change." },
     { orderName: "Weaning trial", doseOrDetail: "Spontaneous breathing trial", route: "Ventilator", frequency: "Once", timing: "Morning round", assignedTo: "Respiratory Therapist", priority: "High", instruction: "Stop trial if distress or hemodynamic instability occurs." },
     { orderName: "Invasive ventilation", doseOrDetail: "Volume control mode", route: "ET tube", frequency: "Continuous", timing: "Now", assignedTo: "Respiratory Therapist", priority: "STAT", instruction: "Document mode, VT, RR, FiO2, PEEP, and pressures." },
-    { orderName: "Oxygen mask", doseOrDetail: "5 L/min", route: "Face mask", frequency: "Continuous", timing: "Now", assignedTo: "Ward Nurse Kavita", priority: "High", instruction: "Target SpO2 as ordered and escalate if requirement increases." },
+    { orderName: "Oxygen mask", doseOrDetail: "5 L/min", route: "Face mask", frequency: "Continuous", timing: "Now", assignedTo: "Bedside Nurse Kavita", priority: "High", instruction: "Target SpO2 as ordered and escalate if requirement increases." },
     { orderName: "HFNC", doseOrDetail: "Flow 40 L/min, FiO2 50%", route: "High-flow nasal cannula", frequency: "Continuous", timing: "Now", assignedTo: "Respiratory Therapist", priority: "High", instruction: "Record flow, FiO2, SpO2, and work of breathing." },
     { orderName: "Suctioning", doseOrDetail: "Closed suction", route: "ET / tracheostomy", frequency: "PRN", timing: "As needed", assignedTo: "Respiratory Therapist", priority: "Routine", instruction: "Use sterile technique and pre-oxygenate if required." },
     { orderName: "PEEP adjustment", doseOrDetail: "Increase by 2 cmH2O", route: "Ventilator", frequency: "Once", timing: "Now", assignedTo: "Respiratory Therapist", priority: "High", instruction: "Repeat SpO2 and ABG review after adjustment." },
@@ -4401,7 +4401,7 @@ const initialDoctorEntryOrders: DoctorEntryOrder[] = [
     route: "IV",
     frequency: "q8h",
     timing: "08:00, 16:00, 00:00",
-    assignedTo: "Ward Nurse Kavita",
+    assignedTo: "Bedside Nurse Kavita",
     priority: "High",
     doctor: "Dr. Sameer Mehta",
     instruction: "Administer after pharmacy dispense and allergy check.",
@@ -4439,7 +4439,7 @@ const initialDoctorEntryOrders: DoctorEntryOrder[] = [
     route: "Bedside chart",
     frequency: "Hourly",
     timing: "Current shift",
-    assignedTo: "Ward Nurse Kavita",
+    assignedTo: "Bedside Nurse Kavita",
     priority: "High",
     doctor: "Dr. Sameer Mehta",
     instruction: "Inform if urine output falls below 0.5 ml/kg/hr.",
@@ -4458,7 +4458,7 @@ const initialDoctorEntryOrders: DoctorEntryOrder[] = [
     route: "IV",
     frequency: "Once",
     timing: "Now",
-    assignedTo: "Ward Nurse Kavita",
+    assignedTo: "Bedside Nurse Kavita",
     priority: "STAT",
     doctor: "Dr. Sameer Mehta",
     instruction: "Recheck BP, pulse, SpO2, and urine output after bolus.",
@@ -4534,7 +4534,7 @@ const initialDoctorEntryOrders: DoctorEntryOrder[] = [
     route: "Bedside",
     frequency: "Hourly",
     timing: "Next 6 hours",
-    assignedTo: "Ward Nurse Arjun",
+    assignedTo: "Bedside Nurse Arjun",
     priority: "High",
     doctor: "Dr. Aman Verma",
     instruction: "Call duty doctor for drop in GCS.",
@@ -4709,7 +4709,7 @@ export function MedicationTimelineWorkspace() {
         ...dose,
         status: nextStatus,
         actualTime: nextStatus === "Administered" || nextStatus === "Running" ? details?.actualTime || "Now" : dose.actualTime,
-        administeredBy: nextStatus === "Administered" || nextStatus === "Running" ? details?.administeredBy || "Ward Nurse Current" : dose.administeredBy,
+        administeredBy: nextStatus === "Administered" || nextStatus === "Running" ? details?.administeredBy || "Bedside Nurse Current" : dose.administeredBy,
         reason: ["Held", "Skipped", "Missed", "Refused"].includes(nextStatus) ? note : dose.reason,
         auditTrail: [...prnReassessment, `Now: ${nextStatus} - ${note}`, ...dose.auditTrail],
       };
@@ -6758,7 +6758,7 @@ function MedicationActionDialog({
   const patient = icuPatients.find((item) => item.id === dose?.patientId);
   const initialClock = dose?.scheduledTime.match(/^\d{2}:\d{2}$/)?.[0] ?? "12:00";
   const [actualTime, setActualTime] = React.useState(initialClock);
-  const [administeredBy, setAdministeredBy] = React.useState("Ward Nurse Current");
+  const [administeredBy, setAdministeredBy] = React.useState("Bedside Nurse Current");
   const [verifier, setVerifier] = React.useState(allNurses.find((nurse) => nurse !== dose?.administeredBy) ?? "Head Nurse Sana");
   const [reason, setReason] = React.useState("");
   const [reviewTime, setReviewTime] = React.useState("");
@@ -6870,7 +6870,7 @@ function MedicationActionDialog({
               <NativeSelect label="Independent verifier" value={verifier} onChange={setVerifier} options={Array.from(new Set([...allNurses, "Head Nurse Sana"]))} />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                <NativeSelect label="Administering nurse" value={administeredBy} onChange={setAdministeredBy} options={Array.from(new Set(["Ward Nurse Current", ...allNurses]))} />
+                <NativeSelect label="Administering nurse" value={administeredBy} onChange={setAdministeredBy} options={Array.from(new Set(["Bedside Nurse Current", ...allNurses]))} />
                 <label className="space-y-1 text-sm">
                   <span className="font-medium text-foreground">Actual time</span>
                   <Input type="time" value={actualTime} onChange={(event) => setActualTime(event.target.value)} />
@@ -7347,7 +7347,7 @@ export function AlertsEscalationWorkspace() {
                 <div className="rounded-md border border-border bg-background p-3">
                   <p className="text-sm font-semibold text-foreground">Action workspace</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <NativeSelect label="Responsible owner" value={actionOwner} onChange={setActionOwner} options={uniqueWorkflowOptions([selectedAlert.assignedTo, "Duty Doctor", "Head Nurse Sana", "Ward Nurse", "Unit Nurse", "Pharmacy", "Biomedical Raj", "Respiratory Therapist", "Lab / Radiology"])} />
+                    <NativeSelect label="Responsible owner" value={actionOwner} onChange={setActionOwner} options={uniqueWorkflowOptions([selectedAlert.assignedTo, "Duty Doctor", "Head Nurse Sana", "Bedside Nurse", "Unit Nurse", "Pharmacy", "Biomedical Raj", "Respiratory Therapist", "Lab / Radiology"])} />
                     <NativeSelect label="Escalation route" value={selectedAlert.severity === "Critical" ? "Immediate doctor escalation" : "Routine owner follow-up"} onChange={() => undefined} options={["Immediate doctor escalation", "Head nurse review", "Routine owner follow-up", "Pharmacy follow-up", "Biomedical follow-up", "Lab / radiology follow-up"]} />
                   </div>
                   <label className="mt-3 block space-y-1 text-sm">
@@ -7658,7 +7658,7 @@ function PatientActionWorkspace({ patient }: { patient?: IcuPatient }) {
             ["Diagnosis", patient.diagnosis],
             ["Ventilator", patient.ventilatorStatus],
             ["Doctor", patient.admittingDoctor],
-            ["Ward nurse", patient.assignedWardNurse],
+            ["Bedside nurse", patient.assignedWardNurse],
           ]} />
           <InfoPanel title="Device Snapshot" rows={[
             ["Monitor", deviceRows.find((row) => row.bedNo === patient.bedNo)?.monitor ?? "Not mapped"],

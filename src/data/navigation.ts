@@ -29,7 +29,7 @@ export const roles: Role[] = [
   "Hospital Admin",
   "Doctor",
   "Doctor ICU",
-  "Ward Nurse",
+  "Bedside Nurse",
   "Unit Nurse",
   "Head Nurse",
   "ICU Bed Coordinator",
@@ -50,7 +50,7 @@ export const roles: Role[] = [
 
 const icuPersonaRoles: Role[] = [
   "Doctor ICU",
-  "Ward Nurse",
+  "Bedside Nurse",
   "Unit Nurse",
   "Head Nurse",
   "ICU Bed Coordinator",
@@ -118,7 +118,7 @@ const icuPersonaNavigation: Partial<Record<Role, NavigationChildItem[]>> = {
       navChild("doctor-icu-vital-graph", "Vital Graph", "/icu-command-center/patients/icu-001?tab=graph"),
     ]),
   ],
-  "Ward Nurse": getNursingRoleNavigation("Ward Nurse")!,
+  "Bedside Nurse": getNursingRoleNavigation("Bedside Nurse")!,
   "Unit Nurse": getNursingRoleNavigation("Unit Nurse")!,
   "Head Nurse": getNursingRoleNavigation("Head Nurse")!,
   "ICU Bed Coordinator": [
@@ -488,7 +488,7 @@ export const navigationItems: NavigationItem[] = [
       { id: "nursing-icu-radiology", label: "Radiology Orders & Reports", route: "/nursing-icu/radiology-reports", status: "ready" },
       { id: "nursing-icu-pharmacy", label: "Pharmacy Requests", route: "/nursing-icu/pharmacy-requests", status: "ready" },
       { id: "nursing-icu-head-nurse", label: "Head Nurse Console", route: "/nursing-icu/head-nurse-console", status: "ready" },
-      { id: "nursing-icu-ward-nurse", label: "Ward Nurse Shift Activities", route: "/nursing-icu/ward-nurse-activities", status: "ready" },
+      { id: "nursing-icu-ward-nurse", label: "Bedside Nurse Shift Activities", route: "/nursing-icu/ward-nurse-activities", status: "ready" },
       { id: "nursing-icu-duty-doctor", label: "Duty Doctor Monitoring", route: "/nursing-icu/duty-doctor-monitoring", status: "ready" },
       { id: "nursing-icu-alerts", label: "ICU Alerts", route: "/nursing-icu/alerts", status: "ready" },
       { id: "nursing-icu-transfer", label: "Transfer / Discharge / Death Workflow", route: "/nursing-icu/transfer-discharge", status: "ready" },

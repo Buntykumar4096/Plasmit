@@ -3,7 +3,7 @@ import type { NavigationChildItem, Role } from "@/types";
 export type NursingRoleKey = "HEAD_NURSE" | "UNIT_NURSE" | "WARD_NURSE";
 
 export type NursingRolePermission = {
-  role: Extract<Role, "Head Nurse" | "Unit Nurse" | "Ward Nurse">;
+  role: Extract<Role, "Head Nurse" | "Unit Nurse" | "Bedside Nurse">;
   defaultRoute: string;
   routes: string[];
   patientTabs: string[];
@@ -57,6 +57,8 @@ export const nursingRolePermissions: Record<NursingRoleKey, NursingRolePermissio
     routes: [
       "/icu-command-center/nursing/station",
       "/icu-command-center/nursing/assigned-patients",
+      "/icu-command-center/nursing/unit-shift-handover",
+      "/icu-command-center/nursing/ward-escalations",
       "/icu-command-center/patients/smart-bed-view",
       "/icu-command-center/nursing/shift-handover",
       "/icu-command-center/critical-care/clinical-alerts",
@@ -69,7 +71,7 @@ export const nursingRolePermissions: Record<NursingRoleKey, NursingRolePermissio
     ],
   },
   WARD_NURSE: {
-    role: "Ward Nurse",
+    role: "Bedside Nurse",
     defaultRoute: "/icu-command-center/clinical-workspace/patient-overview",
     routes: [
       "/icu-command-center/clinical-workspace/patient-overview",

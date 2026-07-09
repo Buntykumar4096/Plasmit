@@ -769,7 +769,7 @@ function NurseObservationEntryTab({
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <FormField label="Recorded by">
               <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20" value={draft.recordedBy} onChange={(event) => updateDraft("recordedBy", event.target.value)} disabled={readOnly}>
-                {["Ward Nurse", "Shift Coordinator", "ER Nurse", "Renal Nurse", "Pediatric Nurse"].map((item) => <option key={item}>{item}</option>)}
+                {["Bedside Nurse", "Shift Coordinator", "ER Nurse", "Renal Nurse", "Pediatric Nurse"].map((item) => <option key={item}>{item}</option>)}
               </select>
             </FormField>
             <FormField label="Respiratory rate">
@@ -1367,7 +1367,7 @@ function NurseObservationEditDialog({
                 </FormField>
                 <FormField label="Edited by">
                   <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20" value={performedBy} onChange={(event) => setPerformedBy(event.target.value)} disabled={readOnly}>
-                    {["Current Nurse", "Ward Nurse", "Shift Coordinator", "ER Nurse", "Renal Nurse", role].map((item) => <option key={item}>{item}</option>)}
+                    {["Current Nurse", "Bedside Nurse", "Shift Coordinator", "ER Nurse", "Renal Nurse", role].map((item) => <option key={item}>{item}</option>)}
                   </select>
                 </FormField>
               </div>
@@ -1546,7 +1546,7 @@ function NurseObservationVoidDialog({
               <DetailRow label="Vitals" value={`RR ${observation.respiratoryRate}, SpO2 ${observation.spo2}, BP ${observation.bloodPressure}, Pulse ${observation.pulse}`} />
               <FormField label="Voided by">
                 <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20" value={voidedBy} onChange={(event) => setVoidedBy(event.target.value)} disabled={readOnly}>
-                  {["Current Nurse", "Ward Nurse", "Shift Coordinator", "ER Nurse", "Renal Nurse", role].map((item) => <option key={item}>{item}</option>)}
+                  {["Current Nurse", "Bedside Nurse", "Shift Coordinator", "ER Nurse", "Renal Nurse", role].map((item) => <option key={item}>{item}</option>)}
                 </select>
               </FormField>
               <FormField label="Reason">
@@ -5172,7 +5172,7 @@ function createObservationDraft(patientId: string): ObservationDraft {
     patientId,
     observationDate: "2026-05-27",
     observationTime: "17:30",
-    recordedBy: "Ward Nurse",
+    recordedBy: "Bedside Nurse",
     shift: "Evening",
     respiratoryRate: "20",
     spo2: "97",

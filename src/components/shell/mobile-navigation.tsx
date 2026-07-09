@@ -88,9 +88,9 @@ export function MobileNavigation() {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[80] bg-slate-900/25 backdrop-blur-sm" />
-        <Dialog.Content className="fixed inset-y-0 left-0 z-[90] flex w-[min(88vw,380px)] flex-col border-r border-slate-200 bg-white text-slate-900 shadow-[18px_0_40px_rgba(15,23,42,0.16)] outline-none">
-          <div className="border-b border-slate-100 bg-white px-3 py-4">
-            <div className="flex h-[72px] items-center justify-between bg-white">
+        <Dialog.Content className="fixed inset-y-0 left-0 z-[90] flex w-screen max-w-[420px] flex-col border-r border-slate-200 bg-white text-slate-900 shadow-[18px_0_40px_rgba(15,23,42,0.16)] outline-none sm:w-[min(88vw,420px)]">
+          <div className="border-b border-slate-100 bg-white px-3 py-3 sm:px-4">
+            <div className="flex h-16 items-center justify-between gap-3 bg-white sm:h-[72px]">
               <Dialog.Title className="sr-only">Plasmit Healthcare IT Vector navigation</Dialog.Title>
               <Dialog.Description className="sr-only">Mobile navigation</Dialog.Description>
               <Image
@@ -102,17 +102,17 @@ export function MobileNavigation() {
                 width={792}
               />
               <Dialog.Close asChild>
-                <Button size="icon" variant="ghost" aria-label="Close navigation">
+                <Button className="shrink-0" size="icon" variant="ghost" aria-label="Close navigation">
                   <X className="h-4 w-4" />
                 </Button>
               </Dialog.Close>
             </div>
           </div>
-          <div className="border-b border-slate-100 p-3">
+          <div className="border-b border-slate-100 p-3 sm:px-4">
             <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">Active role</div>
             <RoleSwitcher className="w-full border-slate-200 bg-white text-slate-900 hover:bg-sky-50" />
           </div>
-          <nav className="min-h-0 flex-1 overflow-auto p-2">
+          <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:p-3">
             {visibleItems.map((item) => {
               const Icon = item.icon;
               const hasChildren = Boolean(item.children?.length);
@@ -128,9 +128,9 @@ export function MobileNavigation() {
                         active ? "bg-primary text-white shadow-[0_12px_24px_rgba(104,120,232,0.2)]" : "hover:bg-sky-50 hover:text-sky-700",
                       )}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span className="min-w-0 flex-1 text-left">{item.label}</span>
-                      <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+                      <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
                     </summary>
                     <div className="ml-6 mt-1 space-y-1 border-l border-slate-200 pl-2">
                       {item.children?.map((child) => renderChild(child))}
@@ -149,8 +149,8 @@ export function MobileNavigation() {
                   key={item.id}
                   onClick={() => setOpen(false)}
                 >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
                 </Link>
               );
             })}

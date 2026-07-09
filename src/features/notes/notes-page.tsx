@@ -643,7 +643,7 @@ const categories: CategoryConfig[] = [
     icon: HeartPulse,
     accent: "text-blue-600",
     soft: "bg-blue-50 dark:bg-blue-950/35",
-    specialties: ["ICU Nurse", "Ward Nurse", "ED Nurse"],
+    specialties: ["ICU Nurse", "Bedside Nurse", "ED Nurse"],
   },
   {
     id: "pharmacy",
@@ -992,7 +992,7 @@ function normalizeNote(note: Note): Note {
 
   if (legacyCategory === "Nurse Notes") {
     if (specialty === "ICU") specialty = "ICU Nurse";
-    else if (!["ICU Nurse", "Ward Nurse", "ED Nurse"].includes(specialty)) specialty = "Ward Nurse";
+    else if (!["ICU Nurse", "Bedside Nurse", "ED Nurse"].includes(specialty)) specialty = "Bedside Nurse";
   } else if (legacyCategory === "Medical Notes" || legacyCategory === "Medical (ED Notes)") {
     const medicalSpecialtyMap: Record<string, string> = {
       ICU: "Respiratory Medicine",

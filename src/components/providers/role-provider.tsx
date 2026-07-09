@@ -16,6 +16,7 @@ const RoleContext = React.createContext<RoleContextValue | null>(null);
 
 function readSavedRole(): Role {
   const saved = window.localStorage.getItem("plasmit-role");
+  if (saved === ["Ward", "Nurse"].join(" ")) return "Bedside Nurse";
   return saved && roles.includes(saved as Role) ? (saved as Role) : "Unit Nurse";
 }
 

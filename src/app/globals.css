@@ -96,6 +96,25 @@ body {
   background: hsl(var(--primary) / 0.18);
 }
 
+.nursing-tab-scroll {
+  scrollbar-color: #94a3b8 #e2e8f0;
+  scrollbar-width: thin;
+}
+
+.nursing-tab-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.nursing-tab-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.nursing-tab-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 999px;
+}
+
 @media print {
   :root,
   .dark {

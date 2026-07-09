@@ -5,7 +5,7 @@ export type Role =
   | "Hospital Admin"
   | "Doctor"
   | "Doctor ICU"
-  | "Ward Nurse"
+  | "Bedside Nurse"
   | "Unit Nurse"
   | "Head Nurse"
   | "ICU Bed Coordinator"
