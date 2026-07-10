@@ -2,21 +2,18 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ClipboardCheck } from "lucide-react";
+import { Check, CheckCheck, ClipboardCheck, Forward, SearchCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRole } from "@/components/providers/role-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { StatusPill } from "@/components/ui/status-pill";
-import { NativeSelect } from "@/features/admin/admin-shared";
 import { cn } from "@/lib/utils";
 import {
   buildClinicalAlertRows,
   buildSupervisionItems,
   ClinicalAlertActionDialog,
   clinicalAlertDefaultForwardTo,
-  DashboardCommandMetric,
   dashboardToneSolidClass,
   dashboardToneTextClass,
   IcuCommandPaginationControls,
@@ -73,14 +70,26 @@ export function UnitWardEscalations() {
       .filter((row, index, rows) => rows.findIndex((item) => item.patientId === row.patientId && item.source === row.source && item.issue === row.issue) === index)
       .sort((a, b) => unitWardEscalationPriorityScore(b) - unitWardEscalationPriorityScore(a));
   }, [clinicalRows, loggedInUnitNurse]);
-  const rows = React.useMemo(() => baseRows
-    .map((row) => ({ ...row, status: statusOverrides[row.id] ?? row.status }))
+  const queueRows = React.useMemo(() => baseRows
+    .map((row) => ({ ...row, status: statusOverrides[row.id] ?? row.status })), [baseRows, statusOverrides]);
+  const escalationCounts = React.useMemo(() => ({
+    open: queueRows.filter((row) => !isEscalationFinalClosedStatus(row.status)).length,
+    critical: queueRows.filter((row) => row.severity === "Critical").length,
+    awaitingReview: queueRows.filter((row) => row.status === "Open" || row.status === "Pending").length,
+    forwarded: queueRows.filter((row) => row.status === "Escalated").length,
+    resolved: queueRows.filter((row) => row.status === "Resolved" || row.status === "Closed").length,
+  }), [queueRows]);
+  const rows = React.useMemo(() => queueRows
     .filter((row) => {
       const text = `${row.patientName} ${row.bedNo} ${row.raisedBy} ${row.source} ${row.issue} ${row.detail} ${row.forwardTo}`.toLowerCase();
-      const statusMatch = statusFilter === "All status" || (statusFilter === "Open work" && !isEscalationFinalClosedStatus(row.status)) || row.status === statusFilter;
+      const statusMatch = statusFilter === "All status"
+        || (statusFilter === "Open work" && !isEscalationFinalClosedStatus(row.status))
+        || (statusFilter === "Awaiting review" && (row.status === "Open" || row.status === "Pending"))
+        || (statusFilter === "Forwarded" && row.status === "Escalated")
+        || row.status === statusFilter;
       const severityMatch = severityFilter === "All severity" || row.severity === severityFilter;
       return text.includes(query.toLowerCase()) && statusMatch && severityMatch;
-    }), [baseRows, query, severityFilter, statusFilter, statusOverrides]);
+    }), [query, queueRows, severityFilter, statusFilter]);
   const pagination = useIcuCommandPagination(rows);
 
   function updateQueueStatus(row: UnitWardEscalationQueueRow, status: string) {
@@ -90,30 +99,35 @@ export function UnitWardEscalations() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-black text-slate-950">Escalations</h1>
-            <p className="mt-1 text-sm text-slate-500">Handled by {loggedInUnitNurse}. Bedside Nurse se aaye saare patient escalations yahin acknowledge, review, forward, resolve aur handover carry-forward honge.</p>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/icu-command-center/nursing/unit-shift-handover"><ClipboardCheck className="h-4 w-4" />Shift Handover</Link>
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
-        <DashboardCommandMetric label="Open escalations" value={rows.filter((row) => !isEscalationFinalClosedStatus(row.status)).length} tone="warning" />
-        <DashboardCommandMetric label="Critical" value={rows.filter((row) => row.severity === "Critical").length} tone="critical" />
-        <DashboardCommandMetric label="Awaiting review" value={rows.filter((row) => row.status === "Open" || row.status === "Pending").length} tone="danger" />
-        <DashboardCommandMetric label="Forwarded" value={rows.filter((row) => row.status === "Escalated").length} tone="info" />
-        <DashboardCommandMetric label="Resolved" value={rows.filter((row) => row.status === "Resolved" || row.status === "Closed").length} tone="success" />
-      </div>
-
       <div className="grid grid-cols-2 gap-3 rounded-md border border-slate-200 bg-white p-3 shadow-sm sm:p-4 lg:grid-cols-[minmax(220px,1fr)_190px_180px_auto] lg:items-end">
         <Input className="col-span-2 lg:col-span-1" aria-label="Search ward escalations" placeholder="Search patient, bedside nurse, issue..." value={query} onChange={(event) => setQuery(event.target.value)} />
-        <NativeSelect label="Severity" value={severityFilter} onChange={setSeverityFilter} options={["All severity", "Critical", "High", "Medium", "Info"]} />
-        <NativeSelect label="Status" value={statusFilter} onChange={setStatusFilter} options={["Open work", "Open", "Pending", "Acknowledged", "In progress", "Escalated", "Carry to handover", "Resolved", "Closed", "All status"]} />
+        <label className="flex min-w-[150px] items-center gap-2 text-xs text-muted-foreground">
+          <span className="sr-only">Severity</span>
+          <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/20" value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)}>
+            <option value="All severity">All severity</option>
+            <option value="Critical">Critical ({escalationCounts.critical})</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Info">Info</option>
+          </select>
+        </label>
+        <label className="flex min-w-[150px] items-center gap-2 text-xs text-muted-foreground">
+          <span className="sr-only">Status</span>
+          <select className="h-9 w-full rounded-md border border-input bg-background px-3 pr-10 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/20" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="Open work">Open escalations ({escalationCounts.open})</option>
+            <option value="Awaiting review">Awaiting review ({escalationCounts.awaitingReview})</option>
+            <option value="Forwarded">Forwarded ({escalationCounts.forwarded})</option>
+            <option value="Resolved">Resolved ({escalationCounts.resolved})</option>
+            <option value="Open">Open</option>
+            <option value="Pending">Pending</option>
+            <option value="Acknowledged">Acknowledged</option>
+            <option value="In progress">In progress</option>
+            <option value="Escalated">Escalated</option>
+            <option value="Carry to handover">Carry to handover</option>
+            <option value="Closed">Closed</option>
+            <option value="All status">All status</option>
+          </select>
+        </label>
         <Button className="h-10 self-end" variant="outline" onClick={() => { setQuery(""); setSeverityFilter("All severity"); setStatusFilter("Open work"); }}>Reset</Button>
       </div>
 
@@ -136,12 +150,12 @@ export function UnitWardEscalations() {
                   <td className="px-2 py-3 text-center align-middle"><span className={cn("inline-flex h-9 min-w-24 items-center justify-center rounded-full px-3 text-xs font-black text-white shadow-[0_2px_5px_rgba(15,23,42,0.16)]", dashboardToneSolidClass(row.tone))}>{row.severity}</span></td>
                   <td className="px-3 py-3 align-middle"><p className="font-semibold text-slate-900">{row.status}</p><p className="mt-1 text-xs text-slate-500">Forward to: {row.forwardTo}</p></td>
                   <td className="px-3 py-3 align-middle">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button size="sm" variant="outline" onClick={() => updateQueueStatus(row, "Acknowledged")}>Ack</Button>
-                      <Button size="sm" variant="outline" onClick={() => setActiveAction({ row: row.actionRow, kind: "action" })}>Review</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateQueueStatus(row, "Escalated")}>Forward</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateQueueStatus(row, "Carry to handover")}>Handover</Button>
-                      <Button size="sm" onClick={() => updateQueueStatus(row, "Resolved")}>Resolve</Button>
+                    <div className="flex flex-nowrap justify-end gap-1">
+                      <Button size="icon" className="h-8 w-8" variant="outline" aria-label="Acknowledge" title="Acknowledge" onClick={() => updateQueueStatus(row, "Acknowledged")}><Check className="h-4 w-4" /></Button>
+                      <Button size="icon" className="h-8 w-8" variant="outline" aria-label="Review escalation" title="Review escalation" onClick={() => setActiveAction({ row: row.actionRow, kind: "action" })}><SearchCheck className="h-4 w-4" /></Button>
+                      <Button size="icon" className="h-8 w-8" variant="outline" aria-label="Forward escalation" title="Forward escalation" onClick={() => updateQueueStatus(row, "Escalated")}><Forward className="h-4 w-4" /></Button>
+                      <Button size="icon" className="h-8 w-8" variant="outline" aria-label="Carry to handover" title="Carry to handover" onClick={() => updateQueueStatus(row, "Carry to handover")}><ClipboardCheck className="h-4 w-4" /></Button>
+                      <Button size="icon" className="h-8 w-8" aria-label="Resolve escalation" title="Resolve escalation" onClick={() => updateQueueStatus(row, "Resolved")}><CheckCheck className="h-4 w-4" /></Button>
                     </div>
                   </td>
                 </tr>
@@ -190,5 +204,4 @@ function unitWardEscalationPriorityScore(row: UnitWardEscalationQueueRow) {
   const statusScore = row.status === "Open" || row.status === "Pending" ? 40 : row.status === "Escalated" ? 30 : row.status === "Acknowledged" ? 20 : 0;
   return severityScore + statusScore;
 }
-
 

@@ -4228,7 +4228,6 @@ function UnitNurseShiftHandover() {
   const [incomingNurse, setIncomingNurse] = React.useState("Unit Nurse Meera");
   const [handoverType, setHandoverType] = React.useState("Evening to night shift");
   const [handoverNote, setHandoverNote] = React.useState("");
-  const [checkedActions, setCheckedActions] = React.useState<Record<string, boolean>>({});
   const [signed, setSigned] = React.useState(false);
   const unitPatients = React.useMemo(() => icuPatients.filter((patient) => patient.unit === "General ICU"), []);
   const patientIds = React.useMemo(() => new Set(unitPatients.map((patient) => patient.id)), [unitPatients]);
@@ -4239,22 +4238,8 @@ function UnitNurseShiftHandover() {
   const unitInfusions = infusionRows.filter((row) => patientIds.has(row.patientId) && row.status === "Running");
   const unitTransfusions = transfusionRows.filter((row) => patientIds.has(row.patientId) && ["Requested", "Issued", "Running", "Reaction"].includes(row.status));
   const criticalPatients = unitPatients.filter((patient) => patient.currentStatus === "Critical" || patient.criticalityScore >= 8);
-  const mandatoryActions = [
-    { id: "patient-count", label: "Patient census, bed status, and Bedside Nurse coverage verified", tone: "info" as DashboardCellTone },
-    { id: "critical-review", label: "Critical / ventilated patients verbally handed over first", tone: "critical" as DashboardCellTone },
-    { id: "alerts", label: "Open alerts and forwarded teams confirmed", tone: "danger" as DashboardCellTone },
-    { id: "medicines", label: "Due, late, hold, skip, infusion, and blood items carried forward", tone: "warning" as DashboardCellTone },
-    { id: "orders", label: "Pending doctor orders and nursing tasks assigned to next shift", tone: "purple" as DashboardCellTone },
-    { id: "documentation", label: "Vitals, I/O, notes, reports, and pending documentation checked", tone: "success" as DashboardCellTone },
-    { id: "ack", label: "Incoming Unit Nurse accepted responsibility for the unit", tone: "info" as DashboardCellTone },
-  ];
-  const completionCount = mandatoryActions.filter((action) => checkedActions[action.id]).length;
-  const canSign = completionCount === mandatoryActions.length && Boolean(incomingNurse) && handoverNote.trim().length >= 10;
-
-  function toggleAction(id: string, checked: boolean) {
-    setSigned(false);
-    setCheckedActions((current) => ({ ...current, [id]: checked }));
-  }
+  const patientPagination = useIcuCommandPagination(unitPatients);
+  const canSign = Boolean(incomingNurse) && handoverNote.trim().length >= 10;
 
   function signHandover() {
     if (!canSign) return;
@@ -4274,25 +4259,7 @@ function UnitNurseShiftHandover() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="border-b border-border bg-surface-muted">
-              <CardTitle>Mandatory Actions</CardTitle>
-              <CardDescription>Required before incoming Unit Nurse takes over.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2 p-3 md:grid-cols-3">
-              {mandatoryActions.map((action) => (
-                <label className="flex min-w-0 items-start gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm shadow-sm" key={action.id}>
-                  <input checked={Boolean(checkedActions[action.id])} className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300" type="checkbox" onChange={(event) => toggleAction(action.id, event.target.checked)} />
-                  <span className="min-w-0">
-                    <span className={cn("mb-2 inline-flex h-2 w-8 rounded-full", dashboardToneSolidClass(action.tone))} />
-                    <span className="block text-xs font-bold leading-snug text-slate-800">{action.label}</span>
-                  </span>
-                </label>
-              ))}
-            </CardContent>
-          </Card>
-
+        <div>
           <Card>
             <CardHeader className="border-b border-border bg-surface-muted">
               <CardTitle>Patient Handover Matrix</CardTitle>
@@ -4305,7 +4272,7 @@ function UnitNurseShiftHandover() {
                     <tr><th className="px-3 py-3 text-left">Patient</th><th className="px-3 py-3 text-center">Risk</th><th className="px-3 py-3 text-center">Alerts</th><th className="px-3 py-3 text-center">Meds</th><th className="px-3 py-3 text-center">Tasks / Orders</th><th className="px-3 py-3 text-left">Next Shift Focus</th></tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {unitPatients.map((patient) => {
+                    {patientPagination.pageRows.map((patient) => {
                       const patientAlerts = unitAlerts.filter((row) => row.patientId === patient.id);
                       const patientMeds = unitMedicines.filter((row) => row.patientId === patient.id);
                       const patientTasks = unitTasks.filter((row) => row.patientId === patient.id);
@@ -4329,6 +4296,7 @@ function UnitNurseShiftHandover() {
                   </tbody>
                 </table>
               </div>
+              <IcuCommandPaginationControls {...patientPagination} />
             </CardContent>
           </Card>
 
@@ -4336,7 +4304,7 @@ function UnitNurseShiftHandover() {
             <CardHeader className="border-b border-border bg-surface-muted">
               <CardTitle>Carry Forward Register</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2 p-3 md:grid-cols-3">
+            <CardContent className="grid grid-cols-3 gap-2 p-3">
               {[...unitAlerts.slice(0, 3), ...unitMedicines.slice(0, 3), ...unitOrders.slice(0, 3), ...unitTasks.slice(0, 3)].slice(0, 9).map((item) => {
                 const title = "message" in item ? item.message : "medication" in item ? item.medication : "instruction" in item ? item.instructionType : item.title;
                 const owner = "owner" in item ? item.owner : "administeredBy" in item ? item.administeredBy || "Bedside Nurse" : "assignedNurse" in item ? item.assignedNurse : item.assignedTo;
@@ -4364,7 +4332,6 @@ function UnitNurseShiftHandover() {
             <NativeSelect label="Shift type" value={handoverType} onChange={setHandoverType} options={["Morning to evening shift", "Evening to night shift", "Night to morning shift", "Emergency handover"]} />
             <NativeSelect label="Incoming Unit Nurse" value={incomingNurse} onChange={setIncomingNurse} options={["Unit Nurse Meera", "Unit Nurse Priya", "Unit Nurse Farah", "Unit Nurse Anita", "Unit Nurse Rohan"]} />
             <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-              <InfoLine label="Mandatory complete" value={`${completionCount}/${mandatoryActions.length}`} />
               <InfoLine label="Critical patients" value={criticalPatients.length} />
               <InfoLine label="Open carry-forward" value={unitAlerts.length + unitMedicines.length + unitOrders.length + unitTasks.length} />
             </div>

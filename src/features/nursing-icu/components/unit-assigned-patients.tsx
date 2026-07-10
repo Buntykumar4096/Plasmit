@@ -219,14 +219,16 @@ export function UnitAssignedPatients() {
                               aria-label={actionTitle}
                               className={cn("h-9 w-9 border-0 p-0 text-white shadow-[0_2px_5px_rgba(15,23,42,0.16)] hover:brightness-95", dashboardToneSolidClass(actionTone))}
                               size="sm"
+                              title={actionTitle}
                               onClick={() => actionRow ? setActiveClinicalAlert({ row: actionRow, kind: "action" }) : setActivePendingTaskPatient(patient)}
                             >
                               <ActionIcon className="h-4 w-4" />
                             </Button>
                             <Button
-                              aria-label={committedNurse ? "Change Nurse" : "Link Nurse"}
+                              aria-label="Assign Nurse"
                               className="h-9 w-9 p-0"
                               size="sm"
+                              title="Assign Nurse"
                               variant={committedNurse ? "outline" : "default"}
                               onClick={() => openLinkEditor(patient)}
                             >
@@ -270,5 +272,4 @@ function unitPatientPriorityScore(patient: IcuPatient) {
     + (patient.ventilatorStatus !== "Room air" ? 50 : 0)
     + patient.pendingTasks;
 }
-
 
