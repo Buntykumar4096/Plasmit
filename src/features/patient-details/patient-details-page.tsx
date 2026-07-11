@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  FileSearch,
   HeartPulse,
   RotateCcw,
   Save,
@@ -24,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CenterModal } from "@/components/ui/center-modal";
 import { Input } from "@/components/ui/input";
+import { PatientHistoryPage, type HistoryTab } from "@/features/patient-history/patient-history-page";
 import { calculatorDefinitions, initialCalculatorValues, validateCalculator, type CalculationResult } from "./medical-calculator-engine";
 import {
   applyPatientSection,
@@ -46,19 +46,25 @@ const selectClass =
   "flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20";
 const decimalPattern = "[0-9]*[.]?[0-9]*";
 const bloodGroupOptions = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Not Known"];
+// Temporarily hidden; keep these flags and the implementation for future use.
+const showQuickUpload = false;
+const showMedicalCalculator = false;
 const patientDetailTabs = [
   { id: "basic", label: "1. Basic Demographics" },
   { id: "clinical", label: "2. Physical & Clinical" },
-  { id: "diagnosis", label: "3. Diagnosis" },
+  { id: "history", label: "3. Patient History" },
   { id: "calculator", label: "4. Medical Calculator" },
 ] as const;
+const visiblePatientDetailTabs = patientDetailTabs.filter((tab) => tab.id !== "calculator" || showMedicalCalculator);
+
+const patientHistoryTabOrder: HistoryTab[] = ["medical", "surgical", "medication", "allergy", "social"];
 
 type PatientDetailTab = (typeof patientDetailTabs)[number]["id"];
 
 const patientDocumentSchema = [
   { tabId: "basic", tabLabel: "1. Basic Demographics", fields: ["MRN / Patient ID", "UHID", "Patient Name", "Date of Birth", "Age", "Gender", "Blood Group", "Contact Number", "Email ID", "Address", "City", "State", "PIN Code", "Referred By (Dr. / Facility Name)", "Referred From", "Referral Type", "Referral Contact", "Referral Notes"] },
   { tabId: "clinical", tabLabel: "2. Physical & Clinical", fields: ["Blood Group (Reconfirm)", "Height", "Weight", "BMI (Auto)", "Allergies", "Comorbidities", "Smoking Status", "Alcohol Use", "Advance Directive", "Notes"] },
-  { tabId: "diagnosis", tabLabel: "3. Diagnosis", fields: ["Primary Diagnosis (ICD Code)", "ICD Code Description", "Diagnosis Type", "Date of Diagnosis", "Secondary Diagnosis (ICD Code)", "Additional Diagnosis Notes"] },
+  { tabId: "history", tabLabel: "3. Patient History", fields: ["Past Medical History", "Known Comorbidities", "Past Surgical History", "Current Medications", "Allergy Status", "Allergen and Reaction", "Smoking Status", "Alcohol Use", "Relevant Social History"] },
   { tabId: "calculator", tabLabel: "4. Medical Calculator", fields: ["Selected Calculator", "Input Summary", "Result", "Interpretation", "Note / Order Action", "FHIR Observation Reference"] },
 ] as const;
 
@@ -543,7 +549,7 @@ function PatientDetailsPreview({
   record: PatientRecord;
   onFieldChange: (tabId: string, fieldIndex: number, value: string) => void;
 }) {
-  const sections = patientDetailTabs.map((tab) => {
+  const sections = visiblePatientDetailTabs.map((tab) => {
     const section = record.sections.find((item) => item.tabId === tab.id);
     return section ?? { tabId: tab.id, tabLabel: tab.label, fields: [] };
   });
@@ -1143,6 +1149,7 @@ export function PatientDetailsPage() {
   const documentInputRef = React.useRef<HTMLInputElement | null>(null);
   const initialEditingRecord = React.useMemo(() => getInitialEditingPatientRecord(), []);
   const [activeTab, setActiveTab] = React.useState<PatientDetailTab>("basic");
+  const [activeHistoryTab, setActiveHistoryTab] = React.useState<HistoryTab>("medical");
   const [dateOfBirth, setDateOfBirth] = React.useState("");
   const [age, setAge] = React.useState("");
   const [bloodGroup, setBloodGroup] = React.useState("");
@@ -1154,7 +1161,7 @@ export function PatientDetailsPage() {
   const [previewRecord, setPreviewRecord] = React.useState<PatientRecord | null>(null);
   const [isExtractingDocument, setIsExtractingDocument] = React.useState(false);
   const clinicalBmi = React.useMemo(() => calculateBmi(clinicalHeight, clinicalWeight), [clinicalHeight, clinicalWeight]);
-  const activeTabIndex = patientDetailTabs.findIndex((tab) => tab.id === activeTab);
+  const activeTabIndex = visiblePatientDetailTabs.findIndex((tab) => tab.id === activeTab);
   const patientGender = editingRecord ? getPatientRecordValue(editingRecord, "Gender") : "";
   const calculatorAge = age || (editingRecord ? getPatientRecordValue(editingRecord, "Age") : "");
   const calculatorHeight = clinicalHeight || (editingRecord ? getPatientRecordValue(editingRecord, "Height") : "");
@@ -1171,7 +1178,7 @@ export function PatientDetailsPage() {
     if (!section && !legacySection) return;
     const mergedSection: PatientRecordSection = {
       tabId: activeTab,
-      tabLabel: patientDetailTabs.find((tab) => tab.id === activeTab)?.label ?? activeTab,
+      tabLabel: visiblePatientDetailTabs.find((tab) => tab.id === activeTab)?.label ?? activeTab,
       fields: [...(section?.fields ?? []), ...(legacySection?.fields ?? [])],
     };
 
@@ -1207,7 +1214,7 @@ export function PatientDetailsPage() {
 
   function saveCurrentPatientSection() {
     if (!formRef.current) return null;
-    const currentTab = patientDetailTabs[activeTabIndex];
+    const currentTab = visiblePatientDetailTabs[activeTabIndex];
     const section = collectPatientSection(formRef.current, currentTab.id, currentTab.label);
     if (!section.fields.length) return null;
     const savedRecord = upsertPatientRecordSection(editingRecordId, section);
@@ -1219,7 +1226,16 @@ export function PatientDetailsPage() {
   function goToNextTab() {
     if (!formRef.current?.reportValidity()) return;
     saveCurrentPatientSection();
-    const nextTab = patientDetailTabs[activeTabIndex + 1];
+    if (activeTab === "history") {
+      const historyTabIndex = patientHistoryTabOrder.indexOf(activeHistoryTab);
+      const nextHistoryTab = patientHistoryTabOrder[historyTabIndex + 1];
+      if (nextHistoryTab) {
+        setActiveHistoryTab(nextHistoryTab);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    }
+    const nextTab = visiblePatientDetailTabs[activeTabIndex + 1];
     if (nextTab) {
       setActiveTab(nextTab.id);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1232,7 +1248,7 @@ export function PatientDetailsPage() {
     const target = event.target as HTMLElement;
     if (event.key !== "Enter" || target.tagName === "BUTTON" || target.tagName === "TEXTAREA") return;
     event.preventDefault();
-    if (activeTabIndex === patientDetailTabs.length - 1) {
+    if (activeTabIndex === visiblePatientDetailTabs.length - 1) {
       handlePreview();
       return;
     }
@@ -1343,7 +1359,7 @@ export function PatientDetailsPage() {
   return (
     <form className="space-y-0" key={formKey} onKeyDown={handleFormKeyDown} ref={formRef}>
       <PageHeader
-        actions={(
+        actions={showQuickUpload ? (
           <>
             <input
               accept="application/pdf,image/jpeg,image/png,image/webp"
@@ -1360,7 +1376,7 @@ export function PatientDetailsPage() {
               {isExtractingDocument ? "Uploading…" : "Quick Upload"}
             </Button>
           </>
-        )}
+        ) : undefined}
         title="Patient Details"
       />
 
@@ -1374,7 +1390,7 @@ export function PatientDetailsPage() {
 
       <div className="pt-1">
         <div className="flex gap-1 overflow-x-auto rounded-md bg-surface-muted p-1" role="tablist" aria-label="Patient detail sections">
-          {patientDetailTabs.map((tab) => (
+          {visiblePatientDetailTabs.map((tab) => (
             <button
               aria-selected={activeTab === tab.id}
               className={`h-8 shrink-0 rounded px-3 text-xs font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
@@ -1547,42 +1563,13 @@ export function PatientDetailsPage() {
           </div>
         ) : null}
 
-        {activeTab === "diagnosis" ? (
-          <div className="mt-2" data-patient-tab="diagnosis">
-          <SectionCard icon={FileSearch} title="3. Diagnosis Information">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <Field label="Primary Diagnosis (ICD Code)">
-                <SearchInput placeholder="Search ICD Code..." />
-              </Field>
-              <Field label="ICD Code Description">
-                <Input />
-              </Field>
-              <div className="space-y-2" data-patient-field-group>
-                <span className={labelClass} data-patient-field-label>Diagnosis Type</span>
-                <div className="flex flex-wrap gap-4 pt-2">
-                  <RadioOption label="Provisional" name="diagnosisType" />
-                  <RadioOption label="Confirmed" name="diagnosisType" />
-                  <RadioOption label="Differential" name="diagnosisType" />
-                </div>
-              </div>
-              <Field label="Date of Diagnosis">
-                <DateTextInput required />
-              </Field>
-              <Field label="Secondary Diagnosis (ICD Code)">
-                <SearchInput placeholder="Search ICD Code..." />
-              </Field>
-              <Field label="ICD Code Description">
-                <Input />
-              </Field>
-              <Field className="md:col-span-2" label="Additional Diagnosis Notes">
-                <Input placeholder="Enter notes (if any)" />
-              </Field>
-            </div>
-          </SectionCard>
+        {activeTab === "history" ? (
+          <div className="mt-1" data-patient-tab="history">
+            <PatientHistoryPage activeTab={activeHistoryTab} embedded onTabChange={setActiveHistoryTab} />
           </div>
         ) : null}
 
-        {activeTab === "calculator" ? (
+        {showMedicalCalculator && activeTab === "calculator" ? (
           <MedicalCalculatorWorkspace
             age={calculatorAge}
             gender={patientGender}
@@ -1608,7 +1595,7 @@ export function PatientDetailsPage() {
               <RotateCcw className="h-4 w-4" />
               Clear
             </Button>
-            {activeTabIndex === patientDetailTabs.length - 1 ? (
+            {activeTabIndex === visiblePatientDetailTabs.length - 1 ? (
               <>
                 <Button onClick={handlePreview} size="sm" type="button" variant="outline">
                   <Eye className="h-4 w-4" />
