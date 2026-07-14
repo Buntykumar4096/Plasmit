@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/openapi.yaml"
+  [headers.values]
+    Content-Type = "application/yaml"
+    Cache-Control = "no-store"

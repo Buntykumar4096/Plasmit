@@ -1,0 +1,7 @@
+services:
+  encounter-swagger-ui:
+    build: .
+    container_name: encounter-petstore-style-ui
+    restart: unless-stopped
+    ports:
+      - "8085:8080"

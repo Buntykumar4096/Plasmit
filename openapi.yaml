@@ -1,0 +1,2189 @@
+openapi: 3.0.4
+info:
+  title: FHIR R5 Encounter API
+  version: 1.0.0
+  description: 'OpenAPI/Swagger documentation for FHIR R5 Encounter creation, lifecycle management, lookup, search, replacement,
+    partial update, validation and history.
+
+
+    **FHIR version:** R5 (5.0.0)
+
+
+    **Default media type:** `application/fhir+json`
+
+
+    **Authentication:** OAuth 2.0 / OpenID Connect through Keycloak using a Bearer JWT.
+
+
+    **Multi-tenancy:** Tenant context is derived from JWT claims. Optional tenant headers must match the token.
+
+
+    **Concurrency:** Read/create/update responses return ETag. PUT and PATCH require `If-Match`.
+
+
+    **Errors:** Safe error responses use FHIR `OperationOutcome`.'
+  contact:
+    name: Encounter API Team
+  license:
+    name: Internal implementation contract
+servers:
+- url: https://api.example.org/fhir/R5
+  description: Example FHIR R5 server; replace with the deployment URL.
+- url: http://localhost:8080/fhir/R5
+  description: Local development server.
+tags:
+- name: Capability
+  description: FHIR server capability discovery.
+- name: Encounter
+  description: FHIR R5 Encounter resource operations.
+- name: Encounter History
+  description: Version history and historical reads for Encounter.
+security:
+- bearerAuth: []
+paths:
+  /metadata:
+    get:
+      tags:
+      - Capability
+      summary: Read Encounter CapabilityStatement
+      description: Returns the FHIR CapabilityStatement and advertises implemented Encounter interactions, supported profiles,
+        search parameters, patch formats, conditional behavior, FHIR version and security.
+      operationId: readEncounterCapabilityStatement
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        '200':
+          description: FHIR CapabilityStatement returned.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/CapabilityStatement'
+              examples:
+                encounterCapability:
+                  summary: Encounter capability advertisement
+                  value:
+                    resourceType: CapabilityStatement
+                    status: active
+                    date: '2026-07-14'
+                    kind: instance
+                    fhirVersion: 5.0.0
+                    format:
+                    - application/fhir+json
+                    rest:
+                    - mode: server
+                      security:
+                        cors: true
+                        service:
+                        - text: OAuth 2.0 / OpenID Connect through Keycloak
+                      resource:
+                      - type: Encounter
+                        interaction:
+                        - code: read
+                        - code: vread
+                        - code: update
+                        - code: patch
+                        - code: history-instance
+                        - code: create
+                        - code: search-type
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: FHIR Platform / Encounter Management
+      x-permission: fhir.metadata.read
+      x-swagger-testing:
+      - Authorize using a valid Keycloak/OAuth 2.0 bearer token.
+      - Execute GET /metadata and expect HTTP 200.
+      - Verify resourceType=CapabilityStatement and fhirVersion=5.0.0.
+      - Verify Encounter interactions and supported search parameters are advertised.
+      - Repeat without a token and verify the configured 401 or approved public policy.
+  /Encounter:
+    post:
+      tags:
+      - Encounter
+      summary: Create Encounter
+      description: Creates a FHIR R5 Encounter. Do not send `id`, `meta.versionId` or `meta.lastUpdated`. The server assigns
+        logical id and resource metadata. Conditional create may be requested with `If-None-Exist`.
+      operationId: createEncounter
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/Prefer'
+      - $ref: '#/components/parameters/IfNoneExist'
+      - $ref: '#/components/parameters/XCorrelationId'
+      - $ref: '#/components/parameters/XTenantId'
+      requestBody:
+        required: true
+        description: FHIR Encounter resource to create.
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/EncounterCreate'
+            examples:
+              icuAdmission:
+                summary: Create an in-progress ICU admission
+                value: &id024
+                  resourceType: Encounter
+                  identifier: &id001
+                  - system: https://hospital.example.org/encounter-number
+                    value: ENC-2026-000101
+                  status: in-progress
+                  class: &id002
+                  - coding:
+                    - system: http://terminology.hl7.org/CodeSystem/v3-ActCode
+                      code: IMP
+                      display: inpatient encounter
+                  type: &id003
+                  - text: ICU Admission
+                  subject: &id004
+                    reference: Patient/pat-100045
+                  serviceProvider: &id005
+                    reference: Organization/ORG-001
+                  participant: &id006
+                  - type:
+                    - text: Attending physician
+                    actor:
+                      reference: PractitionerRole/pr-role-1001
+                  actualPeriod: &id007
+                    start: '2026-07-14T10:30:00+05:30'
+                  reason: &id008
+                  - use:
+                    - text: Chief complaint
+                    value:
+                    - concept:
+                        text: Acute respiratory distress
+                  admission: &id009
+                    admitSource:
+                      text: Emergency department
+                  location: &id010
+                  - location:
+                      reference: Location/icu-bed-07
+                    status: active
+                    form:
+                      text: Bed
+                    period:
+                      start: '2026-07-14T10:35:00+05:30'
+              invalidMissingStatus:
+                summary: 'Negative test: missing required status'
+                value:
+                  resourceType: Encounter
+                  identifier: *id001
+                  class: *id002
+                  type: *id003
+                  subject: *id004
+                  serviceProvider: *id005
+                  participant: *id006
+                  actualPeriod: *id007
+                  reason: *id008
+                  admission: *id009
+                  location: *id010
+              invalidCrossTenantReference:
+                summary: 'Negative test: unauthorized tenant reference'
+                value:
+                  resourceType: Encounter
+                  identifier: *id001
+                  status: in-progress
+                  class: *id002
+                  type: *id003
+                  subject: *id004
+                  serviceProvider:
+                    reference: Organization/OTHER-TENANT-ORG
+                  participant: *id006
+                  actualPeriod: *id007
+                  reason: *id008
+                  admission: *id009
+                  location: *id010
+      responses:
+        '201':
+          description: Encounter created.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+              examples:
+                createdEncounter:
+                  summary: Created Encounter representation
+                  value: &id028
+                    resourceType: Encounter
+                    id: enc-1001
+                    meta:
+                      versionId: '1'
+                      lastUpdated: '2026-07-14T05:10:15Z'
+                    identifier: &id011
+                    - system: https://hospital.example.org/encounter-number
+                      value: ENC-2026-000101
+                    status: in-progress
+                    class: &id012
+                    - text: Inpatient
+                    subject: &id013
+                      reference: Patient/pat-100045
+                    serviceProvider: &id014
+                      reference: Organization/ORG-001
+                    actualPeriod: &id015
+                      start: '2026-07-14T10:30:00+05:30'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management
+      x-permission: encounter.create
+      x-validation-rules:
+      - resourceType must equal Encounter.
+      - status, class, identifier, subject and serviceProvider are required by the project profile.
+      - Do not provide id, meta.versionId or meta.lastUpdated on POST.
+      - Identifier system + value must be unique within the configured tenant namespace.
+      - References must resolve within the authorized tenant, hospital and department.
+      - actualPeriod, participant, location and admission rules must pass.
+      - Inpatient or ICU encounters require admission data and an active/reserved physical location according to profile.
+      x-swagger-testing:
+      - Valid body returns 201 with Location, ETag, server id and meta.
+      - Remove status and verify 422 OperationOutcome with expression Encounter.status.
+      - Use an unauthorized tenant reference and verify 403.
+      - Optionally repeat with If-None-Exist to test conditional create.
+    get:
+      tags:
+      - Encounter
+      summary: Search Encounters
+      description: Searches Encounters using supported FHIR search parameters. Results are tenant-, organization-, department-,
+        role-, patient-relationship- and purpose-of-use filtered. Zero matches still returns HTTP 200.
+      operationId: searchEncounters
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/XCorrelationId'
+      - name: identifier
+        in: query
+        required: false
+        description: 'Encounter business identifier token: system|value.'
+        schema:
+          type: string
+        example: https://hospital.example.org/encounter-number|ENC-2026-000101
+      - name: _id
+        in: query
+        required: false
+        description: FHIR logical resource id.
+        schema:
+          type: string
+        example: enc-1001
+      - name: status
+        in: query
+        required: false
+        description: Encounter status token.
+        schema:
+          type: string
+        example: in-progress
+      - name: class
+        in: query
+        required: false
+        description: 'Encounter class token: system|code.'
+        schema:
+          type: string
+        example: http://terminology.hl7.org/CodeSystem/v3-ActCode|IMP
+      - name: type
+        in: query
+        required: false
+        description: Encounter type token.
+        schema:
+          type: string
+        example: ICU
+      - name: patient
+        in: query
+        required: false
+        description: Patient subject reference.
+        schema:
+          type: string
+        example: Patient/pat-100045
+      - name: subject
+        in: query
+        required: false
+        description: Patient or Group subject reference.
+        schema:
+          type: string
+        example: Patient/pat-100045
+      - name: subject-status
+        in: query
+        required: false
+        description: Patient status within the encounter.
+        schema:
+          type: string
+        example: receiving-care
+      - name: date
+        in: query
+        required: false
+        description: Date overlapping Encounter.actualPeriod; supports FHIR prefixes.
+        schema:
+          type: string
+        example: '2026-07-14'
+      - name: date-start
+        in: query
+        required: false
+        description: Actual start date; supports FHIR prefixes.
+        schema:
+          type: string
+        example: ge2026-07-01
+      - name: end-date
+        in: query
+        required: false
+        description: Actual end date; supports FHIR prefixes.
+        schema:
+          type: string
+        example: le2026-07-31
+      - name: length
+        in: query
+        required: false
+        description: Encounter duration quantity.
+        schema:
+          type: string
+        example: gt2|d
+      - name: participant
+        in: query
+        required: false
+        description: Any participant actor reference.
+        schema:
+          type: string
+        example: PractitionerRole/pr-role-1001
+      - name: participant-type
+        in: query
+        required: false
+        description: Participant role token.
+        schema:
+          type: string
+        example: ATND
+      - name: practitioner
+        in: query
+        required: false
+        description: Practitioner participant reference.
+        schema:
+          type: string
+        example: Practitioner/pr-100
+      - name: location
+        in: query
+        required: false
+        description: Encounter location reference.
+        schema:
+          type: string
+        example: Location/icu-bed-07
+      - name: part-of
+        in: query
+        required: false
+        description: Parent Encounter reference.
+        schema:
+          type: string
+        example: Encounter/admission-9001
+      - name: service-provider
+        in: query
+        required: false
+        description: Responsible Organization reference.
+        schema:
+          type: string
+        example: Organization/ORG-001
+      - name: appointment
+        in: query
+        required: false
+        description: Scheduling Appointment reference.
+        schema:
+          type: string
+        example: Appointment/appt-500
+      - name: based-on
+        in: query
+        required: false
+        description: Initiating request reference.
+        schema:
+          type: string
+        example: ServiceRequest/sr-200
+      - name: careteam
+        in: query
+        required: false
+        description: Allocated CareTeam reference.
+        schema:
+          type: string
+        example: CareTeam/ct-50
+      - name: episode-of-care
+        in: query
+        required: false
+        description: EpisodeOfCare reference.
+        schema:
+          type: string
+        example: EpisodeOfCare/eoc-10
+      - name: diagnosis-code
+        in: query
+        required: false
+        description: Coded diagnosis token.
+        schema:
+          type: string
+        example: http://snomed.info/sct|233604007
+      - name: diagnosis-reference
+        in: query
+        required: false
+        description: Condition diagnosis reference.
+        schema:
+          type: string
+        example: Condition/cond-100
+      - name: reason-code
+        in: query
+        required: false
+        description: Coded encounter reason token.
+        schema:
+          type: string
+        example: http://snomed.info/sct|267036007
+      - name: reason-reference
+        in: query
+        required: false
+        description: Reason resource reference.
+        schema:
+          type: string
+        example: Condition/cond-101
+      - name: account
+        in: query
+        required: false
+        description: Billing Account reference.
+        schema:
+          type: string
+        example: Account/acc-100
+      - name: special-arrangement
+        in: query
+        required: false
+        description: Special arrangement token.
+        schema:
+          type: string
+        example: wheelchair
+      - name: _lastUpdated
+        in: query
+        required: false
+        description: Resource last update date; supports FHIR prefixes.
+        schema:
+          type: string
+        example: ge2026-07-01
+      - name: _count
+        in: query
+        required: false
+        description: Page size. Default 20; maximum 100.
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+        example: 20
+      - name: _sort
+        in: query
+        required: false
+        description: Supported sort field. Prefix with '-' for descending.
+        schema:
+          type: string
+        example: -date
+      responses:
+        '200':
+          description: FHIR searchset Bundle returned.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+              examples:
+                oneMatch:
+                  summary: One authorized matching Encounter
+                  value: &id025
+                    resourceType: Bundle
+                    type: searchset
+                    total: 1
+                    entry:
+                    - fullUrl: https://api.example.org/fhir/R5/Encounter/enc-1001
+                      resource:
+                        resourceType: Encounter
+                        id: enc-1001
+                        status: in-progress
+                        subject:
+                          reference: Patient/pat-100045
+                emptyResult:
+                  summary: No matching Encounters
+                  value: &id026
+                    resourceType: Bundle
+                    type: searchset
+                    total: 0
+                    entry: []
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management
+      x-permission: encounter.search
+      x-search-rules:
+      - Only search parameters advertised by CapabilityStatement are accepted.
+      - Default _count is 20 and maximum _count is 100 unless deployment policy differs.
+      - Date parameters follow FHIR prefix and overlap semantics.
+      - Paging links and tokens are server generated.
+      - No cross-tenant results may be returned.
+      x-swagger-testing:
+      - Search by patient + status and verify only authorized records.
+      - Use no-match criteria and verify 200 with Bundle.type=searchset and total=0.
+      - Use invalid date/token syntax and verify OperationOutcome.
+      - Verify _count limit and Bundle.link.next paging.
+  /Encounter/{id}:
+    parameters:
+    - $ref: '#/components/parameters/EncounterId'
+    get:
+      tags:
+      - Encounter
+      summary: Read Encounter
+      description: Reads the latest version of an Encounter by its FHIR logical id.
+      operationId: readEncounter
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/IfNoneMatch'
+      - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        '200':
+          description: Latest Encounter resource returned.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+              examples:
+                encounter:
+                  summary: Current Encounter version
+                  value:
+                    resourceType: Encounter
+                    id: enc-1001
+                    meta:
+                      versionId: '3'
+                      lastUpdated: '2026-07-14T06:30:00Z'
+                    identifier: *id011
+                    status: in-progress
+                    class: *id012
+                    subject: *id013
+                    serviceProvider: *id014
+                    actualPeriod: *id015
+        '304':
+          description: Resource has not changed since the supplied If-None-Match value.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management
+      x-permission: encounter.read
+      x-swagger-testing:
+      - Execute with a valid id and verify 200, resourceType=Encounter, matching id and ETag.
+      - Execute with a nonexistent id and verify 404 OperationOutcome.
+      - Execute with a token from another tenant and verify 403 or a policy-approved non-disclosing 404.
+    put:
+      tags:
+      - Encounter
+      summary: Replace Encounter
+      description: Replaces the complete current Encounter representation. `If-Match` is required. The body id must equal
+        the path id. A stale ETag returns 412.
+      operationId: replaceEncounter
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Prefer'
+      - $ref: '#/components/parameters/XCorrelationId'
+      - $ref: '#/components/parameters/XTenantId'
+      requestBody:
+        required: true
+        description: Complete FHIR Encounter representation.
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/EncounterUpdate'
+            examples:
+              dischargeEncounter:
+                summary: Replace Encounter and mark discharged
+                value: &id023
+                  resourceType: Encounter
+                  id: enc-1001
+                  meta: &id016
+                    versionId: '4'
+                    lastUpdated: '2026-07-18T08:30:05Z'
+                  identifier: &id017
+                  - system: https://hospital.example.org/encounter-number
+                    value: ENC-2026-000101
+                  status: discharged
+                  class: &id018
+                  - text: Inpatient
+                  subject: &id019
+                    reference: Patient/pat-100045
+                  serviceProvider: &id020
+                    reference: Organization/ORG-001
+                  actualPeriod: &id021
+                    start: '2026-07-14T10:30:00+05:30'
+                    end: '2026-07-18T14:00:00+05:30'
+                  admission: &id022
+                    dischargeDisposition:
+                      text: Transferred to general ward
+              invalidBodyId:
+                summary: 'Negative test: body id does not match URL id'
+                value:
+                  resourceType: Encounter
+                  id: enc-different
+                  meta: *id016
+                  identifier: *id017
+                  status: discharged
+                  class: *id018
+                  subject: *id019
+                  serviceProvider: *id020
+                  actualPeriod: *id021
+                  admission: *id022
+              invalidStatusTransition:
+                summary: 'Negative test: invalid state transition'
+                value:
+                  resourceType: Encounter
+                  id: enc-1001
+                  meta: *id016
+                  identifier: *id017
+                  status: planned
+                  class: *id018
+                  subject: *id019
+                  serviceProvider: *id020
+                  actualPeriod: *id021
+                  admission: *id022
+      responses:
+        '200':
+          description: Encounter replaced and representation returned.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+              examples:
+                updatedEncounter:
+                  value: *id023
+        '204':
+          description: Encounter replaced; minimal response requested.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management
+      x-permission: encounter.update
+      x-validation-rules:
+      - A complete Encounter resource is required.
+      - Body id must equal the URL id.
+      - If-Match must equal the current ETag.
+      - Server-managed metadata cannot be modified by the client.
+      - Status transition, references, periods, locations and admission data must be valid.
+      x-swagger-testing:
+      - Read the current Encounter first and copy its ETag.
+      - Execute PUT with If-Match and verify 200/204 plus a new ETag.
+      - Repeat with the old ETag and verify 412.
+      - Change the body id and verify 400/422.
+      - Test an invalid status transition and verify 409/422 OperationOutcome.
+    patch:
+      tags:
+      - Encounter
+      summary: Partially update Encounter
+      description: Applies RFC 6902 JSON Patch to approved Encounter paths only. `If-Match` is required. The resulting complete
+        resource must pass all FHIR profile and business validations.
+      operationId: patchEncounter
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Prefer'
+      - $ref: '#/components/parameters/XCorrelationId'
+      - $ref: '#/components/parameters/XTenantId'
+      requestBody:
+        required: true
+        description: RFC 6902 JSON Patch document.
+        content:
+          application/json-patch+json:
+            schema:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/JsonPatchOperation'
+            examples:
+              dischargePatch:
+                summary: Set discharge status, period end and disposition
+                value:
+                - op: replace
+                  path: /status
+                  value: discharged
+                - op: add
+                  path: /actualPeriod/end
+                  value: '2026-07-18T14:00:00+05:30'
+                - op: add
+                  path: /admission/dischargeDisposition
+                  value:
+                    text: Transferred to general ward
+              invalidServerManagedPath:
+                summary: 'Negative test: patch server-managed metadata'
+                value:
+                - op: replace
+                  path: /meta/versionId
+                  value: '999'
+              invalidPatchPath:
+                summary: 'Negative test: unknown path'
+                value:
+                - op: replace
+                  path: /unknownField
+                  value: x
+      responses:
+        '200':
+          description: Patch applied and updated Encounter returned.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+              examples:
+                patchedEncounter:
+                  value: *id023
+        '204':
+          description: Patch applied; minimal response requested.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management
+      x-permission: encounter.update
+      x-validation-rules:
+      - If-Match is required.
+      - Only whitelisted Encounter paths may be modified.
+      - id, meta.versionId and meta.lastUpdated cannot be patched.
+      - The resulting Encounter must pass full validation.
+      - Location movement must close the previous active location before activating the next location.
+      x-swagger-testing:
+      - Use the current ETag and application/json-patch+json.
+      - Verify 200/204 and a new ETag.
+      - Use a stale ETag and verify 412.
+      - Use an invalid path and verify 400.
+      - Patch a server-managed path and verify 400/422.
+      - Attempt unauthorized discharge and verify 403.
+  /Encounter/$validate:
+    post:
+      tags:
+      - Encounter
+      summary: Validate Encounter
+      description: Validates an Encounter against FHIR R5 rules, the project Encounter profile, terminology, reference format
+        and hospital business rules without saving it.
+      operationId: validateEncounter
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/XCorrelationId'
+      - name: profile
+        in: query
+        required: false
+        description: Optional canonical profile URL when supported and advertised.
+        schema:
+          type: string
+          format: uri
+        example: https://hospital.example.org/fhir/StructureDefinition/hospital-encounter
+      requestBody:
+        required: true
+        description: FHIR Encounter resource to validate.
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/EncounterCreate'
+            examples:
+              validEncounter:
+                value: *id024
+              missingStatus:
+                summary: 'Negative test: missing status'
+                value:
+                  resourceType: Encounter
+                  identifier: *id001
+                  class: *id002
+                  type: *id003
+                  subject: *id004
+                  serviceProvider: *id005
+                  participant: *id006
+                  actualPeriod: *id007
+                  reason: *id008
+                  admission: *id009
+                  location: *id010
+              invalidPeriod:
+                summary: 'Negative test: end precedes start'
+                value:
+                  resourceType: Encounter
+                  identifier: *id001
+                  status: in-progress
+                  class: *id002
+                  type: *id003
+                  subject: *id004
+                  serviceProvider: *id005
+                  participant: *id006
+                  actualPeriod:
+                    start: '2026-07-14T10:30:00+05:30'
+                    end: '2026-07-13T10:30:00+05:30'
+                  reason: *id008
+                  admission: *id009
+                  location: *id010
+      responses:
+        '200':
+          description: FHIR OperationOutcome containing validation information, warnings or errors.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+              examples:
+                valid:
+                  summary: Encounter is valid
+                  value:
+                    resourceType: OperationOutcome
+                    issue:
+                    - severity: information
+                      code: informational
+                      details:
+                        text: Encounter resource is valid
+                invalid:
+                  summary: Encounter validation failed
+                  value: &id027
+                    resourceType: OperationOutcome
+                    issue:
+                    - severity: error
+                      code: required
+                      details:
+                        text: Encounter.status is required
+                      expression:
+                      - Encounter.status
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management
+      x-permission: encounter.validate
+      x-swagger-testing:
+      - Execute with a valid payload and verify OperationOutcome without error/fatal issues.
+      - Remove status and verify issue.expression contains Encounter.status.
+      - Set actualPeriod.end before start and verify an issue for Encounter.actualPeriod.
+  /Encounter/{id}/_history:
+    get:
+      tags:
+      - Encounter History
+      summary: Read Encounter history
+      description: Returns available historical versions of an Encounter in a Bundle of type history. History access requires
+        separate authorization and audit.
+      operationId: readEncounterHistory
+      parameters:
+      - $ref: '#/components/parameters/EncounterId'
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        '200':
+          description: Encounter version history returned.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+              examples:
+                history:
+                  value:
+                    resourceType: Bundle
+                    type: history
+                    entry:
+                    - resource:
+                        resourceType: Encounter
+                        id: enc-1001
+                        meta:
+                          versionId: '4'
+                        status: discharged
+                    - resource:
+                        resourceType: Encounter
+                        id: enc-1001
+                        meta:
+                          versionId: '3'
+                        status: in-progress
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management / Audit
+      x-permission: encounter.history
+      x-swagger-testing:
+      - Execute with history permission.
+      - Verify 200, Bundle.type=history and available Encounter versions.
+      - Test without history permission and verify 403.
+      - Confirm an audit event is written.
+  /Encounter/{id}/_history/{vid}:
+    get:
+      tags:
+      - Encounter History
+      summary: Read one Encounter version
+      description: Reads a specific historical version of an Encounter.
+      operationId: readEncounterVersion
+      parameters:
+      - $ref: '#/components/parameters/EncounterId'
+      - $ref: '#/components/parameters/VersionId'
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        '200':
+          description: Requested Encounter version returned.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+              examples:
+                version3:
+                  value:
+                    resourceType: Encounter
+                    id: enc-1001
+                    meta:
+                      versionId: '3'
+                      lastUpdated: '2026-07-14T06:30:00Z'
+                    status: in-progress
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management / Audit
+      x-permission: encounter.history
+      x-swagger-testing:
+      - Execute with a known version and verify the exact meta.versionId.
+      - Use an unknown version and verify 404 OperationOutcome.
+      - Use a token without history permission and verify 403.
+  /Encounter/_search:
+    post:
+      tags:
+      - Encounter
+      summary: Search Encounters using POST
+      description: Performs the same FHIR search as GET /Encounter, but accepts form-encoded parameters when the query string
+        would be too long.
+      operationId: searchEncountersUsingPost
+      parameters:
+      - $ref: '#/components/parameters/AcceptFhirJson'
+      - $ref: '#/components/parameters/XCorrelationId'
+      requestBody:
+        required: true
+        description: FHIR search parameters encoded as application/x-www-form-urlencoded.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                identifier:
+                  type: string
+                  description: 'Encounter business identifier token: system|value.'
+                  example: https://hospital.example.org/encounter-number|ENC-2026-000101
+                _id:
+                  type: string
+                  description: FHIR logical resource id.
+                  example: enc-1001
+                status:
+                  type: string
+                  description: Encounter status token.
+                  example: in-progress
+                class:
+                  type: string
+                  description: 'Encounter class token: system|code.'
+                  example: http://terminology.hl7.org/CodeSystem/v3-ActCode|IMP
+                type:
+                  type: string
+                  description: Encounter type token.
+                  example: ICU
+                patient:
+                  type: string
+                  description: Patient subject reference.
+                  example: Patient/pat-100045
+                subject:
+                  type: string
+                  description: Patient or Group subject reference.
+                  example: Patient/pat-100045
+                subject-status:
+                  type: string
+                  description: Patient status within the encounter.
+                  example: receiving-care
+                date:
+                  type: string
+                  description: Date overlapping Encounter.actualPeriod; supports FHIR prefixes.
+                  example: '2026-07-14'
+                date-start:
+                  type: string
+                  description: Actual start date; supports FHIR prefixes.
+                  example: ge2026-07-01
+                end-date:
+                  type: string
+                  description: Actual end date; supports FHIR prefixes.
+                  example: le2026-07-31
+                length:
+                  type: string
+                  description: Encounter duration quantity.
+                  example: gt2|d
+                participant:
+                  type: string
+                  description: Any participant actor reference.
+                  example: PractitionerRole/pr-role-1001
+                participant-type:
+                  type: string
+                  description: Participant role token.
+                  example: ATND
+                practitioner:
+                  type: string
+                  description: Practitioner participant reference.
+                  example: Practitioner/pr-100
+                location:
+                  type: string
+                  description: Encounter location reference.
+                  example: Location/icu-bed-07
+                part-of:
+                  type: string
+                  description: Parent Encounter reference.
+                  example: Encounter/admission-9001
+                service-provider:
+                  type: string
+                  description: Responsible Organization reference.
+                  example: Organization/ORG-001
+                appointment:
+                  type: string
+                  description: Scheduling Appointment reference.
+                  example: Appointment/appt-500
+                based-on:
+                  type: string
+                  description: Initiating request reference.
+                  example: ServiceRequest/sr-200
+                careteam:
+                  type: string
+                  description: Allocated CareTeam reference.
+                  example: CareTeam/ct-50
+                episode-of-care:
+                  type: string
+                  description: EpisodeOfCare reference.
+                  example: EpisodeOfCare/eoc-10
+                diagnosis-code:
+                  type: string
+                  description: Coded diagnosis token.
+                  example: http://snomed.info/sct|233604007
+                diagnosis-reference:
+                  type: string
+                  description: Condition diagnosis reference.
+                  example: Condition/cond-100
+                reason-code:
+                  type: string
+                  description: Coded encounter reason token.
+                  example: http://snomed.info/sct|267036007
+                reason-reference:
+                  type: string
+                  description: Reason resource reference.
+                  example: Condition/cond-101
+                account:
+                  type: string
+                  description: Billing Account reference.
+                  example: Account/acc-100
+                special-arrangement:
+                  type: string
+                  description: Special arrangement token.
+                  example: wheelchair
+                _lastUpdated:
+                  type: string
+                  description: Resource last update date; supports FHIR prefixes.
+                  example: ge2026-07-01
+                _count:
+                  type: integer
+                  description: Page size. Default 20; maximum 100.
+                  example: 20
+                  default: 20
+                  minimum: 1
+                  maximum: 100
+                _sort:
+                  type: string
+                  description: Supported sort field. Prefix with '-' for descending.
+                  example: -date
+            examples:
+              patientStatusSearch:
+                summary: Search by patient and status
+                value:
+                  patient: Patient/pat-100045
+                  status: in-progress
+                  _count: 20
+      responses:
+        '200':
+          description: FHIR searchset Bundle returned.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/X-Correlation-Id'
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+              examples:
+                oneMatch:
+                  value: *id025
+                emptyResult:
+                  value: *id026
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-module: Encounter Management
+      x-permission: encounter.search
+      x-swagger-testing:
+      - Confirm Swagger renders form fields rather than a JSON request body.
+      - Execute with the same criteria as GET search and compare equivalent results.
+      - Use an invalid Content-Type and verify 400/415 according to server policy.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer JWT issued by Keycloak/OIDC. Expected project claims include tenant_id, hospitalId, branchId, departmentId,
+        role and permissions.
+    keycloakOAuth2:
+      type: oauth2
+      description: Optional interactive Swagger OAuth 2.0 authorization-code flow through Keycloak.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://keycloak.example.org/realms/hospital/protocol/openid-connect/auth
+          tokenUrl: https://keycloak.example.org/realms/hospital/protocol/openid-connect/token
+          scopes:
+            encounter.read: Read Encounter resources.
+            encounter.search: Search Encounter resources.
+            encounter.create: Create Encounter resources.
+            encounter.update: Replace or patch Encounter resources.
+            encounter.validate: Validate Encounter resources.
+            encounter.history: Read Encounter history.
+            fhir.metadata.read: Read CapabilityStatement.
+  parameters:
+    EncounterId:
+      name: id
+      in: path
+      required: true
+      description: FHIR logical Encounter id assigned by the server.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9\-.]{1,64}$
+      example: enc-1001
+    VersionId:
+      name: vid
+      in: path
+      required: true
+      description: FHIR resource version id.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9\-.]{1,64}$
+      example: '3'
+    AcceptFhirJson:
+      name: Accept
+      in: header
+      required: false
+      description: Requested FHIR response media type.
+      schema:
+        type: string
+        default: application/fhir+json
+        enum:
+        - application/fhir+json
+        - application/json
+      example: application/fhir+json
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Current weak ETag required for optimistic concurrency on PUT and PATCH.
+      schema:
+        type: string
+      example: W/"3"
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: Conditional read ETag.
+      schema:
+        type: string
+      example: W/"3"
+    IfNoneExist:
+      name: If-None-Exist
+      in: header
+      required: false
+      description: FHIR conditional create criteria.
+      schema:
+        type: string
+      example: identifier=https://hospital.example.org/encounter-number|ENC-2026-000101
+    Prefer:
+      name: Prefer
+      in: header
+      required: false
+      description: Controls whether the server returns the resource representation or no body.
+      schema:
+        type: string
+        enum:
+        - return=representation
+        - return=minimal
+      example: return=representation
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      description: Client-generated trace identifier propagated through gateway, service, JDBC and audit.
+      schema:
+        type: string
+        maxLength: 128
+      example: e3892d65-d32b-472b-a513-f96c3d02fc35
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: false
+      description: Optional deployment-specific tenant header. When supplied, it must exactly match the tenant_id JWT claim.
+      schema:
+        type: string
+      example: tenant-001
+  headers:
+    Location:
+      description: Version-specific location of the created Encounter.
+      schema:
+        type: string
+        format: uri
+      example: https://api.example.org/fhir/R5/Encounter/enc-1001/_history/1
+    ETag:
+      description: Current weak resource version tag, for example W/"3".
+      schema:
+        type: string
+      example: W/"3"
+    Last-Modified:
+      description: Timestamp corresponding to meta.lastUpdated when supported.
+      schema:
+        type: string
+        format: date-time
+      example: '2026-07-14T06:30:00Z'
+    X-Correlation-Id:
+      description: Correlation identifier supplied by the client or generated by the server.
+      schema:
+        type: string
+      example: e3892d65-d32b-472b-a513-f96c3d02fc35
+    WWW-Authenticate:
+      description: OAuth 2.0 Bearer authentication challenge.
+      schema:
+        type: string
+      example: Bearer realm="hospital", error="invalid_token"
+  responses:
+    BadRequest:
+      description: Malformed JSON, invalid query, invalid patch, id mismatch or missing required contract header.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    Unauthorized:
+      description: Authentication is missing, expired or invalid.
+      headers:
+        WWW-Authenticate:
+          $ref: '#/components/headers/WWW-Authenticate'
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    Forbidden:
+      description: Authenticated caller is not authorized for the operation, tenant, patient, department or purpose.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    NotFound:
+      description: Encounter or version was not found or is intentionally not disclosed.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    Conflict:
+      description: Business conflict, invalid state transition or concurrent business-rule conflict.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    Gone:
+      description: Resource or version is no longer available under retention or deletion policy.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    PreconditionFailed:
+      description: ETag/version conflict or conditional create matched multiple records.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    UnsupportedMediaType:
+      description: The supplied Content-Type is not supported for this operation.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    UnprocessableEntity:
+      description: FHIR profile, terminology or hospital business validation failed.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    TooManyRequests:
+      description: Rate limit exceeded.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+    ServiceUnavailable:
+      description: Encounter service is temporarily unavailable.
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/X-Correlation-Id'
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+          examples:
+            operationOutcome:
+              summary: FHIR OperationOutcome error
+              value: *id027
+  schemas:
+    Resource:
+      type: object
+      required:
+      - resourceType
+      properties:
+        resourceType:
+          type: string
+        id:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+      additionalProperties: true
+    Meta:
+      type: object
+      properties:
+        versionId:
+          type: string
+          description: Server-managed resource version.
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Server-managed last update timestamp.
+        profile:
+          type: array
+          items:
+            type: string
+            format: uri
+        tag:
+          type: array
+          items:
+            $ref: '#/components/schemas/Coding'
+      additionalProperties: true
+    Identifier:
+      type: object
+      properties:
+        use:
+          type: string
+        type:
+          $ref: '#/components/schemas/CodeableConcept'
+        system:
+          type: string
+          format: uri
+        value:
+          type: string
+        period:
+          $ref: '#/components/schemas/Period'
+        assigner:
+          $ref: '#/components/schemas/Reference'
+      required:
+      - system
+      - value
+      additionalProperties: true
+    Coding:
+      type: object
+      properties:
+        system:
+          type: string
+          format: uri
+        version:
+          type: string
+        code:
+          type: string
+        display:
+          type: string
+        userSelected:
+          type: boolean
+      additionalProperties: false
+    CodeableConcept:
+      type: object
+      properties:
+        coding:
+          type: array
+          items:
+            $ref: '#/components/schemas/Coding'
+        text:
+          type: string
+      additionalProperties: true
+    Reference:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: Literal FHIR reference, for example Patient/pat-100045.
+        type:
+          type: string
+          format: uri
+        identifier:
+          $ref: '#/components/schemas/Identifier'
+        display:
+          type: string
+      additionalProperties: true
+    CodeableReference:
+      type: object
+      properties:
+        concept:
+          $ref: '#/components/schemas/CodeableConcept'
+        reference:
+          $ref: '#/components/schemas/Reference'
+      additionalProperties: true
+    Period:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+      description: End must not be before start.
+      additionalProperties: false
+    Duration:
+      type: object
+      properties:
+        value:
+          type: number
+        comparator:
+          type: string
+        unit:
+          type: string
+        system:
+          type: string
+          format: uri
+        code:
+          type: string
+      additionalProperties: false
+    EncounterParticipant:
+      type: object
+      properties:
+        type:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+        period:
+          $ref: '#/components/schemas/Period'
+        actor:
+          $ref: '#/components/schemas/Reference'
+      description: 'Project rule: a participant must provide actor or type. Prefer PractitionerRole for role/facility context.'
+      additionalProperties: true
+    EncounterReason:
+      type: object
+      properties:
+        use:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+        value:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableReference'
+          minItems: 1
+      additionalProperties: true
+    EncounterDiagnosis:
+      type: object
+      properties:
+        condition:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableReference'
+        use:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+      additionalProperties: true
+    EncounterAdmission:
+      type: object
+      properties:
+        preAdmissionIdentifier:
+          $ref: '#/components/schemas/Identifier'
+        origin:
+          $ref: '#/components/schemas/Reference'
+        admitSource:
+          $ref: '#/components/schemas/CodeableConcept'
+        reAdmission:
+          $ref: '#/components/schemas/CodeableConcept'
+        destination:
+          $ref: '#/components/schemas/Reference'
+        dischargeDisposition:
+          $ref: '#/components/schemas/CodeableConcept'
+      additionalProperties: true
+    EncounterLocation:
+      type: object
+      required:
+      - location
+      - status
+      properties:
+        location:
+          $ref: '#/components/schemas/Reference'
+        status:
+          type: string
+          enum:
+          - planned
+          - active
+          - reserved
+          - completed
+        form:
+          $ref: '#/components/schemas/CodeableConcept'
+        period:
+          $ref: '#/components/schemas/Period'
+      additionalProperties: true
+    Encounter:
+      type: object
+      required:
+      - resourceType
+      - identifier
+      - status
+      - class
+      - subject
+      - serviceProvider
+      properties:
+        resourceType:
+          type: string
+          enum:
+          - Encounter
+        id:
+          type: string
+          description: Server-assigned FHIR logical id; not the visit/admission number.
+        meta:
+          $ref: '#/components/schemas/Meta'
+        identifier:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Identifier'
+        status:
+          type: string
+          enum:
+          - planned
+          - in-progress
+          - on-hold
+          - discharged
+          - completed
+          - cancelled
+          - discontinued
+          - entered-in-error
+          - unknown
+        class:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+        priority:
+          $ref: '#/components/schemas/CodeableConcept'
+        type:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+        serviceType:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableReference'
+        subject:
+          $ref: '#/components/schemas/Reference'
+        subjectStatus:
+          $ref: '#/components/schemas/CodeableConcept'
+        episodeOfCare:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+        basedOn:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+        careTeam:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+        partOf:
+          $ref: '#/components/schemas/Reference'
+        serviceProvider:
+          $ref: '#/components/schemas/Reference'
+        participant:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterParticipant'
+        appointment:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+        virtualService:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        actualPeriod:
+          $ref: '#/components/schemas/Period'
+        plannedStartDate:
+          type: string
+          format: date-time
+        plannedEndDate:
+          type: string
+          format: date-time
+        length:
+          $ref: '#/components/schemas/Duration'
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterReason'
+        diagnosis:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterDiagnosis'
+        account:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+        dietPreference:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+        specialArrangement:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+        specialCourtesy:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
+        admission:
+          $ref: '#/components/schemas/EncounterAdmission'
+        location:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterLocation'
+      additionalProperties: true
+      description: 'FHIR R5 Encounter. Project validation adds stricter cardinalities and business rules. Examples: actualPeriod.start
+        is required for in-progress/discharged/completed; actualPeriod.end is required for completed; inpatient/ICU profiles
+        require admission and physical location data.'
+    EncounterCreate:
+      allOf:
+      - $ref: '#/components/schemas/Encounter'
+      - type: object
+        description: Create payload. id, meta.versionId and meta.lastUpdated must be omitted.
+        properties:
+          id:
+            readOnly: true
+            type: string
+          meta:
+            readOnly: true
+            $ref: '#/components/schemas/Meta'
+    EncounterUpdate:
+      allOf:
+      - $ref: '#/components/schemas/Encounter'
+      - type: object
+        required:
+        - id
+        description: Complete update payload. Body id must equal URL id.
+        properties:
+          id:
+            type: string
+    BundleLink:
+      type: object
+      properties:
+        relation:
+          type: string
+        url:
+          type: string
+          format: uri
+      additionalProperties: true
+    BundleEntry:
+      type: object
+      properties:
+        fullUrl:
+          type: string
+          format: uri
+        resource:
+          oneOf:
+          - $ref: '#/components/schemas/Encounter'
+          - $ref: '#/components/schemas/OperationOutcome'
+          - $ref: '#/components/schemas/Resource'
+        search:
+          type: object
+          additionalProperties: true
+        request:
+          type: object
+          additionalProperties: true
+        response:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+    Bundle:
+      type: object
+      required:
+      - resourceType
+      - type
+      properties:
+        resourceType:
+          type: string
+          enum:
+          - Bundle
+        id:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        type:
+          type: string
+          enum:
+          - document
+          - message
+          - transaction
+          - transaction-response
+          - batch
+          - batch-response
+          - history
+          - searchset
+          - collection
+          - subscription-notification
+        total:
+          type: integer
+          minimum: 0
+        link:
+          type: array
+          items:
+            $ref: '#/components/schemas/BundleLink'
+        entry:
+          type: array
+          items:
+            $ref: '#/components/schemas/BundleEntry'
+      additionalProperties: true
+    OperationOutcomeIssue:
+      type: object
+      required:
+      - severity
+      - code
+      properties:
+        severity:
+          type: string
+          enum:
+          - fatal
+          - error
+          - warning
+          - information
+          - success
+        code:
+          type: string
+          description: FHIR IssueType code.
+        details:
+          $ref: '#/components/schemas/CodeableConcept'
+        diagnostics:
+          type: string
+        location:
+          type: array
+          items:
+            type: string
+        expression:
+          type: array
+          items:
+            type: string
+          description: FHIRPath expressions identifying affected fields.
+      additionalProperties: true
+    OperationOutcome:
+      type: object
+      required:
+      - resourceType
+      - issue
+      properties:
+        resourceType:
+          type: string
+          enum:
+          - OperationOutcome
+        id:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        issue:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OperationOutcomeIssue'
+      additionalProperties: true
+    CapabilityStatement:
+      type: object
+      required:
+      - resourceType
+      - status
+      - fhirVersion
+      properties:
+        resourceType:
+          type: string
+          enum:
+          - CapabilityStatement
+        id:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        status:
+          type: string
+        date:
+          type: string
+          format: date-time
+        kind:
+          type: string
+        fhirVersion:
+          type: string
+          example: 5.0.0
+        format:
+          type: array
+          items:
+            type: string
+        rest:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true
+    JsonPatchOperation:
+      type: object
+      required:
+      - op
+      - path
+      properties:
+        op:
+          type: string
+          enum:
+          - add
+          - remove
+          - replace
+          - move
+          - copy
+          - test
+        path:
+          type: string
+          description: JSON Pointer path. Server-managed paths are forbidden.
+        from:
+          type: string
+          description: Source JSON Pointer for move/copy.
+        value:
+          description: Value for add, replace or test.
+          nullable: true
+      additionalProperties: false
+  examples:
+    EncounterCreateExample:
+      summary: FHIR R5 ICU Encounter create payload
+      value: *id024
+    EncounterCreatedExample:
+      summary: FHIR R5 Encounter create response
+      value: *id028
+    OperationOutcomeExample:
+      summary: FHIR validation error
+      value: *id027
+x-project-contract:
+  fhirVersion: R5 (5.0.0)
+  module: Encounter Management / Patient Administration
+  swaggerUiPath: /swagger-ui/index.html
+  openApiJsonPath: /v3/api-docs
+  openApiYamlPath: /v3/api-docs.yaml
+  requiredJwtClaims:
+  - tenant_id
+  - hospitalId
+  - branchId
+  - departmentId
+  - role
+  - permissions
+  auditEvents:
+  - create
+  - read
+  - search
+  - update
+  - status transition
+  - location change
+  - discharge
+  - validation failure
+  - history access
+  logging:
+  - Use a dedicated Encounter service log file.
+  - Do not log full FHIR payloads or sensitive diagnosis/reason details.
+  - Propagate X-Correlation-Id through gateway, interceptors, service, JDBC/database and audit.
+  statusTransitions:
+    planned:
+    - in-progress
+    - cancelled
+    - entered-in-error
+    in-progress:
+    - on-hold
+    - discharged
+    - completed
+    - discontinued
+    - entered-in-error
+    on-hold:
+    - in-progress
+    - discontinued
+    - entered-in-error
+    discharged:
+    - completed
+    - entered-in-error
+    completed:
+    - entered-in-error
+    cancelled:
+    - entered-in-error
+    discontinued:
+    - entered-in-error

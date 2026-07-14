@@ -1,0 +1,12 @@
+{
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/openapi.yaml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/yaml" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
+  ]
+}
