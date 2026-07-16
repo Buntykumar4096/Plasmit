@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -320,6 +321,7 @@ function buildRows(profile: VentilationProfile): VentilationRow[] {
 }
 
 export function VentilationChartWorkspace({ patient }: VentilationChartWorkspaceProps) {
+  const [propertiesOpen, setPropertiesOpen] = React.useState(false);
   const profile = React.useMemo(() => patientVentilationProfile(patient), [patient]);
   const rows = React.useMemo(() => buildRows(profile), [profile]);
 
@@ -375,10 +377,16 @@ export function VentilationChartWorkspace({ patient }: VentilationChartWorkspace
       </Card>
 
       <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h3 className="text-sm font-bold text-slate-950">Property</h3>
-        </div>
-        <div className="overflow-x-auto">
+        <button
+          aria-expanded={propertiesOpen}
+          className={cn("flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-50", propertiesOpen && "border-b border-slate-200")}
+          type="button"
+          onClick={() => setPropertiesOpen((open) => !open)}
+        >
+          <h3 className="text-sm font-bold text-slate-950">Properties</h3>
+          {propertiesOpen ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+        </button>
+        {propertiesOpen ? <div className="overflow-x-auto">
           <table className="min-w-[1120px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-600">
@@ -409,7 +417,7 @@ export function VentilationChartWorkspace({ patient }: VentilationChartWorkspace
               })}
             </tbody>
           </table>
-        </div>
+        </div> : null}
       </Card>
     </div>
   );

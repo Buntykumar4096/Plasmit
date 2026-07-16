@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRightLeft, CheckCircle2, ClipboardCheck, Droplets, Eye, HeartPulse, Link2, ListChecks, Pill, ShieldAlert, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, CheckCircle2, ClipboardCheck, Droplets, Eye, HeartPulse, ListChecks, Pill, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
   isClosedSupervisionStatus,
   nursingStationActionRowFromItem,
   nursingStationTopAlert,
+  PendingUnitMonitoringOverviewDialog,
   PendingUnitMonitoringQueueDialog,
   useIcuCommandPagination,
   type ClinicalAlertCellAction,
@@ -29,14 +31,15 @@ import {
 } from "../nursing-icu-pages";
 
 export function UnitAssignedPatients() {
+  const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [nurse, setNurse] = React.useState("All bedside nurses");
   const wardNurses = React.useMemo(() => Array.from(new Set([...icuPatients.map((patient) => patient.assignedWardNurse), "Bedside Nurse Rina", "Bedside Nurse Anjali", "Bedside Nurse Arjun", "Bedside Nurse Neha"])), []);
   const initialAssignments = React.useMemo(() => Object.fromEntries(icuPatients.map((patient) => [patient.id, patient.assignedWardNurse])), []);
   const [assignments, setAssignments] = React.useState<Record<string, string>>(initialAssignments);
   const [committedAssignments, setCommittedAssignments] = React.useState<Record<string, string>>(initialAssignments);
-  const [editingPatientId, setEditingPatientId] = React.useState<string | null>(null);
   const [activePendingTaskPatient, setActivePendingTaskPatient] = React.useState<IcuPatient | null>(null);
+  const [pendingTaskOverviewOpen, setPendingTaskOverviewOpen] = React.useState(false);
   const [activeClinicalAlert, setActiveClinicalAlert] = React.useState<ClinicalAlertCellAction | null>(null);
   const [resolvedAlertRows, setResolvedAlertRows] = React.useState<Set<string>>(() => new Set());
   const [acknowledgedAlertRows, setAcknowledgedAlertRows] = React.useState<Set<string>>(() => new Set());
@@ -48,7 +51,6 @@ export function UnitAssignedPatients() {
   }, {}), [committedAssignments, wardNurses]);
   const nurseFilterOptions = React.useMemo(() => ["All bedside nurses", ...wardNurses], [wardNurses]);
   const nurseAssignmentLabel = React.useCallback((wardNurse: string) => `${wardNurse} (${workload[wardNurse] || "Available"})`, [workload]);
-  const nurseAssignmentOptions = React.useMemo(() => ["Unassign Nurse", ...wardNurses.map(nurseAssignmentLabel)], [nurseAssignmentLabel, wardNurses]);
 
   function updateAssignment(patient: IcuPatient, selectedNurse: string) {
     setAssignments((current) => ({ ...current, [patient.id]: selectedNurse === "Unassign Nurse" ? "" : selectedNurse.replace(/\s+\([^)]*\)$/, "") }));
@@ -57,13 +59,13 @@ export function UnitAssignedPatients() {
   function saveAssignment(patient: IcuPatient) {
     const assignedNurse = assignments[patient.id] ?? "";
     setCommittedAssignments((current) => ({ ...current, [patient.id]: assignedNurse }));
-    setEditingPatientId(null);
     toast.success(assignedNurse ? `${patient.bedNo} assigned to ${assignedNurse}` : `${patient.bedNo} nurse assignment removed`);
   }
 
-  function openLinkEditor(patient: IcuPatient) {
-    setAssignments((current) => ({ ...current, [patient.id]: committedAssignments[patient.id] ?? "" }));
-    setEditingPatientId(patient.id);
+  function openPatientCell(event: React.MouseEvent<HTMLElement>, href: string) {
+    event.stopPropagation();
+    if ((event.target as HTMLElement).closest("a, button, select, input, textarea")) return;
+    router.push(href);
   }
 
   const rows = icuPatients
@@ -87,7 +89,10 @@ export function UnitAssignedPatients() {
         <div className="min-w-0">
           <NativeSelect label="Assigned Bedside Nurse" value={nurse} onChange={setNurse} options={nurseFilterOptions} />
         </div>
-        <Button className="h-10 self-end" variant="outline" onClick={() => { setQuery(""); setNurse("All bedside nurses"); }}>Reset</Button>
+        <Button className="h-10 self-end whitespace-nowrap" variant="outline" onClick={() => setPendingTaskOverviewOpen(true)}>
+          <ListChecks className="h-4 w-4" />
+          Pending Tasks
+        </Button>
         <Button asChild className="h-10 self-end whitespace-nowrap" variant="outline">
           <Link href="/icu-command-center/nursing/ward-escalations">
             <ShieldAlert className="h-4 w-4" />
@@ -106,11 +111,11 @@ export function UnitAssignedPatients() {
           <table className="w-full min-w-[1080px] table-fixed border-collapse text-sm md:min-w-[1480px]">
             <colgroup><col className="w-[185px] md:w-[240px]" /><col className="w-[104px] md:w-[155px]" /><col className="w-[112px] md:w-[165px]" /><col className="w-[104px] md:w-[155px]" /><col className="w-[145px] md:w-[175px]" /><col className="w-[122px] md:w-[155px]" /><col className="w-[180px] md:w-[230px]" /><col className="w-[128px] md:w-[205px]" /></colgroup>
             <thead className="border-b border-border text-[11px] uppercase text-muted-foreground">
-              <tr><th className="sticky left-0 z-40 bg-white px-3 py-4 text-left shadow-[8px_0_14px_-14px_rgba(15,23,42,0.75)] md:px-4">Patient</th><th className="px-2 py-4 text-center md:px-4">Vitals</th><th className="px-2 py-4 text-center md:px-4">Medication</th><th className="px-2 py-4 text-center md:px-4">I/O</th><th className="px-2 py-4 text-center md:px-4">Pending Task</th><th className="px-2 py-4 text-center md:px-4">Alerts</th><th className="px-2 py-4 text-left md:px-4">Assigned Bedside Nurse</th><th className="px-2 py-4 text-center md:px-4">Action</th></tr>
+              <tr><th className="sticky left-0 z-40 bg-white px-3 py-4 text-left shadow-[8px_0_14px_-14px_rgba(15,23,42,0.75)] md:px-4">Patient</th><th className="px-2 py-4 text-center md:px-4">Vitals</th><th className="px-2 py-4 text-center md:px-4">Medication</th><th className="px-2 py-4 text-center md:px-4">I/O</th><th className="px-2 py-4 text-center md:px-4">Pending Tasks</th><th className="px-2 py-4 text-center md:px-4">Alerts</th><th className="px-2 py-4 text-left md:px-4">Assigned Bedside Nurse</th><th className="px-2 py-4 text-center md:px-4">Action</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {pagination.pageRows.map(({ patient, assignedNurse, committedNurse }) => {
-                const selectValue = assignedNurse ? nurseAssignmentLabel(assignedNurse) : "Unassign Nurse";
+                const selectValue = assignedNurse ? nurseAssignmentLabel(assignedNurse) : "";
                 const latestVital = [...icuVitals].reverse().find((vital) => vital.patientId === patient.id);
                 const patientMeds = medicationRows.filter((row) => row.patientId === patient.id);
                 const lateMeds = patientMeds.filter((row) => row.status === "Late").length;
@@ -128,14 +133,26 @@ export function UnitAssignedPatients() {
                 const actionTone: DashboardCellTone = criticalAlerts ? "danger" : overdueTasks ? "critical" : openTasks.length || patientAlerts.length ? "warning" : "info";
                 const ActionIcon = criticalAlerts ? ShieldAlert : overdueTasks || openTasks.length ? ListChecks : patientAlerts.length ? AlertTriangle : Eye;
                 return (
-                  <tr className="group hover:bg-slate-50" key={patient.id}>
-                    <td className="sticky left-0 z-30 bg-white px-3 py-4 align-middle shadow-[8px_0_14px_-14px_rgba(15,23,42,0.75)] group-hover:bg-slate-50 md:px-4">
+                  <tr
+                    className="group cursor-pointer hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+                    key={patient.id}
+                    role="link"
+                    tabIndex={0}
+                    onClick={(event) => {
+                      if ((event.target as HTMLElement).closest("a, button, select, input, textarea")) return;
+                      router.push(icuPatientDetailHref(patient.id, "overview"));
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && event.target === event.currentTarget) router.push(icuPatientDetailHref(patient.id, "overview"));
+                    }}
+                  >
+                    <td className="sticky left-0 z-30 cursor-pointer bg-white px-3 py-4 align-middle shadow-[8px_0_14px_-14px_rgba(15,23,42,0.75)] group-hover:bg-slate-50 md:px-4" onClick={(event) => openPatientCell(event, icuPatientDetailHref(patient.id, "overview"))}>
                       <Link className={cn("block truncate font-bold hover:underline", dashboardToneTextClass(toneForStatus(patient.currentStatus)))} href={icuPatientDetailHref(patient.id, "overview")}>
                         {patient.patientName}
                       </Link>
                       <p className="mt-1 truncate text-xs font-bold text-slate-950">{patient.bedNo} | {patient.unit}</p>
                     </td>
-                    <td className="px-2 py-4 text-center align-middle md:px-4">
+                    <td className="cursor-pointer px-2 py-4 text-center align-middle md:px-4" onClick={(event) => openPatientCell(event, icuPatientDetailHref(patient.id, "monitoring", "24h-chart"))}>
                       <IcuOpsMatrixCell
                         icon={HeartPulse}
                         title={latestVital?.abnormal ? "Review" : latestVital ? "Current" : "Pending"}
@@ -145,27 +162,30 @@ export function UnitAssignedPatients() {
                         showDetail={false}
                       />
                     </td>
-                    <td className="px-2 py-4 text-center align-middle md:px-4">
+                    <td className="cursor-pointer px-2 py-4 text-center align-middle md:px-4" onClick={(event) => openPatientCell(event, icuPatientDetailHref(patient.id, "orders", undefined, `ordersTab=medicine-chart&medStatus=${lateMeds ? "Late" : dueMeds ? "Due" : "All status"}`))}>
                       <IcuOpsMatrixCell
                         icon={Pill}
                         title={lateMeds ? `${lateMeds} late` : dueMeds ? `${dueMeds} due` : patientMeds.length ? "Chart" : "Clear"}
                         detail={patientMeds[0] ? `${patientMeds[0].medication} | ${patientMeds[0].scheduledTime}` : "No active dose"}
                         tone={lateMeds ? "danger" : dueMeds ? "warning" : "success"}
-                        href={icuPatientDetailHref(patient.id, "orders", undefined, "ordersTab=medicine-chart")}
+                        href={icuPatientDetailHref(patient.id, "orders", undefined, `ordersTab=medicine-chart&medStatus=${lateMeds ? "Late" : dueMeds ? "Due" : "All status"}`)}
                         showDetail={false}
                       />
                     </td>
-                    <td className="px-2 py-4 text-center align-middle md:px-4">
+                    <td className="cursor-pointer px-2 py-4 text-center align-middle md:px-4" onClick={(event) => openPatientCell(event, icuPatientDetailHref(patient.id, "monitoring", "intake-output", "ioFocus=balance"))}>
                       <IcuOpsMatrixCell
                         icon={Droplets}
                         title={ioRows.length ? `${netBalance >= 0 ? "+" : ""}${netBalance} ml` : "Pending"}
                         detail={ioRows[0] ? `${ioRows[0].time} | ${ioRows[0].component}` : "No I/O entry"}
                         tone={!ioRows.length ? "warning" : Math.abs(netBalance) > 1000 ? "danger" : "info"}
-                        href={icuPatientDetailHref(patient.id, "monitoring", "intake-output")}
+                        href={icuPatientDetailHref(patient.id, "monitoring", "intake-output", "ioFocus=balance")}
                         showDetail={false}
                       />
                     </td>
-                    <td className="px-2 py-4 text-center align-middle md:px-4">
+                    <td className="cursor-pointer px-2 py-4 text-center align-middle md:px-4" onClick={(event) => {
+                      event.stopPropagation();
+                      if (!(event.target as HTMLElement).closest("a, button, select, input, textarea")) setActivePendingTaskPatient(patient);
+                    }}>
                       <IcuOpsMatrixCell
                         icon={ListChecks}
                         title={openTasks.length ? `${openTasks.length} pending` : "Clear"}
@@ -175,7 +195,7 @@ export function UnitAssignedPatients() {
                         onClick={() => setActivePendingTaskPatient(patient)}
                       />
                     </td>
-                    <td className="px-2 py-4 text-center align-middle md:px-4">
+                    <td className="cursor-pointer px-2 py-4 text-center align-middle md:px-4" onClick={(event) => openPatientCell(event, icuPatientDetailHref(patient.id, "events", undefined, "eventFocus=open-alerts"))}>
                       <IcuOpsMatrixCell
                         icon={AlertTriangle}
                         title={patientAlerts.length ? `${patientAlerts.length} open` : "Clear"}
@@ -185,57 +205,34 @@ export function UnitAssignedPatients() {
                         showDetail={false}
                       />
                     </td>
-                    <td className="px-2 py-4 text-center align-middle md:px-4">
-                      {committedNurse ? (
-                        <span className="inline-flex h-9 min-w-44 max-w-[210px] items-center justify-center rounded-full bg-primary px-4 text-xs font-black text-primary-foreground shadow-[0_2px_5px_rgba(15,23,42,0.16)]">
-                          <span className="truncate">{committedNurse}</span>
-                        </span>
-                      ) : null}
+                    <td className="px-2 py-4 text-center align-middle md:px-4" onClick={(event) => event.stopPropagation()}>
+                      <div className="min-w-0 [&_select]:truncate [&_select]:pr-8">
+                        <select
+                          aria-label="Assigned Bedside Nurse"
+                          className="h-9 w-full min-w-[150px] rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/20"
+                          value={selectValue}
+                          onChange={(event) => updateAssignment(patient, event.target.value)}
+                        >
+                          {!assignedNurse ? <option disabled hidden value="" /> : null}
+                          {assignedNurse ? <option value="Unassign Nurse">Unassign Nurse</option> : null}
+                          {wardNurses.map((wardNurse) => <option key={wardNurse} value={nurseAssignmentLabel(wardNurse)}>{nurseAssignmentLabel(wardNurse)}</option>)}
+                        </select>
+                      </div>
                     </td>
-                    <td className="px-2 py-4 align-middle md:px-4">
-                      <div className="flex min-w-[172px] flex-nowrap items-center justify-center gap-3">
-                        {editingPatientId === patient.id ? (
-                          <div className="grid w-full grid-cols-[minmax(0,1fr)_38px_38px] items-center gap-2">
-                            <div className="min-w-0 [&_select]:truncate [&_select]:pr-8">
-                              <NativeSelect label="Assigned Bedside Nurse" value={selectValue} onChange={(value) => updateAssignment(patient, value)} options={nurseAssignmentOptions} />
-                            </div>
-                            <Button
-                              aria-label="Assign Nurse"
-                              className="h-9 w-9 p-0"
-                              size="sm"
-                              title="Assign Nurse"
-                              onClick={() => saveAssignment(patient)}
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                            </Button>
-                            <Button aria-label="Cancel" className="h-9 w-9 p-0" size="sm" title="Cancel" variant="outline" onClick={() => {
-                              setAssignments((current) => ({ ...current, [patient.id]: committedNurse }));
-                              setEditingPatientId(null);
-                            }}><X className="h-4 w-4" /></Button>
-                          </div>
-                        ) : (
-                          <>
-                            <Button
-                              aria-label={actionTitle}
-                              className={cn("h-9 w-9 border-0 p-0 text-white shadow-[0_2px_5px_rgba(15,23,42,0.16)] hover:brightness-95", dashboardToneSolidClass(actionTone))}
-                              size="sm"
-                              title={actionTitle}
-                              onClick={() => actionRow ? setActiveClinicalAlert({ row: actionRow, kind: "action" }) : setActivePendingTaskPatient(patient)}
-                            >
-                              <ActionIcon className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              aria-label="Assign Nurse"
-                              className="h-9 w-9 p-0"
-                              size="sm"
-                              title="Assign Nurse"
-                              variant={committedNurse ? "outline" : "default"}
-                              onClick={() => openLinkEditor(patient)}
-                            >
-                              {committedNurse ? <ArrowRightLeft className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-                            </Button>
-                          </>
-                        )}
+                    <td className="px-2 py-4 align-middle md:px-4" onClick={(event) => event.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button aria-label="Save nurse assignment" className="h-9 w-9 p-0" size="sm" title="Save nurse assignment" disabled={(assignments[patient.id] ?? "") === committedNurse} onClick={() => saveAssignment(patient)}>
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          aria-label={actionTitle}
+                          className={cn("h-9 w-9 border-0 p-0 text-white shadow-[0_2px_5px_rgba(15,23,42,0.16)] hover:brightness-95", dashboardToneSolidClass(actionTone))}
+                          size="sm"
+                          title={actionTitle}
+                          onClick={() => actionRow ? setActiveClinicalAlert({ row: actionRow, kind: "action" }) : setActivePendingTaskPatient(patient)}
+                        >
+                          <ActionIcon className="h-4 w-4" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -260,6 +257,10 @@ export function UnitAssignedPatients() {
       <PendingUnitMonitoringQueueDialog
         patient={activePendingTaskPatient}
         onOpenChange={(open) => !open && setActivePendingTaskPatient(null)}
+      />
+      <PendingUnitMonitoringOverviewDialog
+        open={pendingTaskOverviewOpen}
+        onOpenChange={setPendingTaskOverviewOpen}
       />
     </div>
   );

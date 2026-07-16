@@ -9,6 +9,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Activity,
   AlertTriangle,
+  ArrowLeft,
   ArrowRightLeft,
   BarChart3,
   BedDouble,
@@ -3891,7 +3892,7 @@ function unitAdmissionTime(value: string) {
 
 type UnitMonitoringKind = "vitals" | "medicines" | "orders" | "tasks" | "alerts";
 
-function UnitMonitoringQueue({ kind, patientId }: { kind: UnitMonitoringKind; patientId?: string }) {
+function UnitMonitoringQueue({ kind, patientId, overdueOnly = false, severityOnly = false }: { kind: UnitMonitoringKind; patientId?: string; overdueOnly?: boolean; severityOnly?: boolean }) {
   const searchParams = useSearchParams();
   const routePatient = icuPatients.find((patient) => patient.id === (patientId ?? searchParams.get("patientId")));
   const config = {
@@ -3901,8 +3902,9 @@ function UnitMonitoringQueue({ kind, patientId }: { kind: UnitMonitoringKind; pa
     tasks: { source: "Tasks", itemLabel: "Nursing task", title: "Nursing Tasks", description: "In-progress and overdue nursing tasks." },
     alerts: { source: "Alerts", itemLabel: "Critical alert", title: "Critical Alerts", description: "Critical patient alerts requiring immediate review or escalation." },
   }[kind];
-  const limitedStatusFilter = kind === "orders" || kind === "tasks";
-  const defaultFilter = limitedStatusFilter ? "Critical" : "Open";
+  const showPatientColumn = !patientId;
+  const limitedStatusFilter = !patientId && (kind === "orders" || kind === "tasks");
+  const defaultFilter = overdueOnly ? "Overdue" : patientId ? "Open" : limitedStatusFilter ? "Critical" : "Open";
   const [query, setQuery] = React.useState(routePatient?.patientName ?? "");
   const [filter, setFilter] = React.useState(defaultFilter);
   const [statusOverrides, setStatusOverrides] = React.useState<Record<string, string>>({});
@@ -3919,11 +3921,12 @@ function UnitMonitoringQueue({ kind, patientId }: { kind: UnitMonitoringKind; pa
   const [viewItem, setViewItem] = React.useState<SupervisionItem | null>(null);
   const searchableRows = React.useMemo(() => buildSupervisionItems()
     .filter((item) => item.source === config.source && (!patientId || item.patientId === patientId))
+    .filter((item) => !overdueOnly || ["Overdue", "Late"].includes(item.status))
     .map((item) => ({ ...item, status: statusOverrides[item.id] ?? item.status }))
     .filter((item) => {
       const text = `${item.patientName} ${item.bedNo} ${item.unit} ${item.nurse} ${item.title} ${item.detail}`.toLowerCase();
       return text.includes(query.toLowerCase());
-    }), [config.source, patientId, query, statusOverrides]);
+    }), [config.source, overdueOnly, patientId, query, statusOverrides]);
   const statusCounts = React.useMemo(() => ({
     Open: searchableRows.filter((item) => !isClosedSupervisionStatus(item.status)).length,
     Critical: searchableRows.filter((item) => item.priority === "Critical").length,
@@ -3998,20 +4001,20 @@ function UnitMonitoringQueue({ kind, patientId }: { kind: UnitMonitoringKind; pa
         <h1 className="text-xl font-black text-slate-950">{config.title}</h1>
         <p className="mt-1 text-sm text-slate-600">{config.description}</p>
       </div> : null}
-      <div className="grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[minmax(260px,1fr)_220px_auto] md:items-end">
-        <Input aria-label="Search patient, bed, nurse or work" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search patient, bed, nurse or work" />
+      <div className={cn("grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm md:items-end", patientId || severityOnly ? "md:grid-cols-[220px]" : "md:grid-cols-[minmax(260px,1fr)_220px_auto]")}>
+        {!patientId && !severityOnly ? <Input aria-label="Search patient, bed, nurse or work" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search patient, bed, nurse or work" /> : null}
         <NativeSelect label="Status" value={selectedStatusOption} onChange={(value) => setFilter(value.replace(/\s+\(\d+\)$/, ""))} options={statusOptions} />
-        <Button variant="outline" onClick={() => { setQuery(""); setFilter(defaultFilter); }}>Reset</Button>
+        {!patientId && !severityOnly ? <Button variant="outline" onClick={() => { setQuery(""); setFilter(defaultFilter); }}>Reset</Button> : null}
       </div>
       <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1240px] border-collapse text-sm">
-            <thead className="border-b border-border text-[11px] uppercase text-muted-foreground"><tr><th className="px-3 py-3 text-left">Patient</th><th className="px-3 py-3 text-left">{config.itemLabel}</th>{kind === "orders" ? <th className="px-3 py-3 text-left">Ordering Doctor</th> : null}<th className="px-3 py-3 text-left">Responsible Nurse</th><th className="px-3 py-3 text-center">Due / Priority</th><th className="px-3 py-3 text-left">Status</th><th className="min-w-[260px] px-3 py-3 text-center">Actions</th></tr></thead>
+          <table className={cn("w-full border-collapse text-sm", showPatientColumn ? "min-w-[1240px]" : "min-w-[1040px]")}>
+            <thead className="border-b border-border text-[11px] uppercase text-muted-foreground"><tr>{showPatientColumn ? <th className="px-3 py-3 text-left">Patient</th> : null}<th className="px-3 py-3 text-left">{config.itemLabel}</th>{kind === "orders" ? <th className="px-3 py-3 text-left">Ordering Doctor</th> : null}<th className="px-3 py-3 text-left">Responsible Nurse</th><th className="px-3 py-3 text-center">Due / Priority</th><th className="px-3 py-3 text-left">Status</th><th className="min-w-[260px] px-3 py-3 text-center">Actions</th></tr></thead>
             <tbody className="divide-y divide-slate-200">
               {pagination.pageRows.map((item) => {
                 const instruction = kind === "orders" ? doctorInstructions.find((row) => `instruction-${row.id}` === item.id) : undefined;
                 return <tr className="hover:bg-surface-muted/70" key={item.id}>
-                  <td className="px-3 py-3"><p className="font-bold text-slate-900">{item.patientName}</p><p className="mt-1 text-xs text-slate-500">{item.bedNo} | {item.unit}</p></td>
+                  {showPatientColumn ? <td className="px-3 py-3"><p className="font-bold text-slate-900">{item.patientName}</p><p className="mt-1 text-xs text-slate-500">{item.bedNo} | {item.unit}</p></td> : null}
                   <td className="px-3 py-3"><p className="font-semibold text-slate-900">{item.title}</p><p className="mt-1 max-w-md text-xs text-slate-500">{item.detail}</p>{instruction ? <p className="mt-1 text-xs font-semibold text-muted-foreground">Ordered at: {instruction.orderedAt}</p> : null}</td>
                   {kind === "orders" ? <td className="px-3 py-3"><p className="font-semibold text-slate-900">{instruction?.doctor ?? item.createdBy}</p><p className="mt-1 text-xs text-slate-500">{instruction?.doctorRole ?? "Doctor"}</p></td> : null}
                   <td className="px-3 py-3 font-semibold text-slate-700">{item.nurse}</td>
@@ -4031,7 +4034,7 @@ function UnitMonitoringQueue({ kind, patientId }: { kind: UnitMonitoringKind; pa
                   </div></td>
                 </tr>;
               })}
-              {!rows.length ? <tr><td className="px-3 py-10 text-center text-slate-500" colSpan={kind === "orders" ? 7 : 6}>No matching {config.itemLabel.toLowerCase()} found.</td></tr> : null}
+              {!rows.length ? <tr><td className="px-3 py-10 text-center text-slate-500" colSpan={(kind === "orders" ? 7 : 6) - (showPatientColumn ? 0 : 1)}>No matching {config.itemLabel.toLowerCase()} found.</td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -4357,6 +4360,9 @@ function UnitNurseShiftHandover() {
             </div>
           </CardContent>
         </Card>
+      </div>
+      <div className="flex justify-end">
+        <Button asChild variant="outline"><Link href="/icu-command-center/nursing/assigned-patients"><ArrowLeft className="h-4 w-4" />Back to Dashboard</Link></Button>
       </div>
     </div>
   );
@@ -16621,10 +16627,7 @@ function IcuPatientCommandProfile({
             <IcuPatientDetailMetric icon={Droplets} label="Fluid balance" value={`${balance} ml`} detail={`${totalIntake} in / ${totalOutput} out`} tone={balanceTone} />
             <IcuPatientDetailMetric icon={AlertTriangle} label="Open alerts" value={openAlerts.length} detail={`${dueMeds.length} meds due, ${activeTasks.length} tasks pending`} tone={openAlerts.length ? "warning" : "success"} />
           </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <IcuPatientTeamPanel patient={patient} />
-            <IcuPatientLatestObservation latestVital={latestVital} patient={patient} />
-          </div>
+          <IcuPatientLatestObservation latestVital={latestVital} patient={patient} />
         <IcuPatientTimeline patientId={patient.id} rows={timeline} />
         </TabsContent>
 
@@ -16674,7 +16677,7 @@ function IcuPatientCommandProfile({
             initialType={initialResultType}
             patient={patient}
             rows={resultRows}
-            onDownload={downloadIcuPatientResult}
+            onOpenReport={openIcuPatientResult}
             onPreview={setPreviewResultId}
           />
         </TabsContent>
@@ -16719,7 +16722,7 @@ function IcuPatientCommandProfile({
       <IcuPatientResultPreviewDialog
         result={previewResult}
         onClose={() => setPreviewResultId(null)}
-        onDownload={downloadIcuPatientResult}
+        onOpenReport={openIcuPatientResult}
       />
     </div>
   );
@@ -16839,12 +16842,13 @@ function IcuPatientMonitoringOverview({
   patient: IcuPatient;
   patientInfusions: typeof infusionRows;
 }) {
+  const recordedByName = latestVital?.nurse ?? patient.assignedWardNurse;
   const observationRows = [
-    ["SpO2 / BP", latestVital ? `${latestVital.spo2}% / ${latestVital.bp}` : "-", latestVital?.time ?? "-", latestVital?.nurse ?? "-"],
-    ["Respiration", latestVital ? `${latestVital.respiratoryRate}/min` : "-", patient.ventilatorStatus, "Respiratory support"],
-    ["Urine output", latestVital ? `${latestVital.urineOutput} ml/hr` : "-", `Net ${balance} ml`, "Fluid balance"],
-    ["Temperature", latestVital ? `${latestVital.temperature} C` : "-", latestVital?.note ?? "No recent note", "Observation"],
-    ["GCS / Pain", latestVital ? `${latestVital.gcs} / ${latestVital.painScore}` : "-", latestVital?.oxygenFlow ?? patient.ventilatorStatus, "Neuro / pain"],
+    ["SpO2 / BP", latestVital ? `${latestVital.spo2}% / ${latestVital.bp}` : "-", latestVital?.time ?? "-", recordedByName],
+    ["Respiration", latestVital ? `${latestVital.respiratoryRate}/min` : "-", patient.ventilatorStatus, recordedByName],
+    ["Urine output", latestVital ? `${latestVital.urineOutput} ml/hr` : "-", `Net ${balance} ml`, recordedByName],
+    ["Temperature", latestVital ? `${latestVital.temperature} C` : "-", latestVital?.note ?? "No recent note", recordedByName],
+    ["GCS / Pain", latestVital ? `${latestVital.gcs} / ${latestVital.painScore}` : "-", latestVital?.oxygenFlow ?? patient.ventilatorStatus, recordedByName],
   ];
   const infusionRowsForTable = patientInfusions.map((row) => ({
     action: row.alert || "Continue monitoring",
@@ -16969,45 +16973,18 @@ function IcuNeutralBadge({ children }: { children: React.ReactNode }) {
 }
 
 function IcuPatientMonitoring24HourChart({ patient }: { patient: IcuPatient }) {
-  const [observationDate, setObservationDate] = React.useState(TODAY_DATE);
+  const observationDate = TODAY_DATE;
   const [dateTimeFilter, setDateTimeFilter] = React.useState<DateTimeFilterState>(defaultDateTimeFilter);
   const hourlyVitals = React.useMemo(() => buildIcuHourlyVitals(patient, observationDate), [observationDate, patient]);
   const filteredHourlyVitals = React.useMemo(() => applyDateTimeFilter(hourlyVitals, dateTimeFilter), [dateTimeFilter, hourlyVitals]);
-  const criticalHours = filteredHourlyVitals.filter((entry) => entry.risk === "Critical" || entry.risk === "High").length;
 
   return (
     <div className="space-y-4">
-      <CollapsibleCommandPanel
-        summary={`${patient.bedNo} - ${patient.patientName} | ${dateTimeFilter.dateFilter} / ${dateTimeFilter.timeFilter} | ${filteredHourlyVitals.length} record(s)`}
-        title="Patient & observation filters"
-      >
-        <div className="space-y-4 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <StatusPill tone={criticalHours ? "danger" : "success"}>{criticalHours ? `${criticalHours} risk hours` : "Stable 24h"}</StatusPill>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_180px_auto] xl:items-end">
-            <label className="space-y-1 text-sm">
-              <span className="font-medium text-foreground">Patient / bed</span>
-              <div className="flex h-10 items-center justify-between gap-2 rounded-md border border-input bg-surface-muted px-3 text-sm">
-                <span className="truncate font-semibold text-foreground">{patient.bedNo} - {patient.patientName}</span>
-                <Badge tone="info">Locked</Badge>
-              </div>
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="font-medium text-foreground">Observation date</span>
-              <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20" value={observationDate} onChange={(event) => {
-                const nextDate = event.target.value;
-                setObservationDate(nextDate);
-                setDateTimeFilter((current) => ({ ...current, fromDate: nextDate, toDate: nextDate }));
-              }}>
-                {dateValueOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </label>
-            <Button onClick={() => toast.success(`24-hour chart saved for ${patient.patientName}`)}>Save chart</Button>
-          </div>
+      <div className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <div className="min-w-0 p-3">
           <DateTimeFilterPanel compact embedded hideHeader value={dateTimeFilter} onChange={setDateTimeFilter} resultCount={filteredHourlyVitals.length} />
         </div>
-      </CollapsibleCommandPanel>
+      </div>
       <IcuVitals24HourTable data={filteredHourlyVitals} />
     </div>
   );
@@ -17399,16 +17376,6 @@ function IcuPatientDetailPanel({ title, children }: { title: string; children: R
   );
 }
 
-function IcuPatientTeamPanel({ patient }: { patient: IcuPatient }) {
-  return (
-    <IcuPatientDetailPanel title="Patient & team">
-      <InfoLine label="Admission" value={`${patient.admissionSource} | ${patient.admissionTime}`} />
-      <InfoLine label="Doctors" value={`${patient.dutyDoctor} / ${patient.consultingDoctor}`} />
-      <InfoLine label="Bedside nurse" value={patient.assignedWardNurse.replace(/^Bedside Nurse\s+/i, "")} />
-    </IcuPatientDetailPanel>
-  );
-}
-
 function IcuPatientLatestObservation({ latestVital, patient }: { latestVital?: (typeof icuVitals)[number]; patient: IcuPatient }) {
   return (
     <IcuPatientDetailPanel title="Latest clinical observation">
@@ -17444,62 +17411,20 @@ function IcuPatientResultsWorkspace({
   patient,
   rows,
   onPreview,
-  onDownload,
+  onOpenReport,
 }: {
   initialType?: string;
   patient: IcuPatient;
   rows: IcuPatientResultRow[];
   onPreview: (resultId: string) => void;
-  onDownload: (result: IcuPatientResultRow) => void;
+  onOpenReport: (result: IcuPatientResultRow) => void;
 }) {
-  const [query, setQuery] = React.useState("");
   const initialCategory = normalizeIcuPatientResultCategory(initialType);
-  const [categoryFilter, setCategoryFilter] = React.useState(initialCategory);
-  const [statusFilter, setStatusFilter] = React.useState("All status");
-  const categoryOptions = ["All categories", ...Array.from(new Set(rows.map((row) => row.category)))];
-  const statusOptions = ["All status", "Available", "Critical", "Pending", "Reviewed"];
-  const filteredRows = rows.filter((row) => {
-    const text = `${row.reportName} ${row.category} ${row.status} ${row.source} ${row.summary}`.toLowerCase();
-    return text.includes(query.toLowerCase())
-      && (categoryFilter === "All categories" || row.category === categoryFilter)
-      && (statusFilter === "All status" || row.status === statusFilter);
-  });
-  const critical = filteredRows.filter((row) => row.status === "Critical").length;
-  const pending = filteredRows.filter((row) => row.status === "Pending").length;
-  const available = filteredRows.filter((row) => row.status !== "Pending").length;
-  const unreviewed = filteredRows.filter((row) => row.status === "Available" || row.status === "Critical").length;
+  const filteredRows = rows.filter((row) => initialCategory === "All categories" || row.category === initialCategory);
   const pagination = useIcuCommandPagination(filteredRows);
 
   return (
     <div className="space-y-4">
-      <CollapsibleCommandPanel
-        summary={`${filteredRows.length} result(s) | ${critical} critical | ${pending} pending | ${unreviewed} review pending`}
-        title="Result filters"
-      >
-        <div className="space-y-3 p-3">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <IcuPatientDetailMetric icon={TestTube2} label="Available reports" value={available} detail="Ready for review" tone={available ? "info" : "muted"} />
-            <IcuPatientDetailMetric icon={AlertTriangle} label="Critical results" value={critical} detail="Needs attention" tone={critical ? "critical" : "success"} />
-            <IcuPatientDetailMetric icon={Clock3} label="Pending reports" value={pending} detail="Awaiting result" tone={pending ? "warning" : "success"} />
-            <IcuPatientDetailMetric icon={ClipboardCheck} label="Review pending" value={unreviewed} detail="Sign-off queue" tone={unreviewed ? "warning" : "success"} />
-          </div>
-
-          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 lg:grid-cols-[minmax(220px,1fr)_220px_180px_auto] lg:items-end">
-            <label className="space-y-1 text-sm">
-              <span className="font-semibold text-slate-800">Search report</span>
-              <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search report, source, summary..." />
-            </label>
-            <NativeSelect label="Category" value={categoryFilter} onChange={setCategoryFilter} options={categoryOptions} />
-            <NativeSelect label="Status" value={statusFilter} onChange={setStatusFilter} options={statusOptions} />
-            <Button variant="outline" onClick={() => {
-              setQuery("");
-              setCategoryFilter("All categories");
-              setStatusFilter("All status");
-            }}>Reset</Button>
-          </div>
-        </div>
-      </CollapsibleCommandPanel>
-
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.05)]">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-separate border-spacing-0 text-left text-sm">
@@ -17515,7 +17440,8 @@ function IcuPatientResultsWorkspace({
             </thead>
             <tbody>
               {pagination.pageRows.map((row) => {
-                const downloadDisabled = row.status === "Pending";
+                const openDisabled = row.status === "Pending";
+                const openLabel = icuPatientResultOpenLabel(row);
                 return (
                   <tr className="bg-white transition even:bg-slate-50/45 hover:bg-sky-50/70 [&:last-child>td]:border-0" key={row.id}>
                     <td className="border-b border-slate-100 px-4 py-3">
@@ -17538,8 +17464,8 @@ function IcuPatientResultsWorkspace({
                         <Button className="h-9 px-3 text-xs" size="sm" variant="outline" onClick={() => onPreview(row.id)}>
                           <FileText className="h-4 w-4" />Preview
                         </Button>
-                        <Button className="h-9 px-3 text-xs" disabled={downloadDisabled} size="sm" title={downloadDisabled ? "Report is pending" : "Download report"} onClick={() => onDownload(row)}>
-                          <Download className="h-4 w-4" />Download
+                        <Button className="h-9 px-3 text-xs" disabled={openDisabled} size="sm" title={openDisabled ? "Report is pending" : openLabel} onClick={() => onOpenReport(row)}>
+                          <ExternalLink className="h-4 w-4" />{openLabel}
                         </Button>
                       </div>
                     </td>
@@ -17569,11 +17495,11 @@ function normalizeIcuPatientResultCategory(value?: string) {
 function IcuPatientResultPreviewDialog({
   result,
   onClose,
-  onDownload,
+  onOpenReport,
 }: {
   result: IcuPatientResultRow | null;
   onClose: () => void;
-  onDownload: (result: IcuPatientResultRow) => void;
+  onOpenReport: (result: IcuPatientResultRow) => void;
 }) {
   return (
     <Dialog.Root open={Boolean(result)} onOpenChange={(open) => {
@@ -17620,7 +17546,7 @@ function IcuPatientResultPreviewDialog({
               </div>
               <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 p-3">
                 <Button variant="outline" onClick={onClose}>Close</Button>
-                <Button onClick={() => onDownload(result)}>Download report</Button>
+                <Button disabled={result.status === "Pending"} onClick={() => onOpenReport(result)}><ExternalLink className="h-4 w-4" />{icuPatientResultOpenLabel(result)}</Button>
               </div>
             </>
           ) : null}
@@ -18553,9 +18479,13 @@ function toneForPatientResult(status: IcuPatientResultStatus): DashboardCellTone
   return "info";
 }
 
-function downloadIcuPatientResult(result: IcuPatientResultRow) {
+function icuPatientResultOpenLabel(result: IcuPatientResultRow) {
+  return result.category === "Radiology" || /x-?ray/i.test(result.reportName) ? "Open X-ray" : "Open Report";
+}
+
+function openIcuPatientResult(result: IcuPatientResultRow) {
   if (result.status === "Pending") {
-    toast.info("Report is pending, download will be available after result release.");
+    toast.info("Report is pending and can be opened after result release.");
     return;
   }
 
@@ -18577,12 +18507,13 @@ function downloadIcuPatientResult(result: IcuPatientResultRow) {
   ].join("\n");
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${result.attachmentLabel.replace(/\.pdf$/i, "")}.txt`;
-  link.click();
-  URL.revokeObjectURL(url);
-  toast.success(`${result.reportName} downloaded`);
+  const openedWindow = window.open(url, "_blank", "noopener,noreferrer");
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  if (!openedWindow) {
+    toast.error("Allow pop-ups to open this report.");
+    return;
+  }
+  toast.success(`${result.reportName} opened`);
 }
 
 type IcuAllVitalsGraphMetricId =
@@ -19505,36 +19436,16 @@ function icuFio2Value(value: string) {
   return 21;
 }
 
-type IcuTimelineFilter = "All" | "Vitals" | "Medicine" | "Alert" | "Notes";
-
 function IcuPatientTimeline({ patientId, rows }: { patientId: string; rows: Array<{ id: string; label: string; title: string; detail: string; tone: DashboardCellTone }> }) {
-  const [filter, setFilter] = React.useState<IcuTimelineFilter>("All");
-  const filteredRows = rows
-    .filter((row) => filter === "All" || row.label === filter || (filter === "Medicine" && row.label === "Medication"))
-    .slice(0, 5);
+  const recentRows = rows.slice(0, 5);
 
   return (
     <div className="rounded-md border border-slate-200 bg-white p-3">
-      <div className="flex flex-col gap-3 border-b border-slate-200 pb-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-b border-slate-200 pb-3">
         <p className="text-sm font-bold text-slate-950">Patient timeline</p>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter patient timeline">
-          {(["All", "Vitals", "Medicine", "Alert", "Notes"] as IcuTimelineFilter[]).map((option) => (
-            <button
-              className={cn(
-                "rounded-md border px-3 py-1.5 text-xs font-semibold transition",
-                filter === option ? "border-primary bg-primary text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-              )}
-              key={option}
-              type="button"
-              onClick={() => setFilter(option)}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
       </div>
       <div className="divide-y divide-slate-200">
-        {filteredRows.map((row) => (
+        {recentRows.map((row) => (
           <div className="grid gap-1 px-1 py-3 sm:grid-cols-[100px_minmax(0,1fr)] sm:gap-3" key={row.id}>
             <p className="text-xs font-bold uppercase text-slate-500">{row.label}</p>
             <div>
@@ -19543,7 +19454,7 @@ function IcuPatientTimeline({ patientId, rows }: { patientId: string; rows: Arra
             </div>
           </div>
         ))}
-        {!filteredRows.length ? <div className="p-5 text-center text-sm font-semibold text-slate-500">No {filter.toLowerCase()} activity found.</div> : null}
+        {!recentRows.length ? <div className="p-5 text-center text-sm font-semibold text-slate-500">No recent timeline activity found.</div> : null}
       </div>
       <div className="flex justify-end border-t border-slate-200 pt-3">
         <Button size="sm" variant="outline" asChild>
@@ -19955,18 +19866,18 @@ type MedicineChartTableLine = {
 };
 
 function IcuPatientMedicineChartTab({ patient }: { patient: IcuPatient }) {
-  const [timeWindow, setTimeWindow] = React.useState("Last 24 hours");
+  const searchParams = useSearchParams();
+  const requestedMedicationStatus = searchParams.get("medStatus")?.trim() || "All status";
+  const isMedicationStatusFocus = requestedMedicationStatus !== "All status";
+  const [timeWindow, setTimeWindow] = React.useState(isMedicationStatusFocus ? "Custom" : "Last 24 hours");
   const [scenarioFilter, setScenarioFilter] = React.useState("All scenarios");
-  const [statusFilter, setStatusFilter] = React.useState("All status");
-  const [routeFilter, setRouteFilter] = React.useState("All routes");
+  const [statusFilter, setStatusFilter] = React.useState(requestedMedicationStatus);
   const [highAlertOnly, setHighAlertOnly] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const patientMedicationRows = React.useMemo(() => medicationRows.filter((row) => row.patientId === patient.id), [patient.id]);
   const historyRows = React.useMemo(() => buildMedicineChartHistoryRows(patient), [patient]);
   const dueLateMedicationRows = patientMedicationRows.filter((row) => ["Due", "Late"].includes(row.status));
-  const highAlertMedicationRows = patientMedicationRows.filter((row) => row.doubleVerification !== "Not required");
-  const verificationPendingRows = highAlertMedicationRows.filter((row) => row.status !== "Administered");
-  const infusionMedicationRows = patientMedicationRows.filter((row) => row.route.toLowerCase().includes("infusion") || row.frequency.toLowerCase().includes("continuous"));
+  const verificationPendingRows = patientMedicationRows.filter((row) => row.doubleVerification !== "Not required" && row.status !== "Administered");
   const heldSkippedRows = patientMedicationRows.filter((row) => ["Held", "Skipped"].includes(row.status));
   const activeAllergies = nursingAllergyRows.filter((row) => row.patientId === patient.id && row.severity !== "Low");
   const orderMismatchRows = patientMedicationRows.filter((row) => {
@@ -19980,13 +19891,12 @@ function IcuPatientMedicineChartTab({ patient }: { patient: IcuPatient }) {
   ].slice(0, 5);
   const scenarioOptions = ["All scenarios", ...Array.from(new Set(historyRows.map((row) => row.scenario)))];
   const statusOptions = ["All status", ...Array.from(new Set(historyRows.map((row) => row.status)))];
-  const routeOptions = ["All routes", ...Array.from(new Set(historyRows.map((row) => row.route)))];
+  const activityStatusFilter = scenarioFilter !== "All scenarios" ? `scenario:${scenarioFilter}` : statusFilter !== "All status" ? `status:${statusFilter}` : "all";
   const filteredRows = historyRows.filter((row) => {
     const text = `${row.medication} ${row.dose} ${row.route} ${row.frequency} ${row.status} ${row.scenario} ${row.changedBy} ${row.source} ${row.verifier} ${row.remarks} ${row.changeSummary}`.toLowerCase();
     return medicineChartRowInWindow(row, historyRows, timeWindow)
       && (scenarioFilter === "All scenarios" || row.scenario === scenarioFilter)
       && (statusFilter === "All status" || row.status === statusFilter)
-      && (routeFilter === "All routes" || row.route === routeFilter)
       && (!highAlertOnly || row.highAlert)
       && text.includes(query.toLowerCase());
   }).sort((first, second) => medicineChartTimestamp(second).getTime() - medicineChartTimestamp(first).getTime());
@@ -19999,51 +19909,51 @@ function IcuPatientMedicineChartTab({ patient }: { patient: IcuPatient }) {
 
   return (
     <div className="space-y-3">
-      <CollapsibleCommandPanel
-        summary={`${timeWindow} | ${scenarioFilter} | ${statusFilter} | ${filteredRows.length} row(s)`}
-        title="Medicine chart filters"
-      >
-        <div className="grid grid-cols-2 gap-3 p-3 xl:grid-cols-6 xl:items-end">
-          <NativeSelect label="Period" value={timeWindow} onChange={setTimeWindow} options={["Last 24 hours", "Last 7 days", "All history"]} />
-          <NativeSelect label="Activity" value={scenarioFilter} onChange={setScenarioFilter} options={scenarioOptions} />
-          <NativeSelect label="Status" value={statusFilter} onChange={setStatusFilter} options={statusOptions} />
-          <NativeSelect label="Route" value={routeFilter} onChange={setRouteFilter} options={routeOptions} />
-          <label className="col-span-2 space-y-1 text-sm xl:col-span-1">
-            <span className="font-semibold text-slate-800">Search</span>
-            <div className="relative">
+      {!isMedicationStatusFocus ? <div className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
+          <select aria-label="Period" className="h-9 w-44 shrink-0 rounded-md border border-input bg-background px-3 text-sm" value={timeWindow} onChange={(event) => setTimeWindow(event.target.value)}>
+            {["Last 24 hours", "Last 7 days", "Custom"].map((option) => <option key={option}>{option}</option>)}
+          </select>
+          <select
+            aria-label="Scenario or status"
+            className="h-9 w-52 shrink-0 rounded-md border border-input bg-background px-3 text-sm"
+            value={activityStatusFilter}
+            onChange={(event) => {
+              const [kind, selected = ""] = event.target.value.split(":");
+              setScenarioFilter(kind === "scenario" ? selected : "All scenarios");
+              setStatusFilter(kind === "status" ? selected : "All status");
+            }}
+          >
+            <option value="all">All scenarios & status</option>
+            <optgroup label="Scenarios">
+              {scenarioOptions.slice(1).map((option) => <option key={option} value={`scenario:${option}`}>{option}</option>)}
+            </optgroup>
+            <optgroup label="Status">
+              {statusOptions.slice(1).map((option) => <option key={option} value={`status:${option}`}>{option}</option>)}
+            </optgroup>
+          </select>
+          <div className="relative w-64 shrink-0">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input className="h-9 pl-9" placeholder="Medicine, nurse, remarks" value={query} onChange={(event) => setQuery(event.target.value)} />
-            </div>
+              <Input aria-label="Search medicines" className="h-9 pl-9" placeholder="Medicine, nurse, remarks" value={query} onChange={(event) => setQuery(event.target.value)} />
+          </div>
+          <label className="flex h-9 shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">
+            <input checked={highAlertOnly} className="h-4 w-4 accent-violet-600" type="checkbox" onChange={(event) => setHighAlertOnly(event.target.checked)} />
+            High-alert only
           </label>
-          <div className="col-span-2 grid grid-cols-2 gap-2 xl:col-span-1 xl:block xl:space-y-2">
-            <label className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">
-              <input checked={highAlertOnly} className="h-4 w-4 accent-violet-600" type="checkbox" onChange={(event) => setHighAlertOnly(event.target.checked)} />
-              High-alert only
-            </label>
-            <Button className="w-full" variant="outline" onClick={() => {
+          <Button className="h-9 shrink-0" variant="outline" onClick={() => {
               setQuery("");
               setTimeWindow("Last 24 hours");
               setScenarioFilter("All scenarios");
               setStatusFilter("All status");
-              setRouteFilter("All routes");
               setHighAlertOnly(false);
-            }}>Reset</Button>
-          </div>
+          }}>Reset</Button>
         </div>
-      </CollapsibleCommandPanel>
+      </div> : null}
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <IcuPatientDetailMetric icon={Pill} label="Due / late" value={dueLateMedicationRows.length} detail="Needs bedside nurse follow-up" tone={dueLateMedicationRows.some((row) => row.status === "Late") ? "danger" : dueLateMedicationRows.length ? "warning" : "success"} />
-        <IcuPatientDetailMetric icon={ShieldAlert} label="High-alert" value={highAlertMedicationRows.length} detail={`${verificationPendingRows.length} verification pending`} tone={verificationPendingRows.length ? "critical" : highAlertMedicationRows.length ? "warning" : "success"} />
-        <IcuPatientDetailMetric icon={Activity} label="Infusions" value={infusionMedicationRows.length} detail="Rate and running status review" tone={infusionMedicationRows.length ? "purple" : "success"} />
-        <IcuPatientDetailMetric icon={AlertTriangle} label="Hold / skip" value={heldSkippedRows.length} detail="Reason must be documented" tone={heldSkippedRows.length ? "danger" : "success"} />
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+      {!isMedicationStatusFocus ? <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
             <h3 className="text-sm font-black text-slate-950">Unit Nurse Medication Safety Review</h3>
-            <p className="mt-1 text-xs text-slate-500">Supervise late dose, double verification, allergy, order match, and documented exception reasons.</p>
           </div>
           <div className="grid gap-3 p-4 md:grid-cols-2">
             <MedicationSafetyCheck title="Late / due medicine" detail={dueLateMedicationRows[0] ? `${dueLateMedicationRows[0].medication} ${dueLateMedicationRows[0].scheduledTime}` : "No delayed dose"} tone={dueLateMedicationRows.length ? "warning" : "success"} />
@@ -20056,7 +19966,6 @@ function IcuPatientMedicineChartTab({ patient }: { patient: IcuPatient }) {
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
             <h3 className="text-sm font-black text-slate-950">Bedside Nurse Follow-up Queue</h3>
-            <p className="mt-1 text-xs text-slate-500">Unit Nurse tracks, verifies, assigns follow-up, or escalates; Bedside Nurse administers and documents bedside dose.</p>
           </div>
           <div className="divide-y divide-slate-100">
             {unitNurseMedicationQueue.map((row) => (
@@ -20075,9 +19984,15 @@ function IcuPatientMedicineChartTab({ patient }: { patient: IcuPatient }) {
             {!unitNurseMedicationQueue.length ? <p className="px-4 py-8 text-center text-sm font-semibold text-slate-500">No medication follow-up pending for Unit Nurse.</p> : null}
           </div>
         </div>
-      </div>
+      </div> : null}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        {isMedicationStatusFocus ? (
+          <div className="border-b border-slate-200 bg-rose-50 px-4 py-3">
+            <h3 className="text-sm font-black text-rose-900">{requestedMedicationStatus} medication</h3>
+            <p className="mt-1 text-xs font-semibold text-rose-700">{filteredRows.length} matching medication entr{filteredRows.length === 1 ? "y" : "ies"}</p>
+          </div>
+        ) : null}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
             <thead className="bg-white text-xs uppercase text-slate-500">
@@ -20272,7 +20187,7 @@ function medicineChartSummaryForScenario(scenario: MedicineChartHistoryScenario,
 }
 
 function medicineChartRowInWindow(row: MedicineChartHistoryRow, historyRows: MedicineChartHistoryRow[], timeWindow: string) {
-  if (timeWindow === "All history") return true;
+  if (timeWindow === "Custom") return true;
   const latestTimestamp = historyRows.reduce((latest, item) => Math.max(latest, medicineChartTimestamp(item).getTime()), 0);
   const rowTimestamp = medicineChartTimestamp(row).getTime();
   if (!Number.isFinite(latestTimestamp) || !Number.isFinite(rowTimestamp)) return true;
@@ -20927,68 +20842,89 @@ function DateTimeFilterPanel({
         </CardHeader>
       ) : null}
       <CardContent className={cn("min-w-0 space-y-3", embedded && "p-0")}>
-        <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <label className="space-y-1 text-sm">
-            <span className="font-medium text-foreground">Date filter</span>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <label className="min-w-48 flex-1 text-sm sm:max-w-64">
+            <span className="sr-only">Date filter</span>
             <select
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
+              aria-label="Date filter"
               value={current.dateFilter}
               onChange={(event) => setCurrent({ ...current, dateFilter: event.target.value as DateFilterOption })}
             >
               {dateFilterOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </label>
-          <label className="space-y-1 text-sm">
-            <span className="font-medium text-foreground">Time filter</span>
+          <label className="min-w-44 flex-1 text-sm sm:max-w-60">
+            <span className="sr-only">Time filter</span>
             <select
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
+              aria-label="Time filter"
               value={current.timeFilter}
               onChange={(event) => setCurrent({ ...current, timeFilter: event.target.value as TimeFilterOption })}
             >
               {timeFilterOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </label>
-          <label className="space-y-1 text-sm">
-            <span className="font-medium text-foreground">From date</span>
-            <select
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
-              disabled={!["Single date", "Custom range"].includes(current.dateFilter)}
-              value={current.fromDate}
-              onChange={(event) => setCurrent({ ...current, fromDate: event.target.value })}
-            >
-              {dateValueOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="font-medium text-foreground">To date</span>
-            <select
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
-              disabled={current.dateFilter !== "Custom range"}
-              value={current.toDate}
-              onChange={(event) => setCurrent({ ...current, toDate: event.target.value })}
-            >
-              {dateValueOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </label>
-        </div>
-        {current.dateFilter === "Single date" || current.dateFilter === "Custom range" || current.timeFilter === "Custom time range" ? (
-          <div className="grid gap-3 rounded-md border border-border bg-surface-muted p-3 md:grid-cols-2">
-            <label className="space-y-1 text-sm">
-              <span className="font-medium text-foreground">From time</span>
+          {current.dateFilter === "Single date" ? (
+            <label className="min-w-40 flex-1 text-sm sm:max-w-52">
+              <span className="sr-only">Date</span>
               <select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
-                disabled={current.timeFilter !== "Custom time range"}
+                aria-label="Date"
+                value={current.fromDate}
+                onChange={(event) => setCurrent({ ...current, fromDate: event.target.value, toDate: event.target.value })}
+              >
+                {dateValueOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+          ) : null}
+          {current.dateFilter === "Custom range" ? (
+            <>
+              <label className="min-w-40 flex-1 text-sm sm:max-w-52">
+                <span className="sr-only">From date</span>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
+                  aria-label="From date"
+                  value={current.fromDate}
+                  onChange={(event) => setCurrent({ ...current, fromDate: event.target.value })}
+                >
+                  {dateValueOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <span aria-hidden="true" className="text-sm text-muted-foreground">→</span>
+              <label className="min-w-40 flex-1 text-sm sm:max-w-52">
+                <span className="sr-only">To date</span>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
+                  aria-label="To date"
+                  value={current.toDate}
+                  onChange={(event) => setCurrent({ ...current, toDate: event.target.value })}
+                >
+                  {dateValueOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+            </>
+          ) : null}
+        </div>
+        {current.timeFilter === "Custom time range" ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className="min-w-40 flex-1 text-sm sm:max-w-52">
+              <span className="sr-only">From time</span>
+              <select
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
+                aria-label="From time"
                 value={current.customTimeStart}
                 onChange={(event) => setCurrent({ ...current, customTimeStart: event.target.value })}
               >
                 {icuMonitoringHours.map((hour) => <option key={hour}>{hour}</option>)}
               </select>
             </label>
-            <label className="space-y-1 text-sm">
-              <span className="font-medium text-foreground">To time</span>
+            <span aria-hidden="true" className="text-sm text-muted-foreground">→</span>
+            <label className="min-w-40 flex-1 text-sm sm:max-w-52">
+              <span className="sr-only">To time</span>
               <select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
-                disabled={current.timeFilter !== "Custom time range"}
+                aria-label="To time"
                 value={current.customTimeEnd}
                 onChange={(event) => setCurrent({ ...current, customTimeEnd: event.target.value })}
               >
@@ -26070,53 +26006,72 @@ export function PendingUnitMonitoringQueueDialog({
   onOpenChange: (open: boolean) => void;
   patient: IcuPatient | null;
 }) {
+  const pendingTasks = patient
+    ? icuTasks.filter((task) => task.patientId === patient.id && task.status !== "Completed")
+    : [];
+
   return (
     <Dialog.Root open={Boolean(patient)} onOpenChange={onOpenChange}>
       {patient ? (
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[1px]" />
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex h-[92dvh] w-[calc(100vw-56px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-slate-300 bg-white shadow-2xl outline-none">
-            <div className="border-b border-border bg-surface-muted px-4 py-3 text-foreground">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <Dialog.Title className="text-base font-bold">Pending Task</Dialog.Title>
-                  <Dialog.Description className="mt-1 text-xs text-muted-foreground">
-                    {patient.bedNo} - {patient.patientName}
-                  </Dialog.Description>
-                </div>
-                <Dialog.Close asChild>
-                  <Button size="sm" variant="outline"><X className="h-4 w-4" />Close</Button>
-                </Dialog.Close>
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
+              <div className="min-w-0">
+                <Dialog.Title className="text-base font-black text-slate-950">Pending Tasks</Dialog.Title>
+                <Dialog.Description className="mt-1 text-xs font-semibold text-slate-500">
+                  {patient.patientName} | {patient.bedNo} | {pendingTasks.length} pending
+                </Dialog.Description>
               </div>
+              <Dialog.Close asChild>
+                <Button aria-label="Close pending tasks" size="sm" variant="outline">Close</Button>
+              </Dialog.Close>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
-              <Tabs defaultValue="doctor-orders" className="space-y-3">
-                <TabsList className="flex flex-wrap">
-                  <TabsTrigger value="doctor-orders">Pending Doctor Order</TabsTrigger>
-                  <TabsTrigger value="vitals">Pending Vitals</TabsTrigger>
-                  <TabsTrigger value="medicines">Pending Medicine</TabsTrigger>
-                  <TabsTrigger value="nurse-tasks">Pending Nurse Task</TabsTrigger>
-                </TabsList>
-                <TabsContent value="doctor-orders">
-                  <UnitMonitoringQueue kind="orders" patientId={patient.id} />
-                </TabsContent>
-                <TabsContent value="vitals">
-                  <UnitMonitoringQueue kind="vitals" patientId={patient.id} />
-                </TabsContent>
-                <TabsContent value="medicines">
-                  <UnitMonitoringQueue kind="medicines" patientId={patient.id} />
-                </TabsContent>
-                <TabsContent value="nurse-tasks">
-                  <UnitMonitoringQueue kind="tasks" patientId={patient.id} />
-                </TabsContent>
-              </Tabs>
-            </div>
-            <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-4 py-3">
-              <Dialog.Close asChild><Button>Done</Button></Dialog.Close>
+              <UnitMonitoringQueue kind="tasks" patientId={patient.id} />
             </div>
           </Dialog.Content>
         </Dialog.Portal>
       ) : null}
+    </Dialog.Root>
+  );
+}
+
+export function PendingUnitMonitoringOverviewDialog({
+  onOpenChange,
+  open,
+}: {
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+}) {
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[1px]" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex h-[92dvh] w-[calc(100vw-56px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-slate-300 bg-white shadow-2xl outline-none">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
+            <div>
+              <Dialog.Title className="text-base font-black text-slate-950">Pending Tasks</Dialog.Title>
+              <Dialog.Description className="sr-only">Pending task queues</Dialog.Description>
+            </div>
+            <Dialog.Close asChild><Button size="sm" variant="outline">Close</Button></Dialog.Close>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            <Tabs defaultValue="nurse-tasks" className="space-y-3">
+              <TabsList className="flex flex-wrap">
+                <TabsTrigger value="doctor-orders">Pending Doctor Orders</TabsTrigger>
+                <TabsTrigger value="vitals">Pending Vitals</TabsTrigger>
+                <TabsTrigger value="medicines">Pending Medicines</TabsTrigger>
+                <TabsTrigger value="nurse-tasks">Pending Nursing Tasks</TabsTrigger>
+              </TabsList>
+              <TabsContent value="doctor-orders"><UnitMonitoringQueue kind="orders" severityOnly /></TabsContent>
+              <TabsContent value="vitals"><UnitMonitoringQueue kind="vitals" overdueOnly severityOnly /></TabsContent>
+              <TabsContent value="medicines"><UnitMonitoringQueue kind="medicines" overdueOnly severityOnly /></TabsContent>
+              <TabsContent value="nurse-tasks"><UnitMonitoringQueue kind="tasks" severityOnly /></TabsContent>
+            </Tabs>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
     </Dialog.Root>
   );
 }
