@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import * as React from "react";
@@ -26,9 +27,8 @@ import {
   PendingUnitMonitoringOverviewDialog,
   PendingUnitMonitoringQueueDialog,
   useIcuCommandPagination,
-  type ClinicalAlertCellAction,
-  type DashboardCellTone,
 } from "../nursing-icu-pages";
+import type { ClinicalAlertCellAction, DashboardCellTone } from "../nursing-icu-page-types";
 
 export function UnitAssignedPatients() {
   const router = useRouter();

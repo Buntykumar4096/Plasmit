@@ -52,12 +52,6 @@ export function UnitBedWardNurseLink() {
     setEditingPatientId(patient.id);
   }
 
-  function openReassignment(patient: IcuPatient) {
-    setReassignPatient(patient);
-    setReassignNurse("Select new Bedside Nurse");
-    setReassignReason("");
-  }
-
   function confirmReassignment() {
     if (!reassignPatient || reassignNurse === "Select new Bedside Nurse" || !reassignReason.trim()) return;
     const previousNurse = committedAssignments[reassignPatient.id] || "Not assigned";

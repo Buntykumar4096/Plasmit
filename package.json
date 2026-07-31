@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:size": "node tools/check-source-size.mjs",
+    "verify": "npm run check:size && npm run typecheck && npm run lint"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "latest",
@@ -20,7 +22,6 @@
     "class-variance-authority": "latest",
     "clsx": "latest",
     "cmdk": "latest",
-    "date-fns": "latest",
     "framer-motion": "latest",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
@@ -28,11 +29,9 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-hook-form": "latest",
     "recharts": "latest",
     "sonner": "latest",
-    "tailwind-merge": "latest",
-    "zod": "latest"
+    "tailwind-merge": "latest"
   },
   "devDependencies": {
     "@tailwindcss/forms": "latest",

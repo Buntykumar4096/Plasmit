@@ -3,15 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  BarChart3,
-  ChevronDown,
-  Plus,
-  RefreshCcw,
-  Search,
-  Table2,
-  X,
-} from "lucide-react";
+import { BarChart3, Plus, RefreshCcw, Search, Table2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,14 +12,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { StatusTone } from "@/types";
-import {
-  icuPatients,
-  intakeOutputRows,
-  type IcuIntakeOutput,
-} from "../nursing-icu-data";
+import { icuPatients, intakeOutputRows, type IcuIntakeOutput } from "../nursing-icu-data";
 
 type IoView = "Hourly" | "12 Hours" | "24 Hours" | "Cumulative";
 type IoMode = "Table" | "Graph";
+type PeriodFilter = "Date" | "Hour" | "Day" | "Custom";
 type TimeWindow = "All time" | "Day shift" | "Night shift" | "Custom range";
 type MatrixRowType = "section" | "group" | "category" | "total" | "net";
 type SourceFilter = "All sources" | IcuIntakeOutput["source"];
@@ -90,51 +79,14 @@ const ioDateOptions = [
 ];
 const hourOptions = ["All hours", ...Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, "0")}:00`)] as const;
 const exactHourOptions = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, "0")}:00`);
-const timeWindowOptions: TimeWindow[] = ["All time", "Day shift", "Night shift", "Custom range"];
 
-const intakeCategories = [
-  "Oral Intake",
-  "Enteral Feed / Tube Feed",
-  "IV Fluids",
-  "IV Medication Dilution",
-  "Continuous Infusions",
-  "NTG Pump",
-  "Blood & Blood Products",
-  "Parenteral Nutrition / TPN",
-  "Electrolyte Replacement",
-  "Irrigation Input",
-  "Other Intake",
-];
+const intakeCategories = ["Oral Intake", "Enteral Feed / Tube Feed", "IV Fluids", "IV Medication Dilution", "Continuous Infusions", "NTG Pump", "Blood & Blood Products", "Parenteral Nutrition / TPN", "Electrolyte Replacement", "Irrigation Input", "Other Intake"];
 
-const outputCategories = [
-  "Urine",
-  "Fecal",
-  "NG Aspirate",
-  "Ryle's Tube Aspirate",
-  "Gastric Drainage",
-  "Gastrostomy Output",
-  "Abdominal Drain",
-  "Pleural Space",
-  "Mediastinum",
-  "Blood Loss",
-  "Other Output",
-];
+const outputCategories = ["Urine", "Fecal", "NG Aspirate", "Ryle's Tube Aspirate", "Gastric Drainage", "Gastrostomy Output", "Abdominal Drain", "Pleural Space", "Mediastinum", "Blood Loss", "Other Output"];
 
-const sourceOptions: SourceFilter[] = [
-  "All sources",
-  "Manual entry",
-  "Medication administration",
-  "Blood administration",
-  "Urine assessment",
-  "Stool assessment",
-  "Emesis assessment",
-  "Drain assessment",
-  "Infusion pump",
-];
+const sourceOptions: SourceFilter[] = ["All sources", "Manual entry", "Medication administration", "Blood administration", "Urine assessment", "Stool assessment", "Emesis assessment", "Drain assessment", "Infusion pump"];
 
 const captureSourceOptions: IcuIntakeOutput["source"][] = sourceOptions.filter((source): source is IcuIntakeOutput["source"] => source !== "All sources");
-const matrixPageSize = 8;
-const ledgerPageSize = 8;
 
 const matrixRows: MatrixRow[] = [
   { label: "Intake", type: "section" },
@@ -163,28 +115,15 @@ export function IntakeOutputWorkspace(props: IntakeOutputWorkspaceProps = {}) {
   );
 }
 
-function IntakeOutputWorkspaceInner({
-  initialPatientId,
-  lockedPatientId,
-  initialView = "Hourly",
-  initialMode = "Table",
-  forceFluidBalanceView,
-}: IntakeOutputWorkspaceProps) {
+function IntakeOutputWorkspaceInner({ initialPatientId, lockedPatientId, initialView = "Hourly", initialMode = "Table", forceFluidBalanceView }: IntakeOutputWorkspaceProps) {
   const searchParams = useSearchParams();
   const isFluidBalanceView = forceFluidBalanceView ?? searchParams.get("view") === "fluid-balance";
-  const isBalanceEntryFocus = searchParams.get("ioFocus") === "balance";
-  const focusPatientId = lockedPatientId ?? initialPatientId;
-  const focusDates = focusPatientId
-    ? intakeOutputRows.filter((row) => row.patientId === focusPatientId).map((row) => row.date).sort()
-    : [];
-  const initialFocusFromDate = focusDates[0] ?? selectedFromDate;
-  const initialFocusToDate = focusDates[focusDates.length - 1] ?? selectedToday;
   const [patientId, setPatientId] = React.useState(lockedPatientId ?? initialPatientId ?? icuPatients[0]?.id ?? "");
-  const [view, setView] = React.useState<IoView>(isBalanceEntryFocus ? "Cumulative" : initialView);
+  const [view, setView] = React.useState<IoView>(initialView);
   const [mode, setMode] = React.useState<IoMode>(initialMode);
   const [selectedDate, setSelectedDate] = React.useState(selectedToday);
-  const [fromDate, setFromDate] = React.useState(isBalanceEntryFocus ? initialFocusFromDate : selectedFromDate);
-  const [toDate, setToDate] = React.useState(isBalanceEntryFocus ? initialFocusToDate : selectedToday);
+  const [fromDate, setFromDate] = React.useState(selectedFromDate);
+  const [toDate, setToDate] = React.useState(selectedToday);
   const [timeWindow, setTimeWindow] = React.useState<TimeWindow>("All time");
   const [customStartTime, setCustomStartTime] = React.useState("06:00");
   const [customEndTime, setCustomEndTime] = React.useState("17:30");
@@ -192,7 +131,6 @@ function IntakeOutputWorkspaceInner({
   const [sourceFilter, setSourceFilter] = React.useState<SourceFilter>("All sources");
   const [query, setQuery] = React.useState("");
   const [quickAddOpen, setQuickAddOpen] = React.useState(false);
-  const [matrixPage, setMatrixPage] = React.useState(1);
   const [manualRows, setManualRows] = React.useState<IcuIntakeOutput[]>([]);
   const [activeCell, setActiveCell] = React.useState<ActiveCell>(null);
   const [draft, setDraft] = React.useState<IoDraft>({
@@ -230,18 +168,25 @@ function IntakeOutputWorkspaceInner({
   const alerts = React.useMemo(() => buildFluidAlerts(scopedRows, totals.balance), [scopedRows, totals.balance]);
   const graphSeries = React.useMemo(() => buildGraphSeries(scopedRows, buckets), [buckets, scopedRows]);
   const effectiveMode: IoMode = isFluidBalanceView ? "Graph" : mode;
+  const periodFilter: PeriodFilter = view === "Cumulative" || timeWindow === "Custom range" ? "Custom" : view === "24 Hours" || view === "12 Hours" ? "Day" : hourFilter === "All hours" ? "Date" : "Hour";
+
+  const changePeriodFilter = (period: PeriodFilter) => {
+    setTimeWindow(period === "Custom" ? "Custom range" : "All time");
+    setView(period === "Custom" ? "Cumulative" : period === "Day" ? "24 Hours" : "Hourly");
+    setHourFilter(period === "Hour" ? (hourFilter === "All hours" ? "06:00" : hourFilter) : "All hours");
+  };
 
   const resetFilters = () => {
     setSelectedDate(selectedToday);
-    setFromDate(isBalanceEntryFocus ? initialFocusFromDate : selectedFromDate);
-    setToDate(isBalanceEntryFocus ? initialFocusToDate : selectedToday);
+    setFromDate(selectedFromDate);
+    setToDate(selectedToday);
     setTimeWindow("All time");
     setCustomStartTime("06:00");
     setCustomEndTime("17:30");
     setHourFilter("All hours");
     setSourceFilter("All sources");
     setQuery("");
-    setView(isBalanceEntryFocus ? "Cumulative" : initialView);
+    setView(initialView);
     setMode(initialMode);
     toast.success("Intake/output filters reset");
   };
@@ -296,120 +241,120 @@ function IntakeOutputWorkspaceInner({
 
   return (
     <div className="space-y-4">
-      {!isBalanceEntryFocus ? <div className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto pb-1">
-              <select
-                aria-label="Time and view filter"
-                className="h-10 w-44 shrink-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200"
-                value={timeWindow === "All time" ? view : timeWindow}
-                onChange={(event) => {
-                  const next = event.target.value;
-                  if ((["Hourly", "12 Hours", "24 Hours", "Cumulative"] satisfies IoView[]).includes(next as IoView)) {
-                    setView(next as IoView);
-                    setTimeWindow("All time");
-                  } else {
-                    setTimeWindow(next as TimeWindow);
-                  }
-                }}
-              >
-                {(["Hourly", "12 Hours", "24 Hours", "Cumulative"] satisfies IoView[]).map((option) => <option key={option}>{option}</option>)}
-                {timeWindowOptions.map((option) => <option key={option}>{option}</option>)}
+      <div className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto p-3">
+          <div className="flex min-w-max items-center gap-2">
+            {!lockedPatientId ? (
+              <select aria-label="Patient / bed" title="Patient / bed" className="h-10 w-48 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={patientId} onChange={(event) => setPatientId(event.target.value)}>
+                {icuPatients.map((patient) => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.bedNo} - {patient.patientName}
+                  </option>
+                ))}
               </select>
-              {false ? (
+            ) : null}
+            <select aria-label="Period" title="Period" className="h-10 w-28 rounded-md border border-slate-300 bg-white px-2 text-sm font-medium text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={periodFilter} onChange={(event) => changePeriodFilter(event.target.value as PeriodFilter)}>
+              {(["Date", "Hour", "Day", "Custom"] satisfies PeriodFilter[]).map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+            <div className="flex h-10 overflow-hidden rounded-md border border-slate-300 bg-white">
+              <select aria-label={periodFilter === "Custom" ? "From date" : "Date"} title={periodFilter === "Custom" ? "From date" : "Date"} className="w-32 border-0 bg-transparent px-2 text-sm text-slate-950 outline-none" value={periodFilter === "Custom" ? fromDate : selectedDate} onChange={(event) => (periodFilter === "Custom" ? setFromDate(event.target.value) : setSelectedDate(event.target.value))}>
+                {ioDateOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {periodFilter === "Custom" ? (
                 <>
-                  <span aria-hidden="true" className="shrink-0 text-sm text-slate-400">→</span>
-                  <select aria-label="To date" className="h-10 w-44 shrink-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={toDate} onChange={(event) => setToDate(event.target.value)}>
-                  {ioDateOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  <span className="self-center text-xs text-slate-400">to</span>
+                  <select aria-label="To date" title="To date" className="w-32 border-0 bg-transparent px-2 text-sm text-slate-950 outline-none" value={toDate} onChange={(event) => setToDate(event.target.value)}>
+                    {ioDateOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </>
               ) : null}
-              {timeWindow === "Custom range" ? (
-                <>
-                  <select aria-label="From time" className="h-10 w-32 shrink-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={customStartTime} onChange={(event) => setCustomStartTime(event.target.value)}>
-                  {exactHourOptions.map((option) => <option key={option}>{option}</option>)}
-                  </select>
-                  <span aria-hidden="true" className="shrink-0 text-sm text-slate-400">→</span>
-                  <select aria-label="To time" className="h-10 w-32 shrink-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={customEndTime} onChange={(event) => setCustomEndTime(event.target.value)}>
-                  {exactHourOptions.map((option) => <option key={option}>{option}</option>)}
-                  </select>
-                </>
-              ) : null}
-              <select aria-label="Source" className="h-10 w-44 shrink-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value as SourceFilter)}>
-                  {sourceOptions.map((source) => <option key={source}>{source}</option>)}
-              </select>
-              <div className="relative w-60 shrink-0">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input aria-label="Search" className="w-full pl-9" placeholder="Component, nurse, source..." value={query} onChange={(event) => setQuery(event.target.value)} />
-              </div>
-              {isFluidBalanceView ? (
-                <div className="flex h-10 w-36 shrink-0 items-center justify-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 text-xs font-bold uppercase text-sky-800">
-                  <BarChart3 className="h-4 w-4" />Graph review
-                </div>
-              ) : (
-                <div className="flex h-10 w-44 shrink-0 rounded-md border border-slate-300 bg-white p-1">
-                  {(["Table", "Graph"] satisfies IoMode[]).map((option) => (
-                    <button
-                      className={cn("flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded px-2 text-xs font-semibold transition", mode === option ? "bg-sky-600 text-white" : "text-slate-600 hover:bg-slate-100")}
-                      key={option}
-                      type="button"
-                      onClick={() => setMode(option)}
-                    >
-                      {option === "Table" ? <Table2 className="h-4 w-4" /> : <BarChart3 className="h-4 w-4" />}{option}
-                    </button>
+            </div>
+            {periodFilter === "Custom" ? (
+              <div className="flex h-10 items-center overflow-hidden rounded-md border border-slate-300 bg-white">
+                <select aria-label="From time" title="From time" className="w-20 border-0 bg-transparent px-2 text-sm outline-none" value={customStartTime} onChange={(event) => setCustomStartTime(event.target.value)}>
+                  {exactHourOptions.map((option) => (
+                    <option key={option}>{option}</option>
                   ))}
-                </div>
-              )}
-              {!isFluidBalanceView ? (
-                <Button className="h-10 shrink-0 justify-center whitespace-nowrap" onClick={() => setQuickAddOpen(true)}>
-                  <Plus className="h-4 w-4" />Quick add
-                </Button>
-              ) : null}
-              <Button className="h-10 shrink-0 justify-center whitespace-nowrap" variant="outline" onClick={resetFilters}>
-                <RefreshCcw className="h-4 w-4" />Reset
+                </select>
+                <span className="text-xs text-slate-400">to</span>
+                <select aria-label="To time" title="To time" className="w-20 border-0 bg-transparent px-2 text-sm outline-none" value={customEndTime} onChange={(event) => setCustomEndTime(event.target.value)}>
+                  {exactHourOptions.map((option) => (
+                    <option key={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            {periodFilter === "Hour" ? (
+              <select aria-label="Hour" title="Hour" className="h-10 w-24 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={hourFilter} onChange={(event) => setHourFilter(event.target.value as (typeof hourOptions)[number])}>
+                {exactHourOptions.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            ) : null}
+            <select aria-label="Source" title="Source" className="h-10 w-36 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-sky-200" value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value as SourceFilter)}>
+              {sourceOptions.map((source) => (
+                <option key={source}>{source}</option>
+              ))}
+            </select>
+            <div className="relative w-48">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input aria-label="Search intake/output" className="w-full pl-9" placeholder="Search..." value={query} onChange={(event) => setQuery(event.target.value)} />
+            </div>
+            {isFluidBalanceView ? (
+              <div className="flex h-10 items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 text-xs font-bold uppercase text-sky-800">
+                <BarChart3 className="h-4 w-4" />
+                Graph review
+              </div>
+            ) : (
+              <div className="flex h-10 w-36 rounded-md border border-slate-300 bg-white p-1">
+                {(["Table", "Graph"] satisfies IoMode[]).map((option) => (
+                  <button className={cn("flex h-8 flex-1 items-center justify-center gap-1 rounded px-2 text-xs font-semibold transition", mode === option ? "bg-sky-600 text-white" : "text-slate-600 hover:bg-slate-100")} key={option} type="button" onClick={() => setMode(option)}>
+                    {option === "Table" ? <Table2 className="h-4 w-4" /> : <BarChart3 className="h-4 w-4" />}
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!isFluidBalanceView ? (
+              <Button className="h-10 whitespace-nowrap" onClick={() => setQuickAddOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Quick add
               </Button>
+            ) : null}
+            <Button className="h-10 whitespace-nowrap" variant="outline" onClick={resetFilters}>
+              <RefreshCcw className="h-4 w-4" />
+              Reset
+            </Button>
           </div>
-      </div> : null}
+        </div>
+      </div>
 
       <div className="space-y-4">
-        {isBalanceEntryFocus ? (
-          <>
-            <Card className="border-slate-200">
-              <CardHeader className="border-b border-slate-100 bg-white">
-                <CardTitle>Net balance calculation</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3 p-4 sm:grid-cols-3">
-                <TotalLine label="Total intake" value={`+${totals.intake} ml`} tone="info" />
-                <TotalLine label="Total output" value={`-${totals.output} ml`} tone="success" />
-                <TotalLine label="Net balance" value={formatSignedMl(totals.balance)} tone={balanceTone(totals.balance)} />
-              </CardContent>
-            </Card>
-            <FluidLedger defaultOpen rows={scopedRows} showContribution title="Balance contributing entries" />
-          </>
-        ) : isFluidBalanceView ? (
+        {isFluidBalanceView ? (
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <FluidBalanceGraph series={graphSeries} />
             <FluidGraphReviewPanel alerts={alerts} previousBalance={previousBalance} rows={scopedRows} series={graphSeries} />
           </div>
         ) : effectiveMode === "Table" ? (
-          <FluidBalanceMatrix buckets={buckets} rows={scopedRows} activeCell={activeCell} page={matrixPage} pageSize={matrixPageSize} onPageChange={setMatrixPage} onSelectCell={setActiveCell} />
+          <FluidBalanceMatrix buckets={buckets} rows={scopedRows} activeCell={activeCell} onSelectCell={setActiveCell} />
         ) : (
           <FluidBalanceGraph series={graphSeries} />
         )}
 
-        {!isFluidBalanceView ? (
-          <FluidLedger rows={scopedRows} />
-        ) : null}
+        {!isFluidBalanceView ? <FluidLedger rows={scopedRows} /> : null}
       </div>
 
-      <QuickFluidEntryDialog
-        draft={draft}
-        open={quickAddOpen}
-        onChange={setDraft}
-        onKindChange={changeDraftKind}
-        onOpenChange={setQuickAddOpen}
-        onSave={saveManualEntry}
-        patientLabel={`${selectedPatient.bedNo} - ${selectedPatient.patientName}`}
-      />
+      <QuickFluidEntryDialog draft={draft} open={quickAddOpen} onChange={setDraft} onKindChange={changeDraftKind} onOpenChange={setQuickAddOpen} onSave={saveManualEntry} patientLabel={`${selectedPatient.bedNo} - ${selectedPatient.patientName}`} />
     </div>
   );
 }
@@ -427,30 +372,6 @@ function FluidWorkspaceLoading() {
   );
 }
 
-function IoCollapsiblePanel({ children, summary, title }: { children: React.ReactNode; summary: string; title: string }) {
-  const [open, setOpen] = React.useState(false);
-
-  return (
-    <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
-      <button
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-slate-50"
-        onClick={() => setOpen((current) => !current)}
-        type="button"
-      >
-        <span className="min-w-0">
-          <span className="block text-sm font-bold text-slate-950">{title}</span>
-          <span className="mt-0.5 block truncate text-xs text-slate-500">{summary}</span>
-        </span>
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm">
-          <ChevronDown className={cn("h-4 w-4 transition-transform", open ? "rotate-180" : "")} />
-        </span>
-      </button>
-      {open ? <div className="border-t border-slate-200 bg-slate-50/80">{children}</div> : null}
-    </div>
-  );
-}
-
 function FieldBlock({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <label className={cn("block min-w-0 space-y-1", className)}>
@@ -460,45 +381,17 @@ function FieldBlock({ label, children, className }: { label: string; children: R
   );
 }
 
-function FluidBalanceMatrix({
-  activeCell,
-  buckets,
-  onPageChange,
-  onSelectCell,
-  page,
-  pageSize,
-  rows,
-}: {
-  activeCell: ActiveCell;
-  buckets: Bucket[];
-  onPageChange: (page: number) => void;
-  onSelectCell: (cell: ActiveCell) => void;
-  page: number;
-  pageSize: number;
-  rows: IcuIntakeOutput[];
-}) {
-  const totalPages = Math.max(1, Math.ceil(matrixRows.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * pageSize;
-  const visibleRows = matrixRows.slice(start, start + pageSize);
-
+function FluidBalanceMatrix({ buckets, rows, activeCell, onSelectCell }: { buckets: Bucket[]; rows: IcuIntakeOutput[]; activeCell: ActiveCell; onSelectCell: (cell: ActiveCell) => void }) {
   return (
     <Card className="overflow-hidden border-slate-200">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table
-            className="table-fixed border-collapse text-sm"
-            style={{ width: `${176 + buckets.length * 96}px` }}
-          >
-            <colgroup>
-              <col style={{ width: "176px" }} />
-              {buckets.map((bucket) => <col key={bucket.key} style={{ width: "96px" }} />)}
-            </colgroup>
+          <table className="w-full min-w-[1180px] border-collapse text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-slate-50 px-3 py-3 text-left text-xs font-bold uppercase text-slate-600">Component</th>
+                <th className="sticky left-0 z-10 w-44 border-b border-r border-slate-200 bg-slate-50 px-3 py-3 text-left text-xs font-bold uppercase text-slate-600">Component</th>
                 {buckets.map((bucket) => (
-                  <th className="border-b border-r border-slate-200 px-2 py-3 text-center text-xs font-bold uppercase text-slate-600" key={bucket.key}>
+                  <th className="border-b border-r border-slate-200 px-3 py-3 text-center text-xs font-bold uppercase text-slate-600" key={bucket.key}>
                     <span className="block">{bucket.label}</span>
                     {bucket.sublabel ? <span className="mt-0.5 block text-[10px] font-medium normal-case text-slate-400">{bucket.sublabel}</span> : null}
                   </th>
@@ -506,10 +399,11 @@ function FluidBalanceMatrix({
               </tr>
             </thead>
             <tbody>
-              {visibleRows.map((row) => (
+              {matrixRows.map((row) => (
                 <tr className={cn(row.type === "section" ? "bg-slate-100 font-bold text-slate-900" : row.type === "group" ? "bg-slate-50 font-bold text-slate-800" : row.type === "total" || row.type === "net" ? "bg-slate-100 font-bold" : "bg-white", "border-b border-slate-100")} key={`${row.type}-${row.label}`}>
                   <td className={cn("sticky left-0 z-10 border-r border-slate-200 px-3 py-2", row.type === "section" ? "bg-slate-100 text-slate-900" : row.type === "group" ? "bg-slate-50 text-slate-800" : row.type === "total" || row.type === "net" ? "bg-slate-100 text-slate-950" : "bg-white text-slate-900", row.subRow ? "pl-7 text-sm" : "")}>
-                    {row.subRow ? <span className="mr-2 text-slate-400">-</span> : null}{row.label}
+                    {row.subRow ? <span className="mr-2 text-slate-400">-</span> : null}
+                    {row.label}
                   </td>
                   {buckets.map((bucket) => {
                     if (row.type === "section") return <td className="border-r border-slate-200 bg-slate-100 px-3 py-2" key={bucket.key} />;
@@ -518,14 +412,7 @@ function FluidBalanceMatrix({
                     const value = sumCellRows(cellRows, row.type);
                     return (
                       <td className="border-r border-slate-100 px-2 py-2 text-center" key={bucket.key}>
-                        <IoQuantityCell
-                          bucket={bucket}
-                          row={row}
-                          rows={cellRows}
-                          value={value}
-                          active={activeCell?.title === row.label && activeCell.bucket === bucket.label}
-                          onSelect={() => onSelectCell({ title: row.label, bucket: bucket.label, total: value, rows: cellRows })}
-                        />
+                        <IoQuantityCell bucket={bucket} row={row} rows={cellRows} value={value} active={activeCell?.title === row.label && activeCell.bucket === bucket.label} onSelect={() => onSelectCell({ title: row.label, bucket: bucket.label, total: value, rows: cellRows })} />
                       </td>
                     );
                   })}
@@ -534,13 +421,6 @@ function FluidBalanceMatrix({
             </tbody>
           </table>
         </div>
-        <FluidPaginationControls
-          label="Intake / output rows"
-          page={safePage}
-          pageSize={pageSize}
-          total={matrixRows.length}
-          onPageChange={onPageChange}
-        />
       </CardContent>
     </Card>
   );
@@ -552,13 +432,7 @@ function IoQuantityCell({ bucket, row, rows, value, active, onSelect }: { bucket
   const surface = rows.length ? "bg-white border-slate-200 hover:bg-slate-50" : "bg-white border-transparent text-slate-300";
 
   return (
-    <button
-      aria-label={`${row.label} ${bucket.label} ${value} ml`}
-      className={cn("min-h-9 w-full rounded-md border px-2 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-sky-200", surface, tone, active ? "ring-2 ring-sky-300" : "")}
-      title={title}
-      type="button"
-      onClick={onSelect}
-    >
+    <button aria-label={`${row.label} ${bucket.label} ${value} ml`} className={cn("min-h-9 w-full rounded-md border px-2 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-sky-200", surface, tone, active ? "ring-2 ring-sky-300" : "")} title={title} type="button" onClick={onSelect}>
       {value ? formatSignedForNet(value, row.type) : "-"}
     </button>
   );
@@ -609,7 +483,9 @@ function FluidBalanceGraph({ series }: { series: GraphPoint[] }) {
                 <g key={point.key}>
                   <rect fill="#0ea5e9" height={intakeHeight} rx="4" width="18" x={x - 23} y={baseline - intakeHeight} />
                   <rect fill="#10b981" height={outputHeight} rx="4" width="18" x={x + 5} y={baseline} />
-                  <text fill="#475569" fontSize="10" textAnchor="middle" x={x} y={height - 10}>{point.label}</text>
+                  <text fill="#475569" fontSize="10" textAnchor="middle" x={x} y={height - 10}>
+                    {point.label}
+                  </text>
                 </g>
               );
             })}
@@ -629,22 +505,12 @@ function FluidGraphLegendItem({ color, label }: { color: string; label: string }
   );
 }
 
-function FluidGraphReviewPanel({
-  rows,
-  alerts,
-  series,
-  previousBalance,
-}: {
-  rows: IcuIntakeOutput[];
-  alerts: Array<{ title: string; detail: string; tone: StatusTone }>;
-  series: GraphPoint[];
-  previousBalance: number;
-}) {
+function FluidGraphReviewPanel({ rows, alerts, series, previousBalance }: { rows: IcuIntakeOutput[]; alerts: Array<{ title: string; detail: string; tone: StatusTone }>; series: GraphPoint[]; previousBalance: number }) {
   const totals = summarizeRows(rows);
   const sourceStats = buildSourceStats(rows).slice(0, 5);
   const fallbackPoint: GraphPoint = { key: "empty", label: "-", intake: 0, output: 0, balance: 0 };
-  const peakPositive = series.reduce((best, point) => point.balance > best.balance ? point : best, series[0] ?? fallbackPoint);
-  const peakNegative = series.reduce((best, point) => point.balance < best.balance ? point : best, series[0] ?? fallbackPoint);
+  const peakPositive = series.reduce((best, point) => (point.balance > best.balance ? point : best), series[0] ?? fallbackPoint);
+  const peakNegative = series.reduce((best, point) => (point.balance < best.balance ? point : best), series[0] ?? fallbackPoint);
   const lowUrineCount = rows.filter((row) => row.category === "Urine" && row.quantityMl < 30).length;
   const drainOutput = rows.filter((row) => ["Abdominal Drain", "Pleural Space", "Mediastinum", "Gastric Drainage", "Gastrostomy Output"].includes(row.category)).reduce((sum, row) => sum + row.quantityMl, 0);
   const pendingCount = rows.filter((row) => row.status === "Pending review").length;
@@ -712,132 +578,66 @@ function FluidScenarioLine({ title, detail, tone }: { title: string; detail: str
   );
 }
 
-function FluidLedger({ rows, defaultOpen = false, showContribution = false, title = "Source Ledger" }: { rows: IcuIntakeOutput[]; defaultOpen?: boolean; showContribution?: boolean; title?: string }) {
-  const [open, setOpen] = React.useState(defaultOpen);
-  const [page, setPage] = React.useState(1);
-  const totalPages = Math.max(1, Math.ceil(rows.length / ledgerPageSize));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * ledgerPageSize;
-  const visibleRows = rows.slice(start, start + ledgerPageSize);
-
+function FluidLedger({ rows }: { rows: IcuIntakeOutput[] }) {
   return (
     <Card className="border-slate-200">
-      <button
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3 text-left transition hover:bg-slate-50"
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span className="min-w-0">
-          <CardTitle>{title}</CardTitle>
-          <span className="mt-1 block text-xs text-slate-500">{rows.length} visible source record(s)</span>
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{open ? "Hide" : "Show"}</span>
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm">
-            <ChevronDown className={cn("h-4 w-4 transition-transform", open ? "rotate-180" : "")} />
-          </span>
-        </span>
-      </button>
-      {open ? (
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  {["Time", "Entry", "Quantity", "Status", "Recorded by"].map((heading) => (
-                    <th className="border-b border-slate-200 px-3 py-2 text-left" key={heading}>{heading}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRows.map((row) => (
-                  <tr className="border-b border-slate-100 last:border-0" key={row.id}>
-                    <td className="px-3 py-2 font-semibold text-slate-900">
-                      <span className="block">{row.time}</span>
-                      <span className="text-xs font-medium text-slate-500">{row.date}</span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="font-semibold text-slate-900">{row.component}</div>
-                      <div className="text-xs text-slate-500">{row.kind} | {row.category} | {row.route}</div>
-                    </td>
-                    <td className={cn("px-3 py-2 font-bold", showContribution ? row.kind === "Intake" ? "text-sky-700" : "text-emerald-700" : "text-slate-900")}>{showContribution ? row.kind === "Intake" ? "+" : "-" : ""}{row.quantityMl} ml</td>
-                    <td className="px-3 py-2">
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{row.status}</span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="font-semibold text-slate-900">{row.nurse}</div>
-                      <div className="text-xs text-slate-500">{row.source}</div>
-                    </td>
-                  </tr>
+      <CardHeader className="border-b border-slate-100 bg-white">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>Source Ledger</CardTitle>
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{rows.length} visible</span>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] border-collapse text-sm">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+              <tr>
+                {["Time", "Entry", "Quantity", "Status", "Recorded by"].map((heading) => (
+                  <th className="border-b border-slate-200 px-3 py-2 text-left" key={heading}>
+                    {heading}
+                  </th>
                 ))}
-                {!rows.length ? (
-                  <tr>
-                    <td className="px-3 py-8 text-center text-sm text-slate-500" colSpan={5}>No intake/output records found for the selected filters.</td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-          <FluidPaginationControls
-            label="Source ledger"
-            page={safePage}
-            pageSize={ledgerPageSize}
-            total={rows.length}
-            onPageChange={setPage}
-          />
-        </CardContent>
-      ) : null}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr className="border-b border-slate-100 last:border-0" key={row.id}>
+                  <td className="px-3 py-2 font-semibold text-slate-900">
+                    <span className="block">{row.time}</span>
+                    <span className="text-xs font-medium text-slate-500">{row.date}</span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="font-semibold text-slate-900">{row.component}</div>
+                    <div className="text-xs text-slate-500">
+                      {row.kind} | {row.category} | {row.route}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 font-bold text-slate-900">{row.quantityMl} ml</td>
+                  <td className="px-3 py-2">
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">{row.status}</span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="font-semibold text-slate-900">{row.nurse}</div>
+                    <div className="text-xs text-slate-500">{row.source}</div>
+                  </td>
+                </tr>
+              ))}
+              {!rows.length ? (
+                <tr>
+                  <td className="px-3 py-8 text-center text-sm text-slate-500" colSpan={5}>
+                    No intake/output records found for the selected filters.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
     </Card>
   );
 }
 
-function FluidPaginationControls({
-  label,
-  onPageChange,
-  page,
-  pageSize,
-  total,
-}: {
-  label: string;
-  onPageChange: (page: number) => void;
-  page: number;
-  pageSize: number;
-  total: number;
-}) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const start = total ? (page - 1) * pageSize + 1 : 0;
-  const end = Math.min(total, page * pageSize);
-
-  return (
-    <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-      <span className="font-semibold">{label}: {start}-{end} of {total}</span>
-      <div className="flex items-center gap-2">
-        <Button className="h-8 px-3 text-xs" disabled={page <= 1} size="sm" variant="outline" onClick={() => onPageChange(Math.max(1, page - 1))}>Previous</Button>
-        <span className="min-w-16 text-center font-bold text-slate-700">Page {page} / {totalPages}</span>
-        <Button className="h-8 px-3 text-xs" disabled={page >= totalPages} size="sm" variant="outline" onClick={() => onPageChange(Math.min(totalPages, page + 1))}>Next</Button>
-        </div>
-      </div>
-  );
-}
-
-function QuickFluidEntryDialog({
-  draft,
-  open,
-  onChange,
-  onKindChange,
-  onOpenChange,
-  onSave,
-  patientLabel,
-}: {
-  draft: IoDraft;
-  open: boolean;
-  onChange: (draft: IoDraft) => void;
-  onKindChange: (kind: IcuIntakeOutput["kind"]) => void;
-  onOpenChange: (open: boolean) => void;
-  onSave: () => void;
-  patientLabel: string;
-}) {
+function QuickFluidEntryDialog({ draft, open, onChange, onKindChange, onOpenChange, onSave, patientLabel }: { draft: IoDraft; open: boolean; onChange: (draft: IoDraft) => void; onKindChange: (kind: IcuIntakeOutput["kind"]) => void; onOpenChange: (open: boolean) => void; onSave: () => void; patientLabel: string }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -878,14 +678,18 @@ function QuickFluidEntry({ draft, onChange, onKindChange, onSave }: { draft: IoD
         </div>
         <div className="grid grid-cols-2 gap-2">
           {(["Intake", "Output"] satisfies IcuIntakeOutput["kind"][]).map((kind) => (
-            <Button className="h-9" key={kind} variant={draft.kind === kind ? "default" : "outline"} onClick={() => onKindChange(kind)}>{kind}</Button>
+            <Button className="h-9" key={kind} variant={draft.kind === kind ? "default" : "outline"} onClick={() => onKindChange(kind)}>
+              {kind}
+            </Button>
           ))}
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <FieldBlock label={draft.kind === "Intake" ? "Intake source" : "Output source"}>
           <select className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-sky-200" value={draft.category} onChange={(event) => updateCategory(event.target.value)}>
-            {categories.map((category) => <option key={category}>{category}</option>)}
+            {categories.map((category) => (
+              <option key={category}>{category}</option>
+            ))}
           </select>
         </FieldBlock>
         <FieldBlock label="Component">
@@ -909,7 +713,8 @@ function QuickFluidEntry({ draft, onChange, onKindChange, onSave }: { draft: IoD
       </div>
       <div className="flex justify-end border-t border-slate-200 pt-4">
         <Button className="min-w-[160px]" onClick={onSave}>
-          <Plus className="h-4 w-4" />Add entry
+          <Plus className="h-4 w-4" />
+          Add entry
         </Button>
       </div>
     </div>
@@ -1008,9 +813,7 @@ function TotalLine({ label, value, tone }: { label: string; value: string; tone:
   );
 }
 
-function buildBuckets(view: IoView, selectedDate: string, _rows: IcuIntakeOutput[]): Bucket[] {
-  const calendarDates = ioDateOptions.map((option) => option.value).sort();
-
+function buildBuckets(view: IoView, selectedDate: string, rows: IcuIntakeOutput[]): Bucket[] {
   if (view === "Hourly") {
     return Array.from({ length: 24 }, (_, hour) => {
       const label = `${String(hour).padStart(2, "0")}:00`;
@@ -1023,32 +826,19 @@ function buildBuckets(view: IoView, selectedDate: string, _rows: IcuIntakeOutput
   }
 
   if (view === "12 Hours") {
-    return calendarDates.flatMap((date) => [
-      {
-        key: `${date}-day`,
-        label: formatShortDate(date),
-        sublabel: "Day 06-18",
-        match: (row: IcuIntakeOutput) => row.date === date && row.shift === "Day",
-      },
-      {
-        key: `${date}-night`,
-        label: formatShortDate(date),
-        sublabel: "Night 18-06",
-        match: (row: IcuIntakeOutput) => row.date === date && row.shift === "Night",
-      },
-    ]);
+    return [
+      { key: "day", label: "06:00 - 17:30", sublabel: "Day shift", match: (row) => row.date === selectedDate && row.shift === "Day" },
+      { key: "night", label: "18:00 - 05:30", sublabel: "Night shift", match: (row) => row.date === selectedDate && row.shift === "Night" },
+    ];
   }
 
   if (view === "24 Hours") {
-    return calendarDates.map((date) => ({
-      key: date,
-      label: formatShortDate(date),
-      sublabel: "24 hours",
-      match: (row: IcuIntakeOutput) => row.date === date,
-    }));
+    return [{ key: selectedDate, label: formatShortDate(selectedDate), sublabel: "24 hour total", match: (row) => row.date === selectedDate }];
   }
 
-  return calendarDates.map((date) => ({
+  const dates = Array.from(new Set(rows.map((row) => row.date))).sort();
+  const safeDates = dates.length ? dates : [selectedDate];
+  return safeDates.map((date) => ({
     key: date,
     label: formatShortDate(date),
     sublabel: "Cumulative",

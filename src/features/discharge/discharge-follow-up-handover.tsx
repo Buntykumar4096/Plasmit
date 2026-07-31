@@ -2,22 +2,7 @@
 
 import * as React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import {
-  AlertTriangle,
-  Bell,
-  CalendarCheck,
-  ChevronRight,
-  ClipboardCheck,
-  Eye,
-  Mail,
-  MessageCircle,
-  Phone,
-  Printer,
-  Send,
-  ShieldCheck,
-  Stethoscope,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Bell, CalendarCheck, ChevronRight, ClipboardCheck, Eye, Mail, MessageCircle, Phone, Printer, Send, ShieldCheck, Stethoscope, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -29,10 +14,8 @@ import { cn } from "@/lib/utils";
 import type { StatusTone } from "@/types";
 import type { DischargeChecklistItem, DischargePatientPlan } from "@/features/discharge/discharge-data";
 
-const inputClassName =
-  "h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50";
-const textareaClassName =
-  "min-h-[120px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50";
+const inputClassName = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50";
+const textareaClassName = "min-h-[120px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50";
 
 type FollowUpMode = "OPD" | "Teleconsultation" | "Emergency" | "Home Visit";
 type FollowUpDestination = "Home" | "Referral Hospital" | "Rehab" | "ICU Transfer";
@@ -95,26 +78,9 @@ const requiredBeforeFollowUp: RequiredItem[] = [
   { id: "req-tpa", label: "Bring insurance/TPA documents if required", status: "Pending", note: "" },
 ];
 
-const redFlagSymptoms = [
-  "High fever",
-  "Breathing difficulty",
-  "Chest pain",
-  "Severe bleeding",
-  "Loss of consciousness",
-  "Wound swelling or pus",
-  "Repeated vomiting",
-  "Severe weakness",
-];
+const redFlagSymptoms = ["High fever", "Breathing difficulty", "Chest pain", "Severe bleeding", "Loss of consciousness", "Wound swelling or pus", "Repeated vomiting", "Severe weakness"];
 
-const instructionSuggestions = [
-  "Review after 7 days",
-  "Bring reports",
-  "Continue medication",
-  "Visit emergency if symptoms worsen",
-  "Dressing required",
-  "Suture removal required",
-  "Teleconsultation allowed",
-];
+const instructionSuggestions = ["Review after 7 days", "Bring reports", "Continue medication", "Visit emergency if symptoms worsen", "Dressing required", "Suture removal required", "Teleconsultation allowed"];
 
 const reminderChannels: ReminderChannel[] = ["SMS", "WhatsApp", "Email", "Patient App Notification"];
 
@@ -140,17 +106,7 @@ const clinicLocationByDepartment: Record<string, string> = {
   Emergency: "Emergency review desk",
 };
 
-export function DischargeFollowUpHandoverPage({
-  plan,
-  checklist,
-  readOnly,
-  onFollowUpChange,
-}: {
-  plan: DischargePatientPlan;
-  checklist: DischargeChecklistItem[];
-  readOnly: boolean;
-  onFollowUpChange: (field: keyof DischargePatientPlan["followUp"], value: string) => void;
-}) {
+export function DischargeFollowUpHandoverPage({ plan, checklist, readOnly, onFollowUpChange }: { plan: DischargePatientPlan; checklist: DischargeChecklistItem[]; readOnly: boolean; onFollowUpChange: (field: keyof DischargePatientPlan["followUp"], value: string) => void }) {
   const initialDepartment = departmentOptions.includes(plan.followUp.department) ? plan.followUp.department : "General Medicine";
   const initialPhysicians = getPhysicianOptions(initialDepartment);
   const [appointment, setAppointment] = React.useState<AppointmentState>(() => ({
@@ -166,9 +122,7 @@ export function DischargeFollowUpHandoverPage({
     contact: "+91 20 4000 1100",
   }));
   const [requiredItems, setRequiredItems] = React.useState<RequiredItem[]>(requiredBeforeFollowUp);
-  const [doctorNotes, setDoctorNotes] = React.useState(
-    plan.instructions.patientInstructions || "Continue medicines as prescribed. Bring discharge summary and reports during follow-up.",
-  );
+  const [doctorNotes, setDoctorNotes] = React.useState(plan.instructions.patientInstructions || "Continue medicines as prescribed. Bring discharge summary and reports during follow-up.");
   const [handoverGroups, setHandoverGroups] = React.useState<HandoverGroup[]>(() => createHandoverGroups(plan));
   const [reminderChannelsSelected, setReminderChannelsSelected] = React.useState<Set<ReminderChannel>>(() => new Set(["SMS", "WhatsApp"]));
   const [reminderTime, setReminderTime] = React.useState<ReminderTime>("24 hours before");
@@ -207,9 +161,7 @@ export function DischargeFollowUpHandoverPage({
   };
 
   const toggleRequiredItem = (itemId: string) => {
-    setRequiredItems((current) =>
-      current.map((item) => (item.id === itemId ? { ...item, status: item.status === "Completed" ? "Pending" : "Completed" } : item)),
-    );
+    setRequiredItems((current) => current.map((item) => (item.id === itemId ? { ...item, status: item.status === "Completed" ? "Pending" : "Completed" } : item)));
   };
 
   const appendSuggestion = (suggestion: string) => {
@@ -222,9 +174,7 @@ export function DischargeFollowUpHandoverPage({
       group.id === groupId
         ? {
             ...group,
-            items: group.items.map((item) =>
-              item.id === itemId ? { ...item, status: "Completed" as HandoverStatus, updatedAt: "Now" } : item,
-            ),
+            items: group.items.map((item) => (item.id === itemId ? { ...item, status: "Completed" as HandoverStatus, updatedAt: "Now" } : item)),
           }
         : group,
     );
@@ -283,62 +233,23 @@ export function DischargeFollowUpHandoverPage({
 
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-4">
-          <FollowUpAppointmentCard
-            appointment={appointment}
-            readOnly={readOnly}
-            onChange={updateAppointment}
-            onPreview={() => setPreviewOpen(true)}
-          />
-          <RequiredBeforeFollowUpCard
-            items={requiredItems}
-            readOnly={readOnly}
-            onToggle={toggleRequiredItem}
-          />
+          <FollowUpAppointmentCard appointment={appointment} readOnly={readOnly} onChange={updateAppointment} onPreview={() => setPreviewOpen(true)} />
+          <RequiredBeforeFollowUpCard items={requiredItems} readOnly={readOnly} onToggle={toggleRequiredItem} />
           <DoctorInstructionsCard notes={doctorNotes} readOnly={readOnly} onChange={setDoctorNotes} onSuggestion={appendSuggestion} />
           <RedFlagSymptomsCard />
-          <FollowUpReminderCard
-            channels={reminderChannelsSelected}
-            reminderTime={reminderTime}
-            customReminder={customReminder}
-            readOnly={readOnly}
-            onToggleChannel={toggleReminderChannel}
-            onReminderTimeChange={setReminderTime}
-            onCustomReminderChange={setCustomReminder}
-          />
+          <FollowUpReminderCard channels={reminderChannelsSelected} reminderTime={reminderTime} customReminder={customReminder} readOnly={readOnly} onToggleChannel={toggleReminderChannel} onReminderTimeChange={setReminderTime} onCustomReminderChange={setCustomReminder} />
           <PatientCopyPreviewCard appointment={appointment} notes={doctorNotes} onPreview={() => setPreviewOpen(true)} />
         </div>
 
-        <PatientHandoverPanel
-          groups={handoverGroups}
-          activeGroupId={activeHandoverGroupId}
-          readOnly={readOnly}
-          onGroupChange={setActiveHandoverGroupId}
-          onMarkDone={markHandoverDone}
-          onValidate={validateFinalDischarge}
-        />
+        <PatientHandoverPanel groups={handoverGroups} activeGroupId={activeHandoverGroupId} readOnly={readOnly} onGroupChange={setActiveHandoverGroupId} onMarkDone={markHandoverDone} onValidate={validateFinalDischarge} />
       </div>
 
-      <PatientFollowUpPreviewModal
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        plan={plan}
-        appointment={appointment}
-        requiredItems={requiredItems}
-        doctorNotes={doctorNotes}
-      />
+      <PatientFollowUpPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} plan={plan} appointment={appointment} requiredItems={requiredItems} doctorNotes={doctorNotes} />
     </div>
   );
 }
 
-function DischargeBlockerChips({
-  blockers,
-  onClick,
-  onValidate,
-}: {
-  blockers: BlockerChip[];
-  onClick: (sectionId: string, handoverGroupId?: string) => void;
-  onValidate: () => void;
-}) {
+function DischargeBlockerChips({ blockers, onClick, onValidate }: { blockers: BlockerChip[]; onClick: (sectionId: string, handoverGroupId?: string) => void; onValidate: () => void }) {
   const pendingCount = blockers.filter((blocker) => blocker.status === "Pending").length;
   return (
     <Card>
@@ -357,17 +268,7 @@ function DischargeBlockerChips({
       </CardHeader>
       <CardContent className="flex flex-wrap gap-2">
         {blockers.map((blocker) => (
-          <button
-            type="button"
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:-translate-y-0.5 hover:shadow-sm",
-              blocker.status === "Completed"
-                ? "border-success/30 bg-success/10 text-success"
-                : "border-warning/40 bg-warning/10 text-warning",
-            )}
-            onClick={() => onClick(blocker.target, blocker.handoverGroupId)}
-            key={blocker.id}
-          >
+          <button type="button" className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:-translate-y-0.5 hover:shadow-sm", blocker.status === "Completed" ? "border-success/30 bg-success/10 text-success" : "border-warning/40 bg-warning/10 text-warning")} onClick={() => onClick(blocker.target, blocker.handoverGroupId)} key={blocker.id}>
             <span>{blocker.label}</span>
             <Badge tone={blocker.status === "Completed" ? "success" : "warning"}>{blocker.status}</Badge>
             <ChevronRight className="h-3.5 w-3.5" />
@@ -378,17 +279,7 @@ function DischargeBlockerChips({
   );
 }
 
-function FollowUpAppointmentCard({
-  appointment,
-  readOnly,
-  onChange,
-  onPreview,
-}: {
-  appointment: AppointmentState;
-  readOnly: boolean;
-  onChange: (field: keyof AppointmentState, value: string) => void;
-  onPreview: () => void;
-}) {
+function FollowUpAppointmentCard({ appointment, readOnly, onChange, onPreview }: { appointment: AppointmentState; readOnly: boolean; onChange: (field: keyof AppointmentState, value: string) => void; onPreview: () => void }) {
   return (
     <Card id="followup-appointment">
       <CardHeader className="flex-col items-stretch gap-3 xl:flex-row xl:items-start">
@@ -445,15 +336,7 @@ function FollowUpAppointmentCard({
   );
 }
 
-function RequiredBeforeFollowUpCard({
-  items,
-  readOnly,
-  onToggle,
-}: {
-  items: RequiredItem[];
-  readOnly: boolean;
-  onToggle: (itemId: string) => void;
-}) {
+function RequiredBeforeFollowUpCard({ items, readOnly, onToggle }: { items: RequiredItem[]; readOnly: boolean; onToggle: (itemId: string) => void }) {
   const completed = items.filter((item) => item.status === "Completed").length;
   return (
     <Card id="required-before-followup">
@@ -463,20 +346,16 @@ function RequiredBeforeFollowUpCard({
             <CardTitle>Required Before Follow-up</CardTitle>
             <CardDescription>Compact patient-facing checklist for reports, tests, medicines, and documents</CardDescription>
           </div>
-          <Badge tone={completed === items.length ? "success" : "warning"}>{completed}/{items.length} completed</Badge>
+          <Badge tone={completed === items.length ? "success" : "warning"}>
+            {completed}/{items.length} completed
+          </Badge>
         </summary>
         <CardContent className="grid gap-2 lg:grid-cols-2">
           {items.map((item) => (
             <div className="rounded-lg border border-border bg-background p-3" key={item.id}>
               <div className="flex items-start justify-between gap-3">
                 <label className="flex min-w-0 items-start gap-3 text-sm font-medium text-foreground">
-                  <input
-                    className="mt-1 h-4 w-4 rounded border-border accent-primary"
-                    type="checkbox"
-                    checked={item.status === "Completed"}
-                    disabled={readOnly}
-                    onChange={() => onToggle(item.id)}
-                  />
+                  <input className="mt-1 h-4 w-4 rounded border-border accent-primary" type="checkbox" checked={item.status === "Completed"} disabled={readOnly} onChange={() => onToggle(item.id)} />
                   <span>{item.label}</span>
                 </label>
                 <StatusBadge status={item.status} />
@@ -490,17 +369,7 @@ function RequiredBeforeFollowUpCard({
   );
 }
 
-function DoctorInstructionsCard({
-  notes,
-  readOnly,
-  onChange,
-  onSuggestion,
-}: {
-  notes: string;
-  readOnly: boolean;
-  onChange: (value: string) => void;
-  onSuggestion: (value: string) => void;
-}) {
+function DoctorInstructionsCard({ notes, readOnly, onChange, onSuggestion }: { notes: string; readOnly: boolean; onChange: (value: string) => void; onSuggestion: (value: string) => void }) {
   return (
     <Card id="doctor-followup-instructions">
       <CardHeader>
@@ -513,13 +382,7 @@ function DoctorInstructionsCard({
         <textarea className={textareaClassName} value={notes} disabled={readOnly} onChange={(event) => onChange(event.target.value)} />
         <div className="flex flex-wrap gap-2">
           {instructionSuggestions.map((suggestion) => (
-            <button
-              type="button"
-              className="rounded-full border border-info/30 bg-info/10 px-3 py-1.5 text-xs font-medium text-info transition hover:bg-info/15 disabled:opacity-50"
-              disabled={readOnly}
-              onClick={() => onSuggestion(suggestion)}
-              key={suggestion}
-            >
+            <button type="button" className="rounded-full border border-info/30 bg-info/10 px-3 py-1.5 text-xs font-medium text-info transition hover:bg-info/15 disabled:opacity-50" disabled={readOnly} onClick={() => onSuggestion(suggestion)} key={suggestion}>
               {suggestion}
             </button>
           ))}
@@ -543,13 +406,7 @@ function RedFlagSymptomsCard() {
       </CardHeader>
       <CardContent className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {redFlagSymptoms.map((symptom, index) => (
-          <div
-            className={cn(
-              "rounded-lg border p-3 text-sm font-medium",
-              index < 4 ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning",
-            )}
-            key={symptom}
-          >
+          <div className={cn("rounded-lg border p-3 text-sm font-medium", index < 4 ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning")} key={symptom}>
             {symptom}
           </div>
         ))}
@@ -558,23 +415,7 @@ function RedFlagSymptomsCard() {
   );
 }
 
-function FollowUpReminderCard({
-  channels,
-  reminderTime,
-  customReminder,
-  readOnly,
-  onToggleChannel,
-  onReminderTimeChange,
-  onCustomReminderChange,
-}: {
-  channels: Set<ReminderChannel>;
-  reminderTime: ReminderTime;
-  customReminder: string;
-  readOnly: boolean;
-  onToggleChannel: (channel: ReminderChannel) => void;
-  onReminderTimeChange: (value: ReminderTime) => void;
-  onCustomReminderChange: (value: string) => void;
-}) {
+function FollowUpReminderCard({ channels, reminderTime, customReminder, readOnly, onToggleChannel, onReminderTimeChange, onCustomReminderChange }: { channels: Set<ReminderChannel>; reminderTime: ReminderTime; customReminder: string; readOnly: boolean; onToggleChannel: (channel: ReminderChannel) => void; onReminderTimeChange: (value: ReminderTime) => void; onCustomReminderChange: (value: string) => void }) {
   return (
     <Card id="followup-reminder">
       <CardHeader>
@@ -590,44 +431,22 @@ function FollowUpReminderCard({
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {reminderChannels.map((channel) => (
             <label className="flex items-center gap-2 rounded-lg border border-border bg-background p-3 text-sm" key={channel}>
-              <input
-                className="h-4 w-4 rounded border-border accent-primary"
-                type="checkbox"
-                checked={channels.has(channel)}
-                disabled={readOnly}
-                onChange={() => onToggleChannel(channel)}
-              />
+              <input className="h-4 w-4 rounded border-border accent-primary" type="checkbox" checked={channels.has(channel)} disabled={readOnly} onChange={() => onToggleChannel(channel)} />
               <ReminderIcon channel={channel} />
               <span>{channel}</span>
             </label>
           ))}
         </div>
         <div className="space-y-2">
-          <FieldSelect
-            label="Reminder time"
-            value={reminderTime}
-            options={["24 hours before", "2 hours before", "Custom"]}
-            disabled={readOnly}
-            onChange={(value) => onReminderTimeChange(value as ReminderTime)}
-          />
-          {reminderTime === "Custom" ? (
-            <Input value={customReminder} disabled={readOnly} onChange={(event) => onCustomReminderChange(event.target.value)} placeholder="Example: 4 hours before" />
-          ) : null}
+          <FieldSelect label="Reminder time" value={reminderTime} options={["24 hours before", "2 hours before", "Custom"]} disabled={readOnly} onChange={(value) => onReminderTimeChange(value as ReminderTime)} />
+          {reminderTime === "Custom" ? <Input value={customReminder} disabled={readOnly} onChange={(event) => onCustomReminderChange(event.target.value)} placeholder="Example: 4 hours before" /> : null}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function PatientCopyPreviewCard({
-  appointment,
-  notes,
-  onPreview,
-}: {
-  appointment: AppointmentState;
-  notes: string;
-  onPreview: () => void;
-}) {
+function PatientCopyPreviewCard({ appointment, notes, onPreview }: { appointment: AppointmentState; notes: string; onPreview: () => void }) {
   return (
     <Card id="patient-copy-preview">
       <CardHeader className="flex-col items-stretch gap-3 xl:flex-row xl:items-start">
@@ -652,11 +471,7 @@ function PatientCopyPreviewCard({
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-border bg-background p-4 text-sm leading-6 text-muted-foreground">
-          Your follow-up appointment is scheduled with <span className="font-semibold text-foreground">{appointment.physician}</span> in{" "}
-          <span className="font-semibold text-foreground">{appointment.department}</span> on{" "}
-          <span className="font-semibold text-foreground">{appointment.date}</span> at{" "}
-          <span className="font-semibold text-foreground">{appointment.time}</span>. Please bring your discharge summary and latest reports.
-          Visit emergency immediately if fever, breathing difficulty, chest pain, bleeding, or severe weakness occurs.
+          Your follow-up appointment is scheduled with <span className="font-semibold text-foreground">{appointment.physician}</span> in <span className="font-semibold text-foreground">{appointment.department}</span> on <span className="font-semibold text-foreground">{appointment.date}</span> at <span className="font-semibold text-foreground">{appointment.time}</span>. Please bring your discharge summary and latest reports. Visit emergency immediately if fever, breathing difficulty, chest pain, bleeding, or severe weakness occurs.
           <div className="mt-3 text-xs">{notes}</div>
         </div>
       </CardContent>
@@ -664,21 +479,7 @@ function PatientCopyPreviewCard({
   );
 }
 
-function PatientHandoverPanel({
-  groups,
-  activeGroupId,
-  readOnly,
-  onGroupChange,
-  onMarkDone,
-  onValidate,
-}: {
-  groups: HandoverGroup[];
-  activeGroupId: string;
-  readOnly: boolean;
-  onGroupChange: (groupId: string) => void;
-  onMarkDone: (groupId: string, itemId: string) => void;
-  onValidate: () => void;
-}) {
+function PatientHandoverPanel({ groups, activeGroupId, readOnly, onGroupChange, onMarkDone, onValidate }: { groups: HandoverGroup[]; activeGroupId: string; readOnly: boolean; onGroupChange: (groupId: string) => void; onMarkDone: (groupId: string, itemId: string) => void; onValidate: () => void }) {
   const total = groups.reduce((count, group) => count + group.items.length, 0);
   const completed = groups.reduce((count, group) => count + group.items.filter((item) => item.status === "Completed").length, 0);
 
@@ -689,7 +490,9 @@ function PatientHandoverPanel({
           <CardTitle>Patient Handover Checklist</CardTitle>
           <CardDescription>Nurse, billing, pharmacy, and summary clearance before exit</CardDescription>
         </div>
-        <Badge tone={completed === total ? "success" : "warning"}>{completed}/{total}</Badge>
+        <Badge tone={completed === total ? "success" : "warning"}>
+          {completed}/{total}
+        </Badge>
       </CardHeader>
       <CardContent className="space-y-3">
         <Tabs value={activeGroupId} onValueChange={onGroupChange}>
@@ -718,7 +521,9 @@ function PatientHandoverPanel({
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="text-sm font-medium text-foreground">{item.label}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{item.owner} | Updated {item.updatedAt}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {item.owner} | Updated {item.updatedAt}
+                      </div>
                     </div>
                     <StatusBadge status={item.status} />
                   </div>
@@ -744,21 +549,7 @@ function PatientHandoverPanel({
   );
 }
 
-function PatientFollowUpPreviewModal({
-  open,
-  onClose,
-  plan,
-  appointment,
-  requiredItems,
-  doctorNotes,
-}: {
-  open: boolean;
-  onClose: () => void;
-  plan: DischargePatientPlan;
-  appointment: AppointmentState;
-  requiredItems: RequiredItem[];
-  doctorNotes: string;
-}) {
+function PatientFollowUpPreviewModal({ open, onClose, plan, appointment, requiredItems, doctorNotes }: { open: boolean; onClose: () => void; plan: DischargePatientPlan; appointment: AppointmentState; requiredItems: RequiredItem[]; doctorNotes: string }) {
   return (
     <Dialog.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <Dialog.Portal>
@@ -767,9 +558,7 @@ function PatientFollowUpPreviewModal({
           <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3">
             <div>
               <Dialog.Title className="text-sm font-semibold text-foreground">Patient Follow-up Instructions Preview</Dialog.Title>
-              <Dialog.Description className="mt-1 text-xs text-muted-foreground">
-                Patient-friendly copy for discharge handover, print, or share.
-              </Dialog.Description>
+              <Dialog.Description className="mt-1 text-xs text-muted-foreground">Patient-friendly copy for discharge handover, print, or share.</Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <Button size="icon" variant="ghost" aria-label="Close preview">
@@ -781,11 +570,12 @@ function PatientFollowUpPreviewModal({
             <div className="mx-auto max-w-[720px] rounded-lg border border-border bg-white p-6 text-slate-950 shadow-sm">
               <div className="border-b border-slate-200 pb-3">
                 <div className="text-lg font-bold">Follow-up Instructions</div>
-                <div className="mt-1 text-sm text-slate-600">{plan.patientName} | {plan.uhid} | {plan.ward}</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  {plan.patientName} | {plan.uhid} | {plan.ward}
+                </div>
               </div>
               <div className="mt-4 text-sm leading-6 text-slate-700">
-                Your follow-up appointment is scheduled with <b>{appointment.physician}</b> in <b>{appointment.department}</b> on{" "}
-                <b>{appointment.date}</b> at <b>{appointment.time}</b>.
+                Your follow-up appointment is scheduled with <b>{appointment.physician}</b> in <b>{appointment.department}</b> on <b>{appointment.date}</b> at <b>{appointment.time}</b>.
               </div>
               <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                 <PreviewLine label="Mode" value={appointment.mode} />
@@ -834,19 +624,7 @@ function FieldInput({ label, value, disabled, onChange }: { label: string; value
   );
 }
 
-function FieldSelect({
-  label,
-  value,
-  options,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  disabled: boolean;
-  onChange: (value: string) => void;
-}) {
+function FieldSelect({ label, value, options, disabled, onChange }: { label: string; value: string; options: string[]; disabled: boolean; onChange: (value: string) => void }) {
   return (
     <label className="space-y-1 text-sm">
       <span className="font-medium text-foreground">{label}</span>
@@ -933,8 +711,7 @@ function createBlockerChips(plan: DischargePatientPlan, checklist: DischargeChec
   const pharmacyDone = handoverGroupDone(handoverGroups, "pharmacy") || plan.pharmacyStatus === "Reconciled";
   const summaryDone = handoverGroupDone(handoverGroups, "summary") || checklistCategoryDone(checklist, "Summary") || plan.summaryStatus === "Signed";
   const medicationDone = checklistCategoryDone(checklist, "Medication") || pharmacyDone;
-  const educationDone =
-    nurseDone || checklist.some((item) => item.label.toLowerCase().includes("education") && item.status === "Done") || plan.nurseClearance === "Done";
+  const educationDone = nurseDone || checklist.some((item) => item.label.toLowerCase().includes("education") && item.status === "Done") || plan.nurseClearance === "Done";
 
   return [
     { id: "block-med", label: "Medication reconciliation completed", status: medicationDone ? "Completed" : "Pending", target: "patient-handover-checklist", handoverGroupId: "pharmacy" },

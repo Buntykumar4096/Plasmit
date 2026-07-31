@@ -3,6 +3,7 @@ node_modules/
 
 # next.js
 .next/
+.next-stale/
 out/
 
 # production
@@ -35,3 +36,5 @@ Thumbs.db
 
 .vercel
 .env*
+.codex-compact/
+.codex-compact2/

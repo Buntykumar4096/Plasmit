@@ -1,4 +1,4 @@
-import type { Role, StatusTone } from "@/types";
+﻿import type { Role, StatusTone } from "@/types";
 
 export type RapidResponseLevel = "Routine" | "RN Review" | "MDT Review" | "MER Call";
 export type RapidZone = "Safe" | "Yellow" | "Red" | "Purple";
